@@ -1,0 +1,12 @@
+{
+  "name": "improvtool-cloudbase-app",
+  "private": true,
+  "scripts": {
+    "syntax-check": "node tools/syntax-check.js",
+    "typecheck": "tsc --noEmit --pretty false"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^4.1.3",
+    "typescript": "^5.9.3"
+  }
+}

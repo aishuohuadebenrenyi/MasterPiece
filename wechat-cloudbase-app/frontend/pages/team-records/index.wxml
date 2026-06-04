@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="safe-right">
+    <button class="back" bindtap="back">← 返回</button>
+    <text class="kicker">团队排练记录</text>
+    <view class="title">开心即兴团</view>
+  </view>
+
+  <view class="card summary">
+    <view class="row">
+      <view>
+        <view class="section-title">最近排练</view>
+        <text class="muted">按时间回看团队练习、游戏反馈和下次提醒。</text>
+      </view>
+      <text class="pill blue">3 条</text>
+    </view>
+  </view>
+
+  <view class="record-list">
+    <view class="card record">
+      <view class="row">
+        <view>
+          <text class="mini-title">今天 · 90 分钟</text>
+          <view class="section-title">身体到场 + 关系建立</view>
+        </view>
+        <button class="small-btn" bindtap="openRecord">查看</button>
+      </view>
+      <text class="muted">完成：名字接龙变奏、空间行走切换、一句话交换身份。</text>
+      <view class="meta"><text>8 人</text><text>3 个游戏</text><text>有复盘</text></view>
+    </view>
+
+    <view class="card record">
+      <view class="row">
+        <view>
+          <text class="mini-title">05.28 · 75 分钟</text>
+          <view class="section-title">新手破冰与身体专注</view>
+        </view>
+        <button class="small-btn" bindtap="openRecord">查看</button>
+      </view>
+      <text class="muted">Try：减少规则解释，先让身体进入状态。</text>
+      <view class="meta"><text>6 人</text><text>2 个游戏</text><text>带领提醒</text></view>
+    </view>
+
+    <view class="card record">
+      <view class="row">
+        <view>
+          <text class="mini-title">05.24 · 60 分钟</text>
+          <view class="section-title">关系确认练习</view>
+        </view>
+        <button class="small-btn" bindtap="openRecord">查看</button>
+      </view>
+      <text class="muted">Keep：一句话限制让关系更清楚，适合下次继续使用。</text>
+      <view class="meta"><text>5 人</text><text>关系</text><text>已沉淀</text></view>
+    </view>
+  </view>
+</view>

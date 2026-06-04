@@ -1,0 +1,57 @@
+<view class="page detail" wx:if="{{game}}">
+  <button class="back safe-right" bindtap="back">← 返回</button>
+  <view class="card header">
+    <view class="row">
+      <view>
+        <text class="kicker">{{tagText}}</text>
+        <view class="detail-title">{{game.title}}</view>
+      </view>
+      <button class="save" bindtap="toggleSaved">{{saveIcon}}</button>
+    </view>
+    <text class="muted">{{game.lead}}</text>
+    <view class="meta"><text wx:for="{{game.meta}}" wx:key="*this">{{item}}</text></view>
+    <view class="verdict">
+      <text>现在能不能玩</text>
+      <text class="muted">{{verdictText}}</text>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="block-title">适用判断</view>
+    <view class="meta"><text wx:for="{{game.fit}}" wx:key="*this">{{item}}</text></view>
+    <text class="muted">提醒：{{avoidText}}</text>
+  </view>
+
+  <view class="card block">
+    <view class="block-title">玩法步骤</view>
+    <view wx:for="{{game.steps}}" wx:key="*this" class="step">
+      <text>{{index + 1}}</text>
+      <text>{{item}}</text>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="block-title">带领提示</view>
+    <text class="muted">{{game.tips}}</text>
+  </view>
+
+  <view class="card block">
+    <view class="block-title">变体与翻车点</view>
+    <text class="muted">{{game.variant}}</text>
+    <text class="muted issue">{{game.issue}}</text>
+  </view>
+
+  <view class="card block">
+    <view class="row">
+      <view class="block-title">相似游戏</view>
+      <button class="small-btn" bindtap="openRelated">去看看</button>
+    </view>
+    <text class="muted">{{related.title}}：{{related.desc}}</text>
+  </view>
+
+  <view class="fixed-actions">
+    <button class="small-btn" bindtap="togglePlayed">{{playedText}}</button>
+    <button class="small-btn" bindtap="toggleSaved">{{savedText}}</button>
+    <button class="primary-btn" bindtap="record">记录这次</button>
+  </view>
+</view>

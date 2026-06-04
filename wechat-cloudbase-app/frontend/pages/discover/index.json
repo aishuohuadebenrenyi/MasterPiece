@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "game-card": "../../components/game-card/index",
+    "bottom-sheet": "../../components/bottom-sheet/index"
+  }
+}
+

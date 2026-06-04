@@ -1,0 +1,67 @@
+<view class="page rehearsal">
+  <view class="safe-right">
+    <button class="back" bindtap="back">← 返回</button>
+    <text class="kicker">排练记录</text>
+    <view class="title">开心即兴团</view>
+  </view>
+
+  <view class="card form-card">
+    <view class="row">
+      <view>
+        <view class="section-title">今晚排练 · 90 分钟</view>
+        <text class="muted">目标：身体到场 → 关系建立 → 小复盘</text>
+      </view>
+      <button class="small-btn" bindtap="openPlan">编辑</button>
+    </view>
+    <view class="meta">
+      <text>8 人</text><text>新手友好</text><text>进行中</text>
+    </view>
+  </view>
+
+  <view class="card form-card">
+    <view class="row">
+      <view class="section-title">游戏计划与反馈</view>
+      <button class="small-btn" bindtap="openAdd">加游戏</button>
+    </view>
+    <view wx:for="{{planGames}}" wx:key="id" class="game-row card">
+      <view class="row">
+        <view class="index">{{index + 1}}</view>
+        <view class="grow">
+          <view class="game-title">{{item.title}}</view>
+          <text class="muted">{{item.metaText}} · {{item.tagText}}</text>
+        </view>
+        <button class="small-btn" data-id="{{item.id}}" bindtap="openGame">详情</button>
+      </view>
+      <view class="status-row">
+        <button class="small-btn status-btn" data-id="{{item.id}}" bindtap="toggleStatus">{{item.status}}</button>
+        <text class="pill orange">Keep / Try</text>
+      </view>
+      <view class="quick-feedback">
+        <label class="field">Keep<input placeholder="有效的瞬间" value="{{item.keepValue}}" /></label>
+        <label class="field">Try<input placeholder="下次调整" value="{{item.tryValue}}" /></label>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-actions">
+    <button class="ghost-btn" bindtap="pause">暂停排练</button>
+    <button class="primary-btn" bindtap="review">结束并复盘</button>
+  </view>
+
+  <bottom-sheet visible="{{addVisible}}" title="添加到排练" bind:close="closeSheet">
+    <view class="search-bar">
+      <text>⌕</text>
+      <input value="{{query}}" bindinput="searchGame" placeholder="搜索游戏、标签或目标" />
+    </view>
+    <view wx:for="{{filteredGames}}" wx:key="id" class="card option-card" data-id="{{item.id}}" bindtap="addGame">
+      <view class="game-title">{{item.title}}</view>
+      <text class="muted">{{item.desc}}</text>
+      <view class="meta"><text wx:for="{{item.meta}}" wx:key="*this">{{item}}</text></view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{planVisible}}" title="调整排练计划" bind:close="closeSheet">
+    <text class="muted">轻量原型：从游戏详情加入计划，在计划页完成后统一复盘。</text>
+    <button class="primary-btn plan-submit" bindtap="savePlan">保存计划</button>
+  </bottom-sheet>
+</view>

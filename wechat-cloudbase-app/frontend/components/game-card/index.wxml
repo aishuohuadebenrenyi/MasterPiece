@@ -1,0 +1,27 @@
+<view class="game-card card {{modeClass}}" bindtap="open">
+  <view class="stripe {{stripeClass}}"></view>
+  <view class="game-main">
+    <view class="row">
+      <view>
+        <text wx:if="{{isCard}}" class="pill blue">{{primaryTag}}</text>
+        <view class="game-title">{{game.title}}</view>
+      </view>
+      <button class="save" catchtap="save">{{saveIcon}}</button>
+    </view>
+    <text class="muted">{{game.desc}}</text>
+    <view class="meta">
+      <text wx:for="{{game.meta}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view wx:if="{{isCard}}" class="fit-box">
+      <text class="mini-title">适合现在玩</text>
+      <view class="meta">
+        <text wx:for="{{game.fit}}" wx:key="*this">{{item}}</text>
+      </view>
+      <text class="muted">{{game.lead}}</text>
+    </view>
+    <view wx:if="{{isCard}}" class="actions">
+      <button class="primary-btn" catchtap="open">查看详情</button>
+      <button class="ghost-btn" catchtap="record">记录这次</button>
+    </view>
+  </view>
+</view>

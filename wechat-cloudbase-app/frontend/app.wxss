@@ -1,0 +1,229 @@
+@import "./styles/theme.wxss";
+
+page {
+  width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, var(--improv-bg-top) 0%, var(--improv-bg-mid) 54%, var(--improv-bg-bottom) 100%);
+  color: #24324a;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+view,
+text,
+button,
+input,
+textarea {
+  box-sizing: border-box;
+}
+
+button {
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+button::after {
+  border: 0;
+}
+
+.back {
+  width: 150rpx;
+  min-width: 150rpx;
+  min-height: 64rpx;
+  margin-left: -10rpx;
+  padding: 0;
+  justify-content: flex-start;
+  color: #24324a;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding: 108rpx 40rpx 226rpx;
+}
+
+.page.modal-open {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.safe-right {
+  padding-right: 196rpx;
+}
+
+.card {
+  border-radius: 40rpx;
+  background: var(--improv-card);
+  box-shadow: var(--improv-shadow-sm);
+  overflow: hidden;
+}
+
+.title {
+  color: #24324a;
+  font-size: 56rpx;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.kicker,
+.mini-title {
+  display: block;
+  color: #96a1b4;
+  font-size: 24rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+}
+
+.muted {
+  color: #667289;
+  font-size: 26rpx;
+  line-height: 1.65;
+}
+
+.primary-btn,
+.ghost-btn,
+.small-btn,
+.chip,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-weight: 900;
+}
+
+.primary-btn {
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  background: linear-gradient(135deg, #ff7a45, #ff5b2e);
+  color: #fff;
+  box-shadow: 0 20rpx 40rpx rgba(255, 91, 46, 0.2);
+}
+
+.ghost-btn {
+  min-height: 74rpx;
+  padding: 0 26rpx;
+  background: #e8f0ff;
+  color: #2f6ff2;
+}
+
+.small-btn {
+  min-height: 58rpx;
+  padding: 0 22rpx;
+  background: #fff;
+  border: 2rpx solid rgba(94, 114, 144, 0.14);
+  color: #667289;
+  font-size: 24rpx;
+}
+
+.chip {
+  flex: none;
+  width: auto;
+  min-width: 0;
+  min-height: 70rpx;
+  padding: 0 28rpx;
+  background: rgba(255, 255, 255, 0.92);
+  color: #24324a;
+  box-shadow: 0 12rpx 24rpx rgba(50, 68, 120, 0.06);
+  white-space: nowrap;
+}
+
+.chip.active {
+  background: #e8f0ff;
+  color: #2f6ff2;
+}
+
+.chip-scroll {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.chip-row {
+  width: auto;
+  min-width: 100%;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14rpx;
+  white-space: nowrap;
+}
+
+.chip-row .chip {
+  flex: 0 0 auto;
+}
+
+.pill {
+  min-height: 52rpx;
+  padding: 0 20rpx;
+  background: #f4f6fb;
+  color: #667289;
+  font-size: 24rpx;
+}
+
+.pill.blue {
+  background: #e8f0ff;
+  color: #2f6ff2;
+}
+
+.pill.orange {
+  background: #ffe4da;
+  color: #ff5b2e;
+}
+
+.field {
+  display: block;
+  margin-top: 24rpx;
+  color: #24324a;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  margin-top: 12rpx;
+  padding: 26rpx 28rpx;
+  border: 2rpx solid rgba(94, 114, 144, 0.14);
+  border-radius: 28rpx;
+  background: #f7f8fc;
+  color: #24324a;
+  font-size: 28rpx;
+}
+
+.field textarea {
+  min-height: 176rpx;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.tag-row {
+  display: flex;
+  gap: 18rpx;
+  overflow-x: auto;
+  padding-bottom: 12rpx;
+  white-space: nowrap;
+  width: 100%;
+}

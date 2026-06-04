@@ -1,0 +1,37 @@
+page {
+  --improv-bg-top: #fff5ef;
+  --improv-bg-mid: #f7f9ff;
+  --improv-bg-bottom: #eef5ff;
+  --improv-card: rgba(255, 255, 255, 0.94);
+  --improv-card-strong: #ffffff;
+  --improv-primary: #ff7a45;
+  --improv-primary-strong: #ff5b2e;
+  --improv-primary-soft: #ffe4da;
+  --improv-secondary: #4f8cff;
+  --improv-secondary-strong: #2f6ff2;
+  --improv-secondary-soft: #e8f0ff;
+  --improv-text: #24324a;
+  --improv-muted: #667289;
+  --improv-light: #96a1b4;
+  --improv-line: rgba(94, 114, 144, 0.14);
+  --improv-shadow-sm: 0 18rpx 40rpx rgba(50, 68, 120, 0.08);
+  --improv-shadow-md: 0 24rpx 56rpx rgba(55, 82, 150, 0.14);
+  --improv-sheet-shadow: 0 24rpx 60rpx rgba(27, 45, 87, 0.18);
+  --improv-radius-card: 40rpx;
+  --improv-radius-sheet: 44rpx;
+  --improv-mask-light: rgba(36, 50, 74, 0.14);
+  --improv-mask-medium: rgba(36, 50, 74, 0.24);
+  --improv-mask-strong: rgba(18, 26, 44, 0.36);
+}
+
+.surface-card {
+  border-radius: var(--improv-radius-card);
+  background: var(--improv-card);
+  box-shadow: var(--improv-shadow-sm);
+}
+
+.surface-sheet {
+  border-radius: var(--improv-radius-sheet);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--improv-sheet-shadow);
+}

@@ -1,0 +1,163 @@
+.game-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 28rpx;
+  min-height: 196rpx;
+  padding: 30rpx;
+  overflow: hidden;
+}
+
+.game-card.large {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 640rpx;
+  padding: 44rpx 38rpx 34rpx;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.74)),
+    linear-gradient(135deg, rgba(255, 122, 69, 0.14), rgba(79, 140, 255, 0.14));
+}
+
+.large .stripe {
+  display: none;
+}
+
+.large .game-main {
+  height: 100%;
+  width: 100%;
+}
+
+.stripe,
+.stripe.orange {
+  flex: 0 0 12rpx;
+  width: 12rpx;
+  height: 124rpx;
+  margin-top: 6rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, #ff7a45, #ffb569);
+}
+
+.stripe.blue {
+  background: linear-gradient(180deg, #4f8cff, #7fb1ff);
+}
+
+.stripe.mint {
+  background: linear-gradient(180deg, #35bfa6, #7ce0cf);
+}
+
+.game-main {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.game-main .row > view {
+  flex: 1;
+  min-width: 0;
+  padding-right: 18rpx;
+}
+
+.game-main .row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.game-title {
+  color: #24324a;
+  font-size: 34rpx;
+  font-weight: 900;
+  line-height: 1.18;
+  word-break: break-all;
+}
+
+.large .game-title {
+  margin-top: 12rpx;
+  font-size: 50rpx;
+}
+
+.save {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 74rpx;
+  height: 74rpx;
+  min-width: 74rpx;
+  min-height: 74rpx;
+  max-width: 74rpx;
+  max-height: 74rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 37rpx;
+  background: #fff;
+  color: #2f6ff2;
+  font-size: 34rpx;
+  line-height: 1;
+  box-shadow: 0 14rpx 32rpx rgba(50, 68, 120, 0.08);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin: 14rpx 0 0;
+  white-space: normal;
+}
+
+.meta text {
+  padding: 10rpx 18rpx;
+  background: #f4f6fb;
+  color: #667289;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.large .meta {
+  margin: 16rpx 0;
+}
+
+.fit-box {
+  flex: 1;
+  margin-top: 28rpx;
+  padding: 28rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 26rpx;
+}
+
+.actions button {
+  flex: 1;
+  min-width: 0;
+  min-height: 82rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.actions .primary-btn {
+  background: linear-gradient(135deg, #ff7a45, #ff5b2e);
+  color: #fff;
+  box-shadow: 0 24rpx 48rpx rgba(255, 91, 46, 0.2);
+}
+
+.actions .ghost-btn {
+  background: #e8f0ff;
+  color: #2f6ff2;
+}
+
+.large .actions {
+  padding-right: 132rpx;
+}

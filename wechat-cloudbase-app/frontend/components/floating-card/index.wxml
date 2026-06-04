@@ -1,0 +1,14 @@
+<view wx:if="{{visible}}" class="float-mask" bindtap="close"></view>
+<view wx:if="{{visible}}" class="float-card">
+  <view class="float-head">
+    <text class="float-title">{{title}}</text>
+    <button class="small-btn" bindtap="close">关闭</button>
+  </view>
+  <slot></slot>
+  <view class="detail-nav">
+    <button class="small-btn" bindtap="prev">上一条</button>
+    <text>{{count}}</text>
+    <button class="small-btn" bindtap="next">下一条</button>
+  </view>
+</view>
+

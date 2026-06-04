@@ -1,0 +1,90 @@
+<view class="page">
+  <view class="safe-right">
+    <button class="back" bindtap="back">← 返回</button>
+    <text class="kicker">灵感记录</text>
+    <view class="title">先把想法留下来</view>
+  </view>
+
+  <view class="card form-card">
+    <view class="section-title">整理方式</view>
+    <view class="tag-row">
+      <button class="chip active">带领提醒</button>
+      <button class="chip">游戏变体</button>
+      <button class="chip">台词想法</button>
+      <button class="chip">复盘片段</button>
+    </view>
+    <view class="tag-row">
+      <button class="chip active">关系</button>
+      <button class="chip active">新手</button>
+      <button class="chip">节奏</button>
+      <button class="chip">身体</button>
+    </view>
+  </view>
+
+  <view class="card form-card">
+    <view class="row">
+      <view>
+        <text class="mini-title">语音 / 文字</text>
+        <view class="section-title">灵感草稿</view>
+      </view>
+      <button class="small-btn" bindtap="openVoice">语音</button>
+    </view>
+    <label class="field">标题<input value="{{titleValue}}" data-field="titleValue" bindinput="updateField" /></label>
+    <label class="field">内容<textarea value="{{contentValue}}" data-field="contentValue" bindinput="updateField" /></label>
+  </view>
+
+  <view class="card form-card">
+    <view class="section-title">可选关联</view>
+    <label class="field">关联游戏
+      <view class="field-picker">
+        <input value="{{linkedGame}}" placeholder="选择关联游戏" disabled />
+        <button class="small-btn" data-kind="game" bindtap="openLink">选择</button>
+      </view>
+    </label>
+    <label class="field">关联排练
+      <view class="field-picker">
+        <input value="{{linkedRehearsal}}" placeholder="可选，例如：开心即兴团 06.01 排练" disabled />
+        <button class="small-btn" data-kind="rehearsal" bindtap="openLink">选择</button>
+      </view>
+    </label>
+  </view>
+
+  <view class="form-actions">
+    <button class="ghost-btn" bindtap="openInsight">沉淀为方法卡</button>
+    <button class="primary-btn" bindtap="save">保存灵感</button>
+  </view>
+
+  <bottom-sheet visible="{{voiceVisible}}" title="语音速记" bind:close="closeSheet">
+    <text class="muted">先说下来，整理可以稍后再做。</text>
+    <view class="voice-pulse">00:36</view>
+    <button class="primary-btn sheet-submit" bindtap="fillVoiceDraft">填入当前草稿</button>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{linkVisible}}" title="{{linkSheetTitle}}" bind:close="closeSheet">
+    <view wx:for="{{linkOptions}}" wx:key="value" class="card option-card">
+      <view class="row">
+        <view>
+          <view class="entry-title">{{item.title}}</view>
+          <text class="muted">{{item.desc}}</text>
+        </view>
+        <button class="small-btn" data-value="{{item.value}}" bindtap="chooseLink">选择</button>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bind:close="closeSheet">
+    <view class="insight-list">
+      <view class="card insight-card">
+        <text class="pill orange">带领提醒</text>
+        <view class="entry-title">开场不要解释太多</view>
+        <text class="muted">新手场先用身体和声音统一节奏，再进入关系和叙事，会明显更顺。</text>
+      </view>
+      <view class="card insight-card">
+        <text class="pill blue">游戏改造</text>
+        <view class="entry-title">一句话交换身份只推进一个信息</view>
+        <text class="muted">每轮只确认一个关系点，现场会更稳，也更容易接住。</text>
+      </view>
+    </view>
+    <button class="primary-btn sheet-submit" bindtap="createMethodCard">保存为方法卡</button>
+  </bottom-sheet>
+</view>

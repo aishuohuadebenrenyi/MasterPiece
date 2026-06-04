@@ -1,0 +1,324 @@
+.discover {
+  display: flex;
+  flex-direction: column;
+  padding: 116rpx 32rpx 208rpx;
+}
+
+.view-tools {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 92rpx;
+  margin-bottom: 24rpx;
+  padding-right: 182rpx;
+}
+
+.switch {
+  width: 286rpx;
+  display: flex;
+  gap: 10rpx;
+  padding: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 16rpx 30rpx rgba(50, 68, 120, 0.08);
+}
+
+.switch button {
+  flex: 1;
+  min-width: 0;
+  min-height: 64rpx;
+  padding: 0;
+  border-radius: 999rpx;
+  color: #667289;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.switch .active {
+  background: #e8f0ff;
+  color: #2f6ff2;
+}
+
+.search {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  min-height: 88rpx;
+  padding: 0 30rpx;
+  border-radius: 999rpx;
+  margin-bottom: 20rpx;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  color: #24324a;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.hint {
+  color: #ff5b2e;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.discover-tags {
+  width: 100%;
+  height: 82rpx;
+  margin-bottom: 14rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+.chip-track {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14rpx;
+  width: auto;
+  min-width: auto;
+  padding-bottom: 0;
+  white-space: nowrap;
+}
+
+.discover-tags .chip {
+  flex: none;
+  width: auto;
+  min-width: 0;
+  min-height: 68rpx;
+  padding: 0 30rpx;
+  white-space: nowrap;
+  font-size: 26rpx;
+}
+
+.discover-tags .scene-chip.active {
+  background: linear-gradient(135deg, #4f8cff, #ff7a45);
+  color: #fff;
+  box-shadow: 0 16rpx 28rpx rgba(82, 107, 209, 0.18);
+}
+
+.section-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin: 14rpx 0 18rpx;
+  color: #24324a;
+  position: relative;
+  z-index: 1;
+}
+
+.section-title {
+  flex: 0 0 auto;
+  color: #24324a;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.actions-row {
+  flex: 0 0 412rpx;
+  width: 412rpx;
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  gap: 12rpx;
+}
+
+.add-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 62rpx;
+  padding: 0;
+  font-size: 24rpx;
+}
+
+.filter-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 62rpx;
+  padding: 0;
+  border: 2rpx solid rgba(79, 140, 255, 0.14);
+  box-shadow: 0 12rpx 24rpx rgba(50, 68, 120, 0.06);
+  font-size: 24rpx;
+}
+
+.game-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.card-carousel {
+  width: 100%;
+  height: calc(100vh - 520rpx);
+  min-height: 640rpx;
+  max-height: 860rpx;
+  white-space: nowrap;
+  padding: 6rpx 0 28rpx;
+  overflow: hidden;
+}
+
+.card-track {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  width: auto;
+}
+
+.card-page {
+  width: calc(100vw - 80rpx);
+  height: 100%;
+  flex: 0 0 calc(100vw - 80rpx);
+}
+
+.random-fab {
+  position: fixed;
+  z-index: 20;
+  width: 116rpx;
+  height: 116rpx;
+  min-width: 116rpx;
+  min-height: 116rpx;
+  max-width: 116rpx;
+  max-height: 116rpx;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 58rpx;
+  background: linear-gradient(135deg, #ff7a45, #ff965e);
+  color: #fff;
+  font-size: 48rpx;
+  line-height: 116rpx;
+  box-shadow: 0 28rpx 56rpx rgba(255, 91, 46, 0.24);
+}
+
+.sheet-submit {
+  width: 320rpx;
+  min-width: 320rpx;
+  max-width: 320rpx;
+  min-height: 76rpx;
+  margin: 28rpx auto 0;
+  padding: 0;
+  display: flex;
+  font-size: 28rpx;
+}
+
+.filter-grid {
+  height: 78rpx;
+  margin-top: 8rpx;
+}
+
+.filter-track {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+  width: auto;
+}
+
+.filter-chip {
+  flex: 0 0 auto;
+  width: 156rpx;
+  min-width: 156rpx;
+  max-width: 156rpx;
+  min-height: 62rpx;
+  padding: 0;
+  font-size: 24rpx;
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, #4f8cff, #ff7a45);
+  color: #fff;
+}
+
+.recommend {
+  position: relative;
+  margin-top: 24rpx;
+  padding: 32rpx;
+  background:
+    linear-gradient(135deg, rgba(255, 150, 106, 0.16), rgba(79, 140, 255, 0.1)),
+    rgba(255, 255, 255, 0.94);
+}
+
+.sheet-chip-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  width: 100%;
+  margin-bottom: 8rpx;
+}
+
+.sheet-chip-row .chip {
+  flex: 0 0 auto;
+  width: 176rpx;
+  min-width: 176rpx;
+  max-width: 176rpx;
+  min-height: 64rpx;
+  padding: 0;
+  font-size: 24rpx;
+}
+
+.recommend .detail {
+  position: absolute;
+  top: 26rpx;
+  right: 26rpx;
+  width: 88rpx;
+  min-width: 88rpx;
+  max-width: 88rpx;
+  height: 64rpx;
+  min-height: 64rpx;
+  padding: 0;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+}
+
+.recommend-title {
+  margin: 20rpx 0 12rpx;
+  color: #24324a;
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.random-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  margin-top: 28rpx;
+}
+
+.random-actions button {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  min-height: 76rpx;
+  padding: 0 12rpx;
+  font-size: 28rpx;
+}
+
+.add-intro {
+  padding: 28rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 18rpx;
+}
+
+.form-grid .field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.compact-field {
+  margin-top: 18rpx;
+}

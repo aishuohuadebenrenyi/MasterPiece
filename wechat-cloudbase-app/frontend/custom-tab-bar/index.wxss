@@ -1,0 +1,80 @@
+view,
+button,
+text {
+  box-sizing: border-box;
+}
+
+.tabbar-shell {
+  position: fixed;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: calc(10rpx + env(safe-area-inset-bottom));
+  z-index: 70;
+  width: auto;
+  padding: 0;
+  pointer-events: none;
+}
+
+.tabbar-shell.is-hidden {
+  display: none;
+}
+
+.tab-item::after {
+  border: 0;
+}
+
+.tabbar {
+  width: 100%;
+  height: 104rpx;
+  min-height: 104rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8rpx;
+  padding: 8rpx;
+  border-radius: 54rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18rpx 40rpx rgba(50, 68, 120, 0.12);
+  pointer-events: auto;
+  overflow: visible;
+}
+
+.tab-item {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
+  height: 88rpx;
+  min-height: 88rpx;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  border-radius: 44rpx;
+  background: transparent;
+  color: #96a1b4;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.tab-item.active {
+  background: linear-gradient(135deg, #4f8cff, #ff7a45);
+  color: #fff;
+  box-shadow: 0 14rpx 26rpx rgba(255, 91, 46, 0.16);
+  overflow: hidden;
+}
+
+.tab-icon {
+  height: 30rpx;
+  font-size: 30rpx;
+  line-height: 30rpx;
+  font-weight: 900;
+}
+
+.tab-text {
+  font-size: 23rpx;
+  line-height: 1.1;
+}

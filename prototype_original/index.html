@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>即兴游戏百科 · 小程序原型</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="phone-frame">
+      <div class="app-container">
+        <div class="page active" id="page-discover">
+          <div class="status-bar-space" aria-hidden="true"></div>
+
+          <div class="discover-tools">
+            <div class="view-switch" id="discoverViewSwitch">
+              <button class="view-switch-btn active" data-view="list" type="button">列表</button>
+              <button class="view-switch-btn" data-view="card" type="button">卡片</button>
+            </div>
+          </div>
+
+          <button class="search-bar" id="searchTrigger" type="button">
+            <span class="search-icon">⌕</span>
+            <span class="search-placeholder">搜索游戏、标签或目标</span>
+            <strong id="searchHint">试试“破冰”</strong>
+          </button>
+
+          <div class="category-scroll" id="categoryScroll">
+            <button class="category-chip active" type="button">最近排练</button>
+            <button class="category-chip" type="button">5 分钟热身</button>
+            <button class="category-chip" type="button">关系练习</button>
+            <button class="category-chip" type="button">专注切换</button>
+          </div>
+
+          <div class="section-row">
+            <span class="section-title">全部游戏</span>
+            <div class="section-actions">
+              <button class="add-game-btn add-game-btn-inline" id="openAddGameButton" type="button">+ 添加游戏</button>
+              <button class="section-link" id="filterTrigger" data-open-filter="true" type="button">筛选</button>
+            </div>
+          </div>
+
+          <div class="discover-view active" id="discoverListView">
+            <div class="game-list" id="gameList"></div>
+          </div>
+
+          <div class="discover-view" id="discoverCardView">
+            <div class="game-card-carousel" id="gameCardCarousel"></div>
+          </div>
+
+          <button class="random-fab" id="randomGameTrigger" type="button" aria-label="随机游戏">🎲</button>
+        </div>
+
+        <div class="page" id="page-detail">
+          <div class="status-bar-space" aria-hidden="true"></div>
+
+          <button class="back-row" id="backToDiscover" type="button">
+            <span>←</span>
+            <span>返回</span>
+          </button>
+
+          <div class="detail-header">
+            <div class="detail-header-row">
+              <span class="detail-title" id="detailTitle">名字接龙变奏</span>
+              <button class="bookmark-icon" id="detailSaveButton" type="button" aria-label="收藏">☆</button>
+            </div>
+            <p class="detail-lead" id="detailLead">适合刚开场时快速让大家进入同一个声音和注意力节奏。</p>
+            <div class="detail-params" id="detailMeta"></div>
+            <div class="judgement-inline">
+              <span class="judgement-label">现在能不能玩</span>
+              <p id="detailVerdict">如果你现在需要一个低门槛起手游戏，它很合适。</p>
+            </div>
+          </div>
+
+          <div class="collapsible-section">
+            <button
+              class="collapsible-header is-open"
+              data-collapse-target="detailStepsWrap"
+              aria-expanded="true"
+              type="button"
+            >
+              <span>玩法步骤</span>
+              <span class="collapseIcon">▼</span>
+            </button>
+            <div class="collapsible-content open" id="detailStepsWrap">
+              <div class="step-list" id="detailSteps"></div>
+            </div>
+          </div>
+
+          <div class="collapsible-section">
+            <button
+              class="collapsible-header is-open"
+              data-collapse-target="detailTipsWrap"
+              aria-expanded="true"
+              type="button"
+            >
+              <span>带领提示</span>
+              <span class="collapseIcon">▼</span>
+            </button>
+            <div class="collapsible-content open" id="detailTipsWrap">
+              <p id="detailTips"></p>
+              <p class="detail-issue" id="detailIssue"></p>
+            </div>
+          </div>
+
+          <article class="card related-card game-entry" id="relatedCard" data-game-id="status-swap">
+            <p class="mini-title">相似游戏</p>
+            <h3 id="relatedTitle">一句话交换身份</h3>
+            <p id="relatedDescription">如果你想继续练关系建立，它会是顺手的下一张卡。</p>
+          </article>
+
+          <div class="fixed-bottom-actions">
+            <button class="action-btn" id="detailPlayedButton" type="button"><span>✓</span>玩过</button>
+            <button class="action-btn" id="detailCollectButton" type="button"><span>★</span>收藏</button>
+            <button class="action-btn" data-open-voice="true" type="button"><span>✎</span>去记录</button>
+          </div>
+        </div>
+
+        <div class="page record-page" id="page-record">
+          <div class="status-bar-space" aria-hidden="true"></div>
+          <div class="record-content">
+            <p class="page-kicker">记录</p>
+            <h2 class="record-title">记录灵感</h2>
+            <button class="record-main-btn" id="recordBtn" data-open-voice="true" type="button">🎤</button>
+            <p class="record-caption">按一下开始，先把感觉留下来。</p>
+            <div class="secondary-actions">
+              <button class="secondary-btn" type="button">记录灵感</button>
+              <button class="secondary-btn" type="button">记录排练</button>
+            </div>
+            <p class="record-footnote">今天已记录 2 条灵感，1 次练习</p>
+
+            <div class="inspiration-box record-recommendation game-entry" data-game-id="status-swap">
+              <span class="mini-title">今日推荐</span>
+              <strong>一句话交换身份</strong>
+              <p>如果今天想练关系建立，它会是顺手的一张卡。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="page" id="page-mine">
+          <div class="status-bar-space" aria-hidden="true"></div>
+
+          <div class="host-card">
+            <div class="host-card-top">
+              <div class="profile-avatar profile-avatar-lg">IM</div>
+              <div class="host-card-main">
+                <div class="profile-name">即兴主理人</div>
+                <div class="host-tags">
+                  <span class="host-tag">即兴主理人</span>
+                  <span class="host-tag host-tag-alt">排练带领者</span>
+                </div>
+              </div>
+            </div>
+            <p class="host-bio">把热身、关系和灵感收集成一套顺手可用的排练工具，让每次现场都能更快进入状态。</p>
+            <div class="host-meta">
+              <span>上海</span>
+              <span>即兴龄 2 年</span>
+              <span>开心即兴团</span>
+            </div>
+          </div>
+
+          <div class="stats-card">
+            <div><strong>128</strong><span>累计记录</span></div>
+            <div><strong>56</strong><span>玩过游戏</span></div>
+            <div><strong>14</strong><span>灵感卡片</span></div>
+          </div>
+
+          <button class="card sediment-card" id="openSedimentButton" type="button">
+            <div class="note-preview-head">
+              <div>
+                <p class="page-kicker">个人沉淀</p>
+                <div class="profile-subtitle">最近一次排练更新于今天</div>
+              </div>
+              <span class="sediment-link">查看全部</span>
+            </div>
+            <div class="note-preview-body">Keep：起手很快进入状态。Try：后半段可加入更明确的限制词。</div>
+            <div class="sediment-tags">
+              <span>排练复盘</span>
+              <span>带领提醒</span>
+              <span>灵感碎片</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="filter-backdrop" id="filterBackdrop"></div>
+        <div class="filter-overlay" id="filterPanel" aria-hidden="true">
+          <div class="filter-title-row">
+            <strong>筛选游戏</strong>
+            <button class="close-filter-btn" id="closeFilterButton" type="button">关闭</button>
+          </div>
+          <div class="filter-row">
+            <div class="filter-label">人数</div>
+            <div class="tag-group">
+              <button class="tag selected" type="button">2-4 人</button>
+              <button class="tag" type="button">5-8 人</button>
+              <button class="tag" type="button">8+ 人</button>
+            </div>
+          </div>
+          <div class="filter-row">
+            <div class="filter-label">时长</div>
+            <div class="tag-group">
+              <button class="tag selected" type="button">5 分钟以内</button>
+              <button class="tag" type="button">5-15 分钟</button>
+              <button class="tag" type="button">15 分钟+</button>
+            </div>
+          </div>
+          <div class="filter-row">
+            <div class="filter-label">标签</div>
+            <div class="tag-group">
+              <button class="tag selected" type="button">破冰</button>
+              <button class="tag" type="button">关系</button>
+              <button class="tag" type="button">专注</button>
+              <button class="tag" type="button">叙事</button>
+            </div>
+          </div>
+          <button class="filter-submit" type="button">查看结果（12）</button>
+        </div>
+
+        <div class="add-sheet-backdrop" id="addGameBackdrop"></div>
+        <div class="add-game-sheet" id="addGameSheet" aria-hidden="true">
+          <div class="voice-sheet-handle"></div>
+          <div class="filter-title-row">
+            <strong>手动添加游戏</strong>
+            <button class="close-filter-btn" data-close-add="true" type="button">关闭</button>
+          </div>
+          <form class="game-form" id="addGameForm">
+            <label class="form-label">
+              <span>游戏名称</span>
+              <input class="form-input" id="newGameTitle" name="title" type="text" placeholder="例如：情绪接力" required />
+            </label>
+            <div class="form-grid">
+              <label class="form-label">
+                <span>适合人数</span>
+                <input class="form-input" id="newGamePeople" name="people" type="text" placeholder="4-8 人" required />
+              </label>
+              <label class="form-label">
+                <span>时长</span>
+                <input class="form-input" id="newGameDuration" name="duration" type="text" placeholder="10 分钟" required />
+              </label>
+            </div>
+            <label class="form-label">
+              <span>标签</span>
+              <input class="form-input" id="newGameTag" name="tag" type="text" placeholder="热身 / 关系 / 专注" required />
+            </label>
+            <label class="form-label">
+              <span>简短描述</span>
+              <textarea class="form-input form-textarea" id="newGameDescription" name="description" placeholder="用一句话说清它适合什么时候玩" required></textarea>
+            </label>
+            <button class="filter-submit" type="submit">加入游戏库</button>
+          </form>
+        </div>
+
+        <div class="voice-sheet-backdrop" id="voiceBackdrop"></div>
+        <div class="voice-sheet" id="voiceSheet" aria-hidden="true">
+          <div class="voice-sheet-handle"></div>
+          <div class="filter-title-row">
+            <strong>语音速记</strong>
+            <button class="close-filter-btn" data-close-voice="true" type="button">关闭</button>
+          </div>
+          <p class="voice-description" id="voiceDescription">先把刚刚那一下留住。</p>
+          <button class="voice-pulse" id="voicePulse" type="button">
+            <span id="voiceTimer">00:00</span>
+          </button>
+          <div class="voice-actions">
+            <button class="secondary-btn small" id="pauseVoiceButton" type="button">暂停</button>
+            <button class="mint-btn" id="startVoiceButton" type="button">开始录音</button>
+            <button class="secondary-btn small" id="finishVoiceButton" type="button">完成</button>
+          </div>
+          <div class="voice-summary" id="voiceSummary">
+            <span class="mini-title">摘要预览</span>
+            <p>完成录音后，这里会出现一张简短记录卡。</p>
+          </div>
+        </div>
+
+        <div class="random-sheet-backdrop" id="randomBackdrop"></div>
+        <div class="random-game-sheet" id="randomGameSheet" aria-hidden="true">
+          <div class="voice-sheet-handle"></div>
+          <div class="filter-title-row">
+            <strong>给你一张随机卡</strong>
+            <button class="close-filter-btn" data-close-random="true" type="button">关闭</button>
+          </div>
+          <div class="random-card" id="randomGameCard"></div>
+          <div class="secondary-actions secondary-actions-sheet">
+            <button class="secondary-btn small" id="rerollRandomButton" type="button">再抽一张</button>
+            <button class="mint-btn" id="openRandomDetailButton" type="button">查看详情</button>
+          </div>
+        </div>
+
+        <div class="sediment-sheet-backdrop" id="sedimentBackdrop"></div>
+        <div class="sediment-sheet" id="sedimentSheet" aria-hidden="true">
+          <div class="voice-sheet-handle"></div>
+          <div class="filter-title-row">
+            <strong>我的个人沉淀</strong>
+            <button class="close-filter-btn" data-close-sediment="true" type="button">关闭</button>
+          </div>
+          <div class="sediment-list">
+            <article class="card sediment-entry">
+              <div class="note-preview-head">
+                <span>2026.05.30 · 排练</span>
+                <span>名字接龙变奏</span>
+              </div>
+              <p class="note-preview-body">Keep：起手很快进入状态。Try：后半段可加入更明确的限制词。</p>
+            </article>
+            <article class="card sediment-entry">
+              <div class="note-preview-head">
+                <span>2026.05.28 · 灵感</span>
+                <span>空间行走切换</span>
+              </div>
+              <p class="note-preview-body">今天更适合先用身体切换进入状态，再加口令，不要一开始解释太多。</p>
+            </article>
+            <article class="card sediment-entry">
+              <div class="note-preview-head">
+                <span>2026.05.24 · 带领</span>
+                <span>一句话交换身份</span>
+              </div>
+              <p class="note-preview-body">如果现场关系迟迟起不来，可以先限定一句话只推进一个信息点。</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <button class="nav-item active" data-page="page-discover" type="button">
+            <span class="nav-icon">⌕</span>
+            <span>发现</span>
+          </button>
+          <button class="nav-item" data-page="page-record" type="button">
+            <span class="nav-icon">✚</span>
+            <span>记录</span>
+          </button>
+          <button class="nav-item" data-page="page-mine" type="button">
+            <span class="nav-icon">◔</span>
+            <span>我的</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <script src="./script.js"></script>
+  </body>
+</html>

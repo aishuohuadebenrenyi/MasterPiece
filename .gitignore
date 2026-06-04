@@ -1,0 +1,5 @@
+.DS_Store
+.trae/
+node_modules/
+wechat-cloudbase-app/node_modules/
+wechat-cloudbase-app/project.private.config.json

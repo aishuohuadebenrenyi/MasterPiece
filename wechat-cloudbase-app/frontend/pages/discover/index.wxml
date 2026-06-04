@@ -1,0 +1,115 @@
+<view class="page discover {{modalOpen ? 'modal-open' : ''}}">
+  <view class="view-tools safe-right">
+    <view class="switch">
+      <button class="{{listActiveClass}}" data-view="list" bindtap="switchView">列表</button>
+      <button class="{{cardActiveClass}}" data-view="card" bindtap="switchView">卡片</button>
+    </view>
+  </view>
+
+  <view class="search card">
+    <text>⌕</text>
+    <input placeholder="搜索游戏、标签或目标" value="{{query}}" bindinput="search" />
+    <text class="hint">试试“破冰”</text>
+  </view>
+
+  <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="tag-row discover-tags">
+    <view class="chip-track">
+      <button wx:for="{{tagChips}}" wx:key="value" class="chip scene-chip {{item.activeClass}}" data-tag="{{item.value}}" bindtap="filterTag">{{item.label}}</button>
+    </view>
+  </scroll-view>
+
+  <view class="section-row">
+    <text class="section-title">全部游戏</text>
+    <view class="actions-row">
+      <button class="primary-btn add-btn" bindtap="openAdd">+ 添加游戏</button>
+      <button class="ghost-btn filter-btn" bindtap="openFilter">筛选</button>
+    </view>
+  </view>
+
+  <view wx:if="{{isListView}}" class="game-list">
+    <game-card wx:for="{{filteredGames}}" wx:key="id" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:record="recordGame" bind:save="toggleSave" />
+  </view>
+
+  <scroll-view wx:else scroll-x enhanced paging-enabled scroll-with-animation show-scrollbar="{{false}}" class="card-carousel">
+    <view class="card-track">
+      <view wx:for="{{filteredGames}}" wx:key="id" class="card-page">
+        <game-card mode="card" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:record="recordGame" bind:save="toggleSave" />
+      </view>
+    </view>
+  </scroll-view>
+
+  <button
+    wx:if="{{fabReady}}"
+    class="random-fab"
+    style="left: {{fabX}}px; top: {{fabY}}px;"
+    bindtap="openRandom"
+    bindtouchstart="onFabTouchStart"
+    catchtouchmove="onFabTouchMove"
+    bindtouchend="onFabTouchEnd"
+  >🎲</button>
+
+  <bottom-sheet visible="{{filterVisible}}" title="筛选游戏" maskVariant="light" sheetClass="filter-sheet" bind:close="closeSheet">
+    <text class="mini-title">人数</text>
+    <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="chip-scroll filter-grid">
+      <view class="chip-row filter-track">
+        <button wx:for="{{peopleFilters}}" wx:key="value" class="chip filter-chip {{item.activeClass}}" data-value="{{item.value}}" catchtap="filterPeople">{{item.label}}</button>
+      </view>
+    </scroll-view>
+    <text class="mini-title">时长</text>
+    <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="chip-scroll filter-grid">
+      <view class="chip-row filter-track">
+        <button wx:for="{{durationFilters}}" wx:key="value" class="chip filter-chip {{item.activeClass}}" data-value="{{item.value}}" catchtap="filterDuration">{{item.label}}</button>
+      </view>
+    </scroll-view>
+    <text class="mini-title">目标</text>
+    <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="chip-scroll filter-grid">
+      <view class="chip-row filter-track">
+        <button wx:for="{{goalFilters}}" wx:key="value" class="chip filter-chip {{item.activeClass}}" data-value="{{item.value}}" catchtap="filterGoal">{{item.label}}</button>
+      </view>
+    </scroll-view>
+    <text class="mini-title">状态</text>
+    <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="chip-scroll filter-grid">
+      <view class="chip-row filter-track">
+        <button wx:for="{{statusFilters}}" wx:key="value" class="chip filter-chip {{item.activeClass}}" data-status="{{item.value}}" catchtap="filterStatus">{{item.label}}</button>
+      </view>
+    </scroll-view>
+    <button class="primary-btn sheet-submit" catchtap="applyFilter">查看结果（{{filteredGames.length}}）</button>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{randomVisible}}" title="条件抽卡" maskVariant="light" closeOnMask="{{false}}" sheetClass="tab-sheet" bind:close="closeSheet">
+    <view class="sheet-chip-row">
+      <button class="chip active">5 分钟内</button>
+      <button class="chip active">新手友好</button>
+      <button class="chip">高能量</button>
+    </view>
+    <view class="recommend card">
+      <button class="small-btn detail" catchtap="openRandomDetail">详情</button>
+      <text class="pill blue">抽到</text>
+      <view class="recommend-title">{{currentRandomGame.title}}</view>
+      <text class="muted">{{currentRandomGame.desc}}</text>
+      <view class="random-actions">
+        <button class="ghost-btn" catchtap="reroll">再抽一张</button>
+        <button class="primary-btn" catchtap="recordRandom">记录这次</button>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{addVisible}}" title="添加游戏" maskVariant="medium" bind:close="closeSheet">
+    <view class="add-intro">
+      <text class="mini-title">快速收录</text>
+      <text class="muted">先把游戏讲清楚，细节可以之后从实践反馈里继续补。</text>
+    </view>
+    <label class="field">游戏名称<input value="{{newGame.title}}" data-field="title" placeholder="例如：情绪接力" bindinput="updateNewGame" /></label>
+    <button class="small-btn" data-target="title" bindtap="voiceFill">语音填入名称</button>
+    <view class="form-grid">
+      <label class="field compact-field">适合人数<input value="{{newGame.people}}" data-field="people" placeholder="4-8 人" bindinput="updateNewGame" /></label>
+      <label class="field compact-field">时长<input value="{{newGame.duration}}" data-field="duration" placeholder="10 分钟" bindinput="updateNewGame" /></label>
+    </view>
+    <label class="field">标签<input value="{{newGame.tag}}" data-field="tag" placeholder="热身 / 关系 / 专注" bindinput="updateNewGame" /></label>
+    <label class="field">简短描述<textarea value="{{newGame.desc}}" data-field="desc" placeholder="用一句话说清它适合什么时候玩" bindinput="updateNewGame"></textarea></label>
+    <button class="small-btn" data-target="desc" bindtap="voiceFill">语音填入描述</button>
+    <label class="field">玩法步骤<textarea value="{{newGame.steps}}" data-field="steps" placeholder="每行一步" bindinput="updateNewGame"></textarea></label>
+    <button class="small-btn" data-target="steps" bindtap="voiceFill">语音填入步骤</button>
+    <button class="primary-btn sheet-submit" bindtap="addGame">加入游戏库</button>
+  </bottom-sheet>
+</view>

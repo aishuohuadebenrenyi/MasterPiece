@@ -1,0 +1,85 @@
+<view class="page mine {{modalOpen ? 'modal-open' : ''}}">
+  <view class="card host">
+    <view class="row">
+      <view class="avatar">IM</view>
+      <view class="grow">
+        <view class="profile-name">即兴主理人</view>
+        <view class="role-line">
+          <text class="role-pill">即兴主理人</text>
+          <text class="role-text">排练带领者</text>
+        </view>
+      </view>
+    </view>
+    <text class="muted">把热身、关系和灵感收集成一套顺手可用的排练工具，让每次现场都能更快进入状态。</text>
+    <view class="host-meta"><text>上海</text><text>即兴龄 2 年</text><text>开心即兴团</text></view>
+  </view>
+
+  <view class="card stats">
+    <view><text>128</text><text>累计记录</text></view>
+    <view><text>56</text><text>玩过游戏</text></view>
+    <view><text>14</text><text>灵感卡片</text></view>
+  </view>
+
+  <view class="entry-list">
+    <button class="card entry" data-kind="sediments" bindtap="openList">
+      <view class="row">
+        <view>
+          <text class="kicker">个人沉淀</text>
+          <view class="entry-title">14 张方法卡</view>
+          <text class="muted">带领提醒、游戏变体、复盘方法。</text>
+        </view>
+        <text class="link">查看</text>
+      </view>
+      <view class="tags"><text>带领提醒</text><text>游戏改造</text><text>排练复盘</text></view>
+    </button>
+
+    <button class="card entry" data-kind="inspirations" bindtap="openList">
+      <view class="row">
+        <view>
+          <text class="kicker">灵感记录</text>
+          <view class="entry-title">2 条今日灵感</view>
+          <text class="muted">还没完全整理，但值得回看。</text>
+        </view>
+        <text class="link">查看</text>
+      </view>
+    </button>
+
+    <button class="card entry" bindtap="openTeamRecords">
+      <view class="row">
+        <view>
+          <text class="kicker">排练记录</text>
+          <view class="entry-title">开心即兴团</view>
+          <text class="muted">3 次排练可回看 · 最近更新于今天。</text>
+        </view>
+        <text class="link">进入</text>
+      </view>
+    </button>
+  </view>
+
+  <bottom-sheet visible="{{listVisible}}" title="{{listTitle}}" sheetClass="mine-list-sheet" bind:close="closeSheet">
+    <view class="list-stack">
+      <button wx:for="{{listItems}}" wx:key="title" class="card list-item" data-index="{{index}}" bindtap="openDetail">
+        <text class="pill {{pillClass}}">{{item.type}}</text>
+        <view class="entry-title">{{item.title}}</view>
+        <text class="muted">{{item.desc}}</text>
+        <view wx:if="{{item.meta && item.meta.length}}" class="tags list-tags"><text wx:for="{{item.meta}}" wx:key="*this">{{item}}</text></view>
+      </button>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{detailVisible}}" title="{{detailTitle}}" sheetClass="mine-detail-sheet" bind:close="closeSheet">
+    <view wx:if="{{detailItem}}" class="detail-card">
+      <view class="card detail-panel">
+        <text class="pill {{pillClass}}">{{detailItem.type}}</text>
+        <view class="detail-title">{{detailItem.title}}</view>
+        <text class="muted">{{detailItem.desc}}</text>
+        <view class="tags"><text wx:for="{{detailItem.meta}}" wx:key="*this">{{item}}</text></view>
+      </view>
+      <view class="detail-nav">
+        <button class="small-btn" bindtap="prevDetail">上一条</button>
+        <text class="detail-count">{{detailCount}}</text>
+        <button class="small-btn" bindtap="nextDetail">下一条</button>
+      </view>
+    </view>
+  </bottom-sheet>
+</view>

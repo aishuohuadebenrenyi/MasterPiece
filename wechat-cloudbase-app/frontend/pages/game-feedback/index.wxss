@@ -1,0 +1,74 @@
+.back {
+  margin-bottom: 24rpx;
+}
+
+.form-card {
+  padding: 32rpx;
+  margin-top: 24rpx;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #24324a;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.meta text {
+  padding: 10rpx 18rpx;
+  background: #f4f6fb;
+  color: #667289;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.form-actions,
+.center-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.form-actions button,
+.center-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.center-actions {
+  width: 78%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.field-picker {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.field-picker input {
+  flex: 1;
+}
+
+.option-card {
+  padding: 28rpx;
+  margin-top: 20rpx;
+}
+
+.insight-title {
+  margin: 14rpx 0 10rpx;
+}
+
+.sheet-submit {
+  width: 100%;
+  margin-top: 24rpx;
+}

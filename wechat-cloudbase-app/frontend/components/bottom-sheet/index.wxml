@@ -1,0 +1,15 @@
+<root-portal wx:if="{{mounted}}">
+  <view class="sheet-layer">
+    <view class="sheet-mask mask-{{resolvedMaskVariant}} {{maskVisibleClass}} {{maskClass}}" catchtap="closeFromMask" catchtouchmove="noop"></view>
+    <view class="sheet {{showClass}} {{sheetClass}}" catchtap="noop">
+      <view class="sheet-content">
+        <view class="handle"></view>
+        <view class="sheet-head">
+          <text class="sheet-title">{{title}}</text>
+          <button class="small-btn sheet-close-btn" catchtap="close">关闭</button>
+        </view>
+        <slot></slot>
+      </view>
+    </view>
+  </view>
+</root-portal>

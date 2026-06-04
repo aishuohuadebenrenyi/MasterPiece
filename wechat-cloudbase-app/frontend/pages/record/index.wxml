@@ -1,0 +1,82 @@
+<view class="page record {{modalOpen ? 'modal-open' : ''}}">
+  <view class="record-content">
+  <view class="hero">
+    <view class="title">记录灵感</view>
+    <button class="mic" bindtap="openVoice">🎤</button>
+    <text class="muted">按一下开始，先把感觉留下来。</text>
+    <view class="quick-actions">
+      <button class="small-btn" bindtap="saveVoiceAsInspiration">记录灵感</button>
+      <button class="small-btn" bindtap="openStartRehearsal">记录排练</button>
+    </view>
+    <view class="footnote">
+      <text>今天已记录</text>
+      <button class="record-stat-link" data-kind="inspirations" bindtap="openToday">{{inspirationCount}} 条灵感</button>
+      <text>，</text>
+      <button class="record-stat-link" data-kind="rehearsals" bindtap="openToday">{{rehearsalCount}} 次练习</button>
+    </view>
+  </view>
+
+  <view wx:if="{{pausedRehearsal}}" class="card paused">
+    <view class="row">
+      <view>
+        <text class="mini-title">暂停中的排练</text>
+        <view class="card-title">{{pausedRehearsal.title}}</view>
+      </view>
+      <button class="small-btn" bindtap="resumeRehearsal">继续</button>
+    </view>
+    <text class="muted">目标：{{pausedRehearsal.desc}}</text>
+  </view>
+
+  <view wx:if="{{recommendVisible}}" class="card recommend" bindtap="openRecommend">
+    <button class="close" catchtap="closeRecommend">×</button>
+    <text class="mini-title">今日推荐</text>
+    <view class="card-title">一句话交换身份</view>
+    <text class="muted">如果今天想练关系建立，它会是顺手的一张卡。</text>
+  </view>
+  </view>
+
+  <bottom-sheet visible="{{voiceVisible}}" title="语音速记" maskVariant="medium" bind:close="closeSheet">
+    <text class="muted">先说下来，整理可以稍后再做。</text>
+    <view class="tag-row voice-targets">
+      <button wx:for="{{voiceTargets}}" wx:key="value" class="chip {{item.activeClass}}" data-target="{{item.value}}" bindtap="setVoiceTarget">{{item.label}}</button>
+    </view>
+    <view class="pulse">{{timeText}}</view>
+    <view class="voice-actions">
+      <button class="small-btn" bindtap="pauseVoice">暂停</button>
+      <button class="primary-btn" bindtap="startTimer">{{recordingText}}</button>
+      <button class="small-btn" bindtap="finishVoice">完成</button>
+    </view>
+    <view class="card summary">
+      <text class="mini-title">摘要预览</text>
+      <text class="muted">刚才的起手进入状态很快，后半段节奏开始松掉，下次可以加一句更明确的限制词。</text>
+    </view>
+    <view class="save-actions">
+      <button class="ghost-btn" bindtap="saveVoiceAsInspiration">存为灵感</button>
+      <button class="primary-btn" bindtap="saveVoiceContext">按当前归类</button>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bind:close="closeSheet">
+    <view wx:for="{{todayItems}}" wx:key="id" class="card item-card">
+      <view class="card-title">{{item.title}}</view>
+      <text class="muted">{{item.desc}}</text>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bind:close="closeSheet">
+    <label class="field">团队<input value="{{teamName}}" data-field="teamName" bindinput="updateStartForm" /></label>
+    <text class="mini-title">时长</text>
+    <view class="tag-row voice-targets">
+      <button wx:for="{{durationOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setDuration">{{item.label}}</button>
+    </view>
+    <text class="mini-title">本次目标</text>
+    <view class="tag-row voice-targets">
+      <button wx:for="{{goalOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="toggleGoal">{{item.label}}</button>
+    </view>
+    <text class="mini-title">添加游戏</text>
+    <view class="tag-row voice-targets">
+      <button wx:for="{{sourceOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setSource">{{item.label}}</button>
+    </view>
+    <button class="primary-btn start-btn" bindtap="startRehearsal">开始排练</button>
+  </bottom-sheet>
+</view>
