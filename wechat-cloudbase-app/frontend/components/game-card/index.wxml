@@ -21,7 +21,6 @@
     </view>
     <view wx:if="{{isCard}}" class="actions">
       <button class="primary-btn" catchtap="open">查看详情</button>
-      <button class="ghost-btn" catchtap="record">记录这次</button>
     </view>
   </view>
 </view>

@@ -25,9 +25,6 @@ Component({
     open() {
       this.triggerEvent('open', { id: (this.data.game as Game).id })
     },
-    record() {
-      this.triggerEvent('record', { id: (this.data.game as Game).id })
-    },
     save() {
       this.triggerEvent('save', { id: (this.data.game as Game).id })
     }

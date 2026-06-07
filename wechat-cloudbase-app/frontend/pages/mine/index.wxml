@@ -75,6 +75,17 @@
       </view>
 
       <view class="mine-card-list">
+        <view class="card mine-entry-card mine-pending-card" data-kind="pending" bindtap="openList">
+          <view class="mine-entry-main">
+            <text class="kicker">待整理</text>
+            <view class="mine-entry-title">{{pendingCount}} 条可沉淀记录</view>
+            <text wx:if="{{pendingCount > 0}}" class="muted">把灵感、游戏实践和排练复盘整理成方法卡。</text>
+            <text wx:else class="muted">当前没有待整理记录。</text>
+          </view>
+          <view class="mine-entry-action">整理</view>
+          <view class="tags"><text>灵感</text><text>游戏实践</text><text>排练复盘</text></view>
+        </view>
+
         <view class="card mine-entry-card" data-kind="sediments" bindtap="openList">
           <view class="mine-entry-main">
             <text class="kicker">个人沉淀</text>
@@ -121,15 +132,21 @@
 
   <bottom-sheet visible="{{listVisible}}" title="{{listTitle}}" sheetClass="mine-list-sheet" bind:close="closeSheet">
     <view class="list-stack">
+      <scroll-view wx:if="{{currentKind === 'sediments' && methodFilterOptions.length > 1}}" class="mine-filter-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
+        <view class="mine-filter-row">
+          <button wx:for="{{methodFilterOptions}}" wx:key="value" class="chip mine-filter-chip {{item.activeClass}}" data-filter="{{item.value}}" catchtap="filterMethodCards">{{item.label}}</button>
+        </view>
+      </scroll-view>
       <view wx:if="{{!listItems.length}}" class="empty-list">
         <view class="mine-entry-title">暂无记录</view>
         <text wx:if="{{currentKind === 'sediments'}}" class="muted">还没沉淀方法卡，去整理一条吧。</text>
+        <text wx:elif="{{currentKind === 'pending'}}" class="muted">当前没有待整理记录。</text>
         <text wx:else class="muted">还没有灵感记录，随时记下闪念。</text>
       </view>
       <view wx:for="{{listItems}}" wx:key="title" class="card list-item" data-index="{{index}}" bindtap="openDetail">
         <view class="list-item-head">
-          <text class="pill {{item.type === '游戏实践' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}">{{item.type}}</text>
-          <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">待同步</text>
+          <text wx:if="{{item.type}}" class="pill {{item.type === '游戏实践' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}">{{item.type}}</text>
+          <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">本地暂存</text>
         </view>
         <view class="mine-entry-title">{{item.title}}</view>
         <text class="muted">{{item.desc}}</text>
@@ -147,8 +164,8 @@
       <view class="detail-panel">
         <view class="detail-content-wrapper">
           <view class="list-item-head">
-            <text class="pill {{detailItem.type === '游戏实践' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}">{{detailItem.type}}</text>
-            <text wx:if="{{detailItem.syncStatus === 'pending'}}" class="sync-pill">待同步</text>
+            <text wx:if="{{detailItem.type}}" class="pill {{detailItem.type === '游戏实践' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}">{{detailItem.type}}</text>
+            <text wx:if="{{detailItem.syncStatus === 'pending'}}" class="sync-pill">本地暂存</text>
           </view>
           <view class="detail-title">{{detailItem.title}}</view>
           <text class="muted detail-desc">{{detailItem.desc}}</text>
@@ -158,6 +175,11 @@
             </block>
           </view>
         </view>
+        <view wx:if="{{detailCanSediment}}" class="detail-action-row">
+          <button class="ghost-btn detail-discard-btn" bindtap="discardCurrentDetail">不再整理</button>
+          <button class="primary-btn detail-action-btn" loading="{{sedimentSaving}}" bindtap="sedimentCurrentDetail">沉淀为方法卡</button>
+        </view>
+        <text wx:if="{{detailCanSediment}}" class="detail-action-note">整理后会生成方法卡，原记录仍保留。</text>
       </view>
     </view>
   </floating-card>

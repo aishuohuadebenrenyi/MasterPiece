@@ -6,11 +6,13 @@
         <text class="float-title">{{title}}</text>
         <button class="icon-close-btn" catchtap="close">✕</button>
       </view>
-      <scroll-view scroll-y enable-flex enhanced show-scrollbar="{{false}}" class="float-scroll">
+      <scroll-view scroll-y enable-flex enhanced show-scrollbar="{{false}}" class="float-scroll" bindtouchstart="handleTouchStart" bindtouchend="handleTouchEnd">
         <slot></slot>
       </scroll-view>
       <view class="detail-nav">
-        <text>{{count}}</text>
+        <button class="detail-nav-btn" catchtap="prev">上一个</button>
+        <text class="detail-nav-count">{{count}}</text>
+        <button class="detail-nav-btn" catchtap="next">下一个</button>
       </view>
     </view>
   </view>

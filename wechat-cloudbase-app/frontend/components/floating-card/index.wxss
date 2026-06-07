@@ -64,12 +64,36 @@ text {
 .detail-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-top: 28rpx;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 24rpx;
   color: #96a1b4;
   color: var(--improv-light, #96a1b4);
   font-size: 28rpx;
   font-weight: 900;
+}
+
+.detail-nav-btn {
+  flex: 0 0 156rpx;
+  width: 156rpx;
+  min-width: 156rpx;
+  max-width: 156rpx;
+  min-height: 64rpx;
+  padding: 0;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.72);
+  background: var(--improv-card-soft, rgba(255, 255, 255, 0.72));
+  color: #667289;
+  color: var(--improv-muted, #667289);
+  font-size: 24rpx;
+  font-weight: 900;
+  box-shadow: 0 10rpx 22rpx var(--improv-shadow-soft-color, rgba(50, 68, 120, 0.08));
+}
+
+.detail-nav-count {
+  flex: 1 1 auto;
+  min-width: 96rpx;
+  text-align: center;
 }
 
 .float-title {

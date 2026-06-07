@@ -42,13 +42,13 @@
     </view>
 
     <view wx:if="{{isListView}}" class="game-list">
-      <game-card wx:for="{{filteredGames}}" wx:key="id" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:record="recordGame" bind:save="toggleSave" />
+      <game-card wx:for="{{filteredGames}}" wx:key="id" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:save="toggleSave" />
     </view>
 
     <scroll-view wx:else scroll-x enhanced paging-enabled scroll-with-animation show-scrollbar="{{false}}" class="card-carousel">
       <view class="card-track">
         <view wx:for="{{filteredGames}}" wx:key="id" class="card-page">
-          <game-card mode="card" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:record="recordGame" bind:save="toggleSave" />
+          <game-card mode="card" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:save="toggleSave" />
         </view>
       </view>
     </scroll-view>
@@ -108,13 +108,12 @@
       </view>
     </scroll-view>
     <view class="recommend card">
-      <button class="small-btn detail" catchtap="openRandomDetail">详情</button>
       <text class="pill blue">抽到</text>
       <view class="recommend-title">{{currentRandomGame.title}}</view>
       <text class="muted">{{currentRandomGame.desc}}</text>
       <view class="random-actions">
         <button class="ghost-btn" catchtap="reroll">再抽一张</button>
-        <button class="primary-btn" catchtap="recordRandom">记录这次</button>
+        <button class="primary-btn" catchtap="openRandomDetail">查看详情</button>
       </view>
     </view>
   </bottom-sheet>

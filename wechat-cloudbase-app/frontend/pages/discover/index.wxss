@@ -337,20 +337,6 @@
     var(--improv-card, rgba(255, 255, 255, 0.94));
 }
 
-.recommend .detail {
-  position: absolute;
-  top: 26rpx;
-  right: 26rpx;
-  width: 88rpx;
-  min-width: 88rpx;
-  max-width: 88rpx;
-  height: 64rpx;
-  min-height: 64rpx;
-  padding: 0;
-  border-radius: 24rpx;
-  font-size: 22rpx;
-}
-
 .recommend-title {
   margin: 20rpx 0 12rpx;
   color: var(--improv-text);

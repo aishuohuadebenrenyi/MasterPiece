@@ -1,9 +1,9 @@
-const { listMethodCards } = require('../../services/method-card')
+const { createMethodCard, listMethodCards } = require('../../services/method-card')
 const { listInspirations } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
 const { listGameRecords } = require('../../services/game-record')
 const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
-const { getState } = require('../../store/index')
+const { addMethodCard, getState } = require('../../store/index')
 const { closeModal, openModal } = require('../../utils/modal')
 const { syncTabBar } = require('../../utils/tabbar')
 const { getLayoutStyle } = require('../../utils/layout')
@@ -24,21 +24,101 @@ function getAvatarText(displayName = '') {
   return source.slice(0, 2).toUpperCase()
 }
 
-function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile } = {}) {
-  const mappedSediments = sediments.map(item => Object.assign({}, item, {
-    type: item.type || (item.sourceType === 'gameRecord' ? '游戏实践' : '方法卡')
+function normalizeMethodSourceType(sourceType = '') {
+  if (sourceType === 'inspiration' || sourceType === 'voice') return 'inspiration'
+  if (sourceType === 'gameRecord') return 'gameRecord'
+  if (sourceType === 'rehearsalReview' || sourceType === 'rehearsal') return 'rehearsalReview'
+  return sourceType || 'manual'
+}
+
+function getSourceLabel(sourceType = '') {
+  const normalized = normalizeMethodSourceType(sourceType)
+  if (normalized === 'inspiration') return '灵感'
+  if (normalized === 'gameRecord') return '游戏实践'
+  if (normalized === 'rehearsalReview') return '排练复盘'
+  return '方法卡'
+}
+
+function getSourceKey(item = {}) {
+  const sourceType = normalizeMethodSourceType(item.sourceType)
+  const sourceId = item.sourceId || item.id
+  if (sourceId) return `${sourceType}:${sourceId}`
+  return `${sourceType}:${item.sourceTitle || item.title || ''}`
+}
+
+function normalizePendingItem(item, sourceType) {
+  const label = getSourceLabel(sourceType)
+  const title = item.title || (sourceType === 'gameRecord' ? '未命名游戏记录' : '未命名记录')
+  const desc = item.desc
+    || (sourceType === 'gameRecord'
+      ? `Keep: ${item.keep || '待整理'}\nTry: ${item.try || '待整理'}`
+      : item.reviewReminder || item.summary || '待整理')
+  const meta = Array.isArray(item.meta) ? item.meta : []
+  return Object.assign({}, item, {
+    id: item.id || item._id || `${sourceType}-${Date.now()}`,
+    type: label,
+    sourceType,
+    sourceId: item.id || item._id,
+    sourceTitle: title,
+    title,
+    desc,
+    meta: [label].concat(meta.filter((entry) => entry !== label))
+  })
+}
+
+function buildPendingItems({ inspirations = [], rehearsals = [], gameRecords = [], sediments = [] } = {}) {
+  const existing = new Set(sediments.map(getSourceKey))
+  const candidates = []
+    .concat(inspirations.map((item) => normalizePendingItem(item, 'inspiration')))
+    .concat(gameRecords.map((item) => normalizePendingItem(item, 'gameRecord')))
+    .concat(rehearsals
+      .filter((item) => item.status === '已完成' || item.reviewKeep || item.reviewTry || item.reviewReminder)
+      .map((item) => normalizePendingItem(item, 'rehearsalReview')))
+  return candidates.filter((item) => !existing.has(getSourceKey(item)))
+}
+
+function buildMethodFilterOptions(sediments = [], activeFilter = 'all') {
+  const sourceTypes = Array.from(new Set(sediments.map((item) => normalizeMethodSourceType(item.sourceType))))
+    .filter((item) => item && item !== 'manual')
+  const options = [{ value: 'all', label: '全部' }].concat(sourceTypes.map((value) => ({
+    value,
+    label: getSourceLabel(value)
+  })))
+  return options.map((item) => Object.assign({}, item, {
+    activeClass: activeFilter === item.value ? 'active' : ''
   }))
-  const totalRecords = inspirations.length + getRehearsalCount(rehearsals) + mappedSediments.length + (gameRecords.length || 0)
+}
+
+function filterSediments(sediments = [], methodFilter = 'all') {
+  if (methodFilter === 'all') return sediments
+  return sediments.filter((item) => normalizeMethodSourceType(item.sourceType) === methodFilter)
+}
+
+function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', discardedPendingKeys = [] } = {}) {
+  const mappedSediments = sediments.map(item => Object.assign({}, item, {
+    sourceType: normalizeMethodSourceType(item.sourceType),
+    type: item.type || getSourceLabel(item.sourceType)
+  }))
+  const mappedInspirations = inspirations.map((item) => Object.assign({}, item, {
+    sourceType: item.sourceType || 'inspiration',
+    type: item.type || '灵感'
+  }))
+  const discarded = new Set(discardedPendingKeys)
+  const pendingItems = buildPendingItems({ inspirations: mappedInspirations, rehearsals, gameRecords, sediments: mappedSediments })
+    .filter((item) => !discarded.has(getSourceKey(item)))
+  const totalRecords = mappedInspirations.length + getRehearsalCount(rehearsals) + mappedSediments.length + (gameRecords.length || 0)
   const methodCount = mappedSediments.length
   const rehearsalCount = getRehearsalCount(rehearsals)
   const gameRecordsCount = gameRecords.length || 0
-  const showIntroState = methodCount === 0 && inspirations.length === 0 && rehearsalCount === 0 && gameRecordsCount === 0
+  const showIntroState = methodCount === 0 && mappedInspirations.length === 0 && rehearsalCount === 0 && gameRecordsCount === 0
   const nextProfile = normalizeProfile(profile || DEFAULT_PROFILE)
   return {
     sediments: mappedSediments,
-    inspirations,
+    inspirations: mappedInspirations,
     rehearsals,
     gameRecords,
+    pendingItems,
+    pendingCount: pendingItems.length,
     totalRecords,
     playedCount,
     methodCount,
@@ -50,7 +130,8 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
     profileAvatar: nextProfile.avatarUrl,
     profileAvatarText: getAvatarText(nextProfile.displayName),
     profileTroupeName: nextProfile.troupeName,
-    profileTags: computeProfileTags(nextProfile.troupeName)
+    profileTags: computeProfileTags(nextProfile.troupeName),
+    methodFilterOptions: buildMethodFilterOptions(mappedSediments, methodFilter)
   }
 }
 
@@ -60,6 +141,9 @@ Page({
     inspirations: [],
     rehearsals: [],
     gameRecords: [],
+    pendingItems: [],
+    pendingCount: 0,
+    discardedPendingKeys: [],
     totalRecords: 0,
     playedCount: 0,
     methodCount: 0,
@@ -70,12 +154,16 @@ Page({
     listTitle: '',
     detailTitle: '',
     currentKind: 'sediments',
+    methodFilter: 'all',
+    methodFilterOptions: [],
     pillClass: 'orange',
     modalOpen: false,
     currentIndex: 0,
     listItems: [],
     detailItem: null,
     detailCount: '1 / 1',
+    detailCanSediment: false,
+    sedimentSaving: false,
     layoutStyle: '',
     showIntroState: false,
     profileName: DEFAULT_PROFILE.displayName,
@@ -107,7 +195,9 @@ Page({
       gameRecords: localGameRecords,
       playedCount: (state.playedGameIds || []).length,
       layoutStyle: getLayoutStyle(),
-      profile: state.profile || DEFAULT_PROFILE
+      profile: state.profile || DEFAULT_PROFILE,
+      methodFilter: this.data.methodFilter,
+      discardedPendingKeys: this.data.discardedPendingKeys
     }))
     const [sedimentsResult, inspirationsResult, rehearsalsResult, gameRecordsResult, profileResult] = await Promise.allSettled([
       listMethodCards(),
@@ -123,20 +213,37 @@ Page({
       gameRecords: gameRecordsResult.status === 'fulfilled' ? gameRecordsResult.value : localGameRecords,
       playedCount: (state.playedGameIds || []).length,
       layoutStyle: getLayoutStyle(),
-      profile: profileResult.status === 'fulfilled' ? profileResult.value : (state.profile || DEFAULT_PROFILE)
+      profile: profileResult.status === 'fulfilled' ? profileResult.value : (state.profile || DEFAULT_PROFILE),
+      methodFilter: this.data.methodFilter,
+      discardedPendingKeys: this.data.discardedPendingKeys
     }))
   },
 
   openList(event) {
     const kind = event.currentTarget.dataset.kind
-    const listItems = kind === 'sediments' ? this.data.sediments : this.data.inspirations
+    const listItems = kind === 'sediments'
+      ? filterSediments(this.data.sediments, this.data.methodFilter)
+      : kind === 'pending'
+        ? this.data.pendingItems
+        : this.data.inspirations
     openModal(this, {
       listVisible: true,
       detailVisible: false,
-      listTitle: kind === 'sediments' ? '个人沉淀' : '灵感记录',
+      listTitle: kind === 'sediments' ? '个人沉淀' : (kind === 'pending' ? '待整理' : '灵感记录'),
       currentKind: kind,
-      pillClass: kind === 'sediments' ? 'orange' : 'blue',
+      pillClass: kind === 'sediments' ? 'orange' : (kind === 'pending' ? 'mint' : 'blue'),
       listItems
+    })
+  },
+
+  filterMethodCards(event) {
+    const methodFilter = event.currentTarget.dataset.filter || 'all'
+    this.setData({
+      methodFilter,
+      methodFilterOptions: buildMethodFilterOptions(this.data.sediments, methodFilter),
+      listItems: this.data.currentKind === 'sediments'
+        ? filterSediments(this.data.sediments, methodFilter)
+        : this.data.listItems
     })
   },
 
@@ -145,12 +252,13 @@ Page({
       listVisible: false,
       detailVisible: false,
       profileEditVisible: false,
-      profileSaving: false
+      profileSaving: false,
+      sedimentSaving: false
     })
   },
 
   closeDetail() {
-    closeModal(this, { detailVisible: false, detailItem: null })
+    closeModal(this, { detailVisible: false, detailItem: null, detailCanSediment: false, sedimentSaving: false })
   },
 
   noop() {},
@@ -167,32 +275,139 @@ Page({
   },
 
   syncDetail() {
-    const items = this.data.currentKind === 'sediments' ? this.data.sediments : this.data.inspirations
+    const items = this.data.currentKind === 'sediments'
+      ? filterSediments(this.data.sediments, this.data.methodFilter)
+      : this.data.currentKind === 'pending'
+        ? this.data.pendingItems
+        : this.data.inspirations
     const detailItem = items[this.data.currentIndex] || items[0]
     this.setData({
       detailItem,
-      detailTitle: this.data.currentKind === 'sediments' ? '沉淀详情' : '灵感详情',
-      detailCount: `${this.data.currentIndex + 1} / ${items.length}`
+      detailTitle: this.data.currentKind === 'sediments' ? '沉淀详情' : (this.data.currentKind === 'pending' ? '待整理详情' : '灵感详情'),
+      detailCount: `${this.data.currentIndex + 1} / ${items.length}`,
+      detailCanSediment: this.data.currentKind === 'pending'
     })
   },
 
   moveDetail(event) {
     const step = Number(event.currentTarget.dataset.step)
-    const items = this.data.currentKind === 'sediments' ? this.data.sediments : this.data.inspirations
+    const items = this.data.currentKind === 'sediments'
+      ? filterSediments(this.data.sediments, this.data.methodFilter)
+      : this.data.currentKind === 'pending'
+        ? this.data.pendingItems
+        : this.data.inspirations
     const next = (this.data.currentIndex + step + items.length) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
   },
 
   prevDetail() {
-    const items = this.data.currentKind === 'sediments' ? this.data.sediments : this.data.inspirations
+    const items = this.data.currentKind === 'sediments'
+      ? filterSediments(this.data.sediments, this.data.methodFilter)
+      : this.data.currentKind === 'pending'
+        ? this.data.pendingItems
+        : this.data.inspirations
     const next = (this.data.currentIndex - 1 + items.length) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
   },
 
   nextDetail() {
-    const items = this.data.currentKind === 'sediments' ? this.data.sediments : this.data.inspirations
+    const items = this.data.currentKind === 'sediments'
+      ? filterSediments(this.data.sediments, this.data.methodFilter)
+      : this.data.currentKind === 'pending'
+        ? this.data.pendingItems
+        : this.data.inspirations
     const next = (this.data.currentIndex + 1) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
+  },
+
+  discardCurrentDetail() {
+    const source = this.data.detailItem
+    if (!source || this.data.currentKind !== 'pending') return
+    const sourceKey = getSourceKey(source)
+    const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
+    const pendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
+    if (!pendingItems.length) {
+      this.setData({
+        discardedPendingKeys,
+        pendingItems,
+        pendingCount: 0,
+        listItems: [],
+        currentIndex: 0
+      })
+      this.closeDetail()
+      toast('已不再整理，原记录仍保留')
+      return
+    }
+    const currentIndex = Math.min(this.data.currentIndex, pendingItems.length - 1)
+    this.setData({
+      discardedPendingKeys,
+      pendingItems,
+      pendingCount: pendingItems.length,
+      listItems: pendingItems,
+      currentIndex
+    }, () => this.syncDetail())
+    toast('已不再整理，原记录仍保留')
+  },
+
+  async sedimentCurrentDetail() {
+    const source = this.data.detailItem
+    if (!source || this.data.sedimentSaving) return
+    const sourceType = normalizeMethodSourceType(source.sourceType)
+    const sourceLabel = getSourceLabel(sourceType)
+    const item = {
+      id: `method-${Date.now()}`,
+      type: sourceLabel,
+      title: source.title || '未命名方法卡',
+      desc: source.desc || '待补充',
+      meta: [sourceLabel].concat((source.meta || []).filter((entry) => entry !== sourceLabel)).concat('可复用'),
+      sourceType,
+      sourceId: source.sourceId || source.id,
+      sourceTitle: source.title
+    }
+    this.setData({ sedimentSaving: true })
+    try {
+      await createMethodCard({
+        sourceType: item.sourceType,
+        sourceId: item.sourceId,
+        sourceTitle: item.sourceTitle,
+        type: item.type,
+        title: item.title,
+        desc: item.desc,
+        meta: item.meta
+      })
+      addMethodCard(item)
+      const sourceKey = getSourceKey(source)
+      const sediments = [item].concat(this.data.sediments)
+      const pendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
+      this.setData({
+        sediments,
+        pendingItems,
+        pendingCount: pendingItems.length,
+        methodCount: sediments.length,
+        totalRecords: this.data.totalRecords + 1,
+        methodFilterOptions: buildMethodFilterOptions(sediments, this.data.methodFilter),
+        sedimentSaving: false
+      })
+      this.closeDetail()
+      toast('已沉淀为方法卡')
+    } catch (error) {
+      const pendingItem = Object.assign({}, item, { syncStatus: 'pending' })
+      addMethodCard(pendingItem)
+      const sourceKey = getSourceKey(source)
+      const sediments = [pendingItem].concat(this.data.sediments)
+      const pendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
+      this.setData({
+        sediments,
+        pendingItems,
+        pendingCount: pendingItems.length,
+        methodCount: sediments.length,
+        totalRecords: this.data.totalRecords + 1,
+        methodFilterOptions: buildMethodFilterOptions(sediments, this.data.methodFilter),
+        sedimentSaving: false
+      })
+      this.closeDetail()
+      toast('已本地保存，待同步')
+    }
   },
 
   openTeamRecords() {

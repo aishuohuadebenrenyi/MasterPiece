@@ -124,6 +124,13 @@ text {
   padding-bottom: 10rpx;
 }
 
+.sheet.task-sheet .sheet-scroll-static {
+  max-height: calc(82vh - 154rpx);
+  padding-bottom: 10rpx;
+  display: flex;
+  flex-direction: column;
+}
+
 .sheet.profile-edit-sheet-shell {
   max-height: 72vh;
   padding-bottom: 30rpx;
@@ -260,5 +267,4 @@ text {
   font-size: 24rpx;
   font-weight: 900;
 }
-
 

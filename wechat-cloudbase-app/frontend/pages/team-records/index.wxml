@@ -33,7 +33,7 @@
           <button class="small-btn" data-id="{{item.id}}" bindtap="openRecord">查看</button>
         </view>
         <text class="muted">{{item.displayDesc}}</text>
-        <view class="meta"><text wx:for="{{item.displayMeta}}" wx:key="*this">{{item}}</text><text wx:if="{{item.syncStatus === 'pending'}}" class="pending">待同步</text></view>
+        <view class="meta"><text wx:for="{{item.displayMeta}}" wx:key="*this">{{item}}</text><text wx:if="{{item.syncStatus === 'pending'}}" class="pending">本地暂存</text></view>
       </view>
     </view>
   </view>
@@ -46,7 +46,7 @@
         <text>{{selectedRecord.duration}} 分钟</text>
         <text>{{selectedRecord.statusLabel}}</text>
         <text>{{selectedPlan.length}} 个游戏</text>
-        <text wx:if="{{selectedRecord.syncStatus === 'pending'}}" class="pending">待同步</text>
+        <text wx:if="{{selectedRecord.syncStatus === 'pending'}}" class="pending">本地暂存</text>
       </view>
     </view>
 

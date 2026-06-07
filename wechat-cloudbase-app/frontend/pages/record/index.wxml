@@ -82,63 +82,65 @@
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{startGameVisible}}" title="快速开始游戏" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
-    <view class="search-field-row">
-      <view class="field search-field">
-        <input value="{{gameSearchQuery}}" placeholder="输入游戏名称搜索" bindinput="onGameSearchInput" />
+  <bottom-sheet visible="{{startGameVisible}}" title="快速开始游戏" maskVariant="light" sheetClass="start-game-sheet task-sheet" bodyMode="fit" bind:close="closeSheet">
+    <view class="start-game-picker">
+      <view class="start-game-search">
+        <text class="start-game-search-icon">⌕</text>
+        <input value="{{gameSearchQuery}}" placeholder="搜索游戏、标签或目标" bindfocus="showStartGameList" bindblur="onGameSearchInput" bindconfirm="onGameSearchInput" />
       </view>
-      <button class="small-btn select-btn" catchtap="toggleGameList">选择</button>
+      <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="start-game-list">
+        <view wx:for="{{filteredGamesList}}" wx:key="id" class="card start-game-option {{startGameSelectedId === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="selectGameToStart">
+          <view class="start-game-option-head">
+            <view class="card-title">{{item.title}}</view>
+            <text wx:if="{{startGameSelectedId === item.id}}" class="selected-pill">已选</text>
+          </view>
+          <text class="muted">{{item.desc}}</text>
+          <view class="start-game-meta" wx:if="{{item.meta.length || item.tags.length}}">
+            <text wx:for="{{item.meta}}" wx:key="*this">{{item}}</text>
+            <text wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
+          </view>
+        </view>
+        <view wx:if="{{filteredGamesList.length === 0}}" class="start-game-empty">
+          <text class="muted">未找到匹配的游戏</text>
+        </view>
+      </scroll-view>
     </view>
-    <scroll-view scroll-y class="select-list" wx:if="{{showGameListInStart}}">
-      <view wx:for="{{filteredGamesList}}" wx:key="id" class="card item-card {{startGameSelectedId === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="selectGameToStart">
-        <view class="card-title">{{item.title}}</view>
-      </view>
-      <view wx:if="{{filteredGamesList.length === 0}}" class="muted" style="text-align:center; padding: 40rpx 0;">未找到匹配的游戏</view>
-    </scroll-view>
     <button class="primary-btn start-btn {{!startGameSelectedId ? 'disabled-btn' : ''}}" bindtap="startGameFromRecord" disabled="{{!startGameSelectedId}}">开始游戏</button>
-  </bottom-sheet>
-
-  <bottom-sheet visible="{{gameSelectVisible}}" title="选择要关联的游戏" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
-    <scroll-view scroll-y class="select-list">
-      <view wx:for="{{gamesList}}" wx:key="id" class="card item-card" data-id="{{item.id}}" bindtap="selectGameToArchive">
-        <view class="card-title">{{item.title}}</view>
-      </view>
-    </scroll-view>
-  </bottom-sheet>
-
-  <bottom-sheet visible="{{rehearsalSelectVisible}}" title="选择要关联的排练" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
-    <scroll-view scroll-y class="select-list">
-      <view wx:for="{{rehearsalHistoryList}}" wx:key="id" class="card item-card" data-id="{{item.id}}" bindtap="selectRehearsalToArchive">
-        <view class="card-title">{{item.title || item.teamName + ' 的排练'}}</view>
-      </view>
-    </scroll-view>
   </bottom-sheet>
 
   <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
     <view wx:for="{{todayItems}}" wx:key="id" class="card item-card">
       <view class="item-head">
         <view class="card-title">{{item.title}}</view>
-        <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">待同步</text>
+        <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">本地暂存</text>
       </view>
       <text class="muted">{{item.desc}}</text>
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
-    <label class="field">团队<input value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" /></label>
-    <text class="mini-title">时长</text>
-    <view class="sheet-chip-row voice-targets">
-      <button wx:for="{{durationOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setDuration">{{item.label}}</button>
+  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" sheetClass="start-rehearsal-sheet task-sheet" bind:close="closeSheet">
+    <view class="start-rehearsal-form">
+      <label class="field start-rehearsal-section">团队<input value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" /></label>
+      <view class="start-rehearsal-section">
+        <text class="mini-title">时长</text>
+        <view class="sheet-chip-row start-rehearsal-chips">
+          <button wx:for="{{durationOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setDuration">{{item.label}}</button>
+        </view>
+      </view>
+      <view class="start-rehearsal-section">
+        <text class="mini-title">本次目标</text>
+        <view class="sheet-chip-row start-rehearsal-chips start-rehearsal-chips-wrap">
+          <button wx:for="{{goalOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="toggleGoal">{{item.label}}</button>
+        </view>
+      </view>
+      <view class="start-rehearsal-section">
+        <text class="mini-title">添加游戏</text>
+        <view class="sheet-chip-row start-rehearsal-chips">
+          <button wx:for="{{sourceOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setSource">{{item.label}}</button>
+        </view>
+      </view>
+      <button class="primary-btn start-btn start-rehearsal-submit" bindtap="startRehearsal">开始排练</button>
     </view>
-    <text class="mini-title">本次目标</text>
-    <view class="sheet-chip-row voice-targets">
-      <button wx:for="{{goalOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="toggleGoal">{{item.label}}</button>
-    </view>
-    <text class="mini-title">添加游戏</text>
-    <view class="sheet-chip-row voice-targets">
-      <button wx:for="{{sourceOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setSource">{{item.label}}</button>
-    </view>
-    <button class="primary-btn start-btn" bindtap="startRehearsal">开始排练</button>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">

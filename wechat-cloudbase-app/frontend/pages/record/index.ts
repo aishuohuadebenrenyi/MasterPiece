@@ -41,11 +41,7 @@ Page({
     startGameSelectedId: '',
     gameSearchQuery: '',
     filteredGamesList: [] as Game[],
-    showGameListInStart: false,
-    gameSelectVisible: false,
-    rehearsalSelectVisible: false,
     gamesList: [] as Game[],
-    rehearsalHistoryList: [] as RehearsalRecord[],
     modalOpen: false,
     todayTitle: '',
     todayItems: [] as TodayItem[],
@@ -172,6 +168,10 @@ Page({
     this.syncLocalState()
   },
 
+  onResize() {
+    this.setData({ layoutStyle: getLayoutStyle() })
+  },
+
   onUnload() {
     if (this.data.timer) clearInterval(this.data.timer)
     if (this.unsubscribeStore) this.unsubscribeStore()
@@ -239,8 +239,9 @@ Page({
       todayVisible: false,
       startRehearsalVisible: false,
       startGameVisible: false,
-      gameSelectVisible: false,
-      rehearsalSelectVisible: false,
+      startGameSelectedId: '',
+      gameSearchQuery: '',
+      filteredGamesList: [],
       timer: null,
       teamName: '',
       rehearsalDuration: '90',
@@ -396,40 +397,47 @@ Page({
       startGameSelectedId: '',
       gameSearchQuery: '',
       gamesList: gamesList,
-      filteredGamesList: gamesList,
-      showGameListInStart: false
+      filteredGamesList: gamesList
     })
 
     if (gamesList.length === 0) {
       try {
         const games = await listGames()
         setGames(games)
-        this.setData({ gamesList: games, filteredGamesList: games })
+        const query = this.data.gameSearchQuery || ''
+        const lowerQuery = query.trim().toLowerCase()
+        const filteredGamesList = games.filter((game: Game) => {
+          const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+          return !lowerQuery || text.includes(lowerQuery)
+        })
+        this.setData({ gamesList: games, filteredGamesList })
       } catch (e) {
         toast('加载游戏失败')
       }
     }
   },
 
-  onGameSearchInput(e: any) {
-    const query = e.detail.value || ''
+  filterStartGames(query: string) {
     const lowerQuery = query.trim().toLowerCase()
-    const filtered = this.data.gamesList.filter((game: Game) => {
+    return this.data.gamesList.filter((game: Game) => {
       const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
       return !lowerQuery || text.includes(lowerQuery)
     })
+  },
+
+  showStartGameList() {
+    if (!this.data.filteredGamesList.length && this.data.gamesList.length) {
+      this.setData({ filteredGamesList: this.filterStartGames(this.data.gameSearchQuery || '') })
+    }
+  },
+
+  onGameSearchInput(e: any) {
+    const query = e.detail.value || ''
+    const filtered = this.filterStartGames(query)
     this.setData({
       gameSearchQuery: query,
       filteredGamesList: filtered,
-      showGameListInStart: true // Typing automatically shows the list
-    })
-  },
-
-  toggleGameList() {
-    this.setData({ showGameListInStart: !this.data.showGameListInStart })
-    wx.hideKeyboard({
-      success: () => {},
-      fail: () => {}
+      startGameSelectedId: filtered.some((game: Game) => game.id === this.data.startGameSelectedId) ? this.data.startGameSelectedId : ''
     })
   },
 
@@ -438,8 +446,7 @@ Page({
     const game = this.data.gamesList.find((g: Game) => g.id === id)
     this.setData({ 
       startGameSelectedId: id,
-      gameSearchQuery: game ? game.title : this.data.gameSearchQuery,
-      showGameListInStart: false // Hide list after selection
+      gameSearchQuery: game ? game.title : this.data.gameSearchQuery
     })
   },
 

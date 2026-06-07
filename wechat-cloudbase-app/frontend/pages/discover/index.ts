@@ -7,7 +7,7 @@ import { syncTabBar } from '../../utils/tabbar'
 import { getLayoutStyle } from '../../utils/layout'
 
 const tagOptions = [
-  { value: 'all', label: '最近排练' },
+  { value: 'all', label: '全部' },
   { value: '破冰', label: '快速破冰' },
   { value: '热身', label: '5分钟热身' },
   { value: '关系', label: '关系构建' },
@@ -263,10 +263,6 @@ Page({
     wx.navigateTo({ url: `/pages/game-detail/index?id=${event.detail.id}` })
   },
 
-  recordGame(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
-    wx.navigateTo({ url: `/pages/game-feedback/index?id=${event.detail.id}` })
-  },
-
   async toggleSave(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
     const id = event.detail.id
     const nextValue = toggleSaved(id)
@@ -329,13 +325,6 @@ Page({
     if (!game) return
     this.closeSheet()
     wx.navigateTo({ url: `/pages/game-detail/index?id=${game.id}` })
-  },
-
-  recordRandom() {
-    const game = this.data.currentRandomGame
-    if (!game) return
-    this.closeSheet()
-    wx.navigateTo({ url: `/pages/game-feedback/index?id=${game.id}` })
   },
 
   openFilter() {

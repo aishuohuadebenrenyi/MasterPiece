@@ -96,6 +96,8 @@
 | `game.seed` | 已停用代码内 seed，调用时会提示改为手动导入仓库根目录 `mock_data/improv_games.json`。 |
 | `game.list` | 返回游戏列表，并合并当前用户收藏/玩过状态。 |
 | `game.create` | 创建自定义游戏。 |
+| `game.update` | 更新当前用户创建的自定义游戏。 |
+| `game.delete` | 软删除当前用户创建的自定义游戏。 |
 | `game.updateState` | 统一更新 `saved` / `played` / `lastRehearsalAt`。 |
 | `profile.get` | 返回当前用户个人资料；没有资料时返回空。 |
 | `profile.update` | 更新当前用户的名字和头像。 |
