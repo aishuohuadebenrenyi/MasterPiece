@@ -1,4 +1,4 @@
-const DEFAULT_PROD_ENV_ID = 'your-cloudbase-env-id'
+const DEFAULT_PROD_ENV_ID = '' // 留空则使用默认云环境
 
 const ENV_CONFIGS = {
   develop: {
@@ -7,11 +7,11 @@ const ENV_CONFIGS = {
   },
   trial: {
     label: '体验环境',
-    envId: DEFAULT_PROD_ENV_ID
+    envId: ''
   },
   release: {
     label: '正式环境',
-    envId: DEFAULT_PROD_ENV_ID
+    envId: ''
   }
 }
 

@@ -1,20 +1,77 @@
 const { toast } = require('../../utils/page')
 const { createInspiration } = require('../../services/inspiration')
 const { createMethodCard: createMethodCardRecord } = require('../../services/method-card')
-const { addTodayItem } = require('../../services/local-state')
+const { getLayoutStyle } = require('../../utils/layout')
+const { closeModal, openModal } = require('../../utils/modal')
+const {
+  addInspiration,
+  addMethodCard,
+  clearVoiceDraft,
+  getState
+} = require('../../store/index')
 
 Page({
   data: {
-    titleValue: '一句话交换身份可以加限制词',
-    contentValue: '每轮只允许推进一个关系信息，现场会更稳。新手不会急着解释背景，也更容易接住对方。',
-    linkedGame: '一句话交换身份',
+    titleValue: '',
+    contentValue: '',
+    linkedGame: '',
     linkedRehearsal: '',
+    arrangementValue: '带领提醒',
+    selectedTags: [],
     voiceVisible: false,
     linkVisible: false,
     insightVisible: false,
+    modalOpen: false,
     linkKind: 'game',
-    linkSheetTitle: '选择关联',
-    linkOptions: []
+    linkSheetTitle: '选择关联游戏',
+    linkOptions: [],
+    arrangementOptions: [],
+    tagOptions: [],
+    arrangementLabel: '带领提醒',
+    draftTitle: '',
+    draftSummary: '',
+    layoutStyle: ''
+  },
+
+  syncOptions() {
+    this.setData({
+      arrangementOptions: [
+        { value: '带领提醒', label: '带领提醒' },
+        { value: '游戏变体', label: '游戏变体' },
+        { value: '台词想法', label: '台词想法' },
+        { value: '复盘片段', label: '复盘片段' }
+      ].map((item) => Object.assign({}, item, {
+        activeClass: this.data.arrangementValue === item.value ? 'active' : ''
+      })),
+      tagOptions: [
+        { value: '关系', label: '关系' },
+        { value: '新手', label: '新手' },
+        { value: '节奏', label: '节奏' },
+        { value: '身体', label: '身体' }
+      ].map((item) => Object.assign({}, item, {
+        activeClass: this.data.selectedTags.includes(item.value) ? 'active' : ''
+      })),
+      arrangementLabel: this.data.arrangementValue
+    })
+  },
+
+  onLoad() {
+    this.setData({ layoutStyle: getLayoutStyle() })
+    const state = getState()
+    const draft = state.voiceDraft
+    const currentRehearsal = state.currentRehearsal
+    if (draft) {
+      const linkedGame = state.games.find((item) => item.id === draft.linkedGameId)
+      this.setData({
+        titleValue: draft.title,
+        contentValue: draft.desc,
+        linkedGame: linkedGame ? linkedGame.title : this.data.linkedGame,
+        linkedRehearsal: currentRehearsal && currentRehearsal.id === draft.linkedRehearsalId ? currentRehearsal.title : this.data.linkedRehearsal,
+        draftTitle: draft.title,
+        draftSummary: draft.summary
+      })
+    }
+    this.syncOptions()
   },
 
   back() {
@@ -27,40 +84,59 @@ Page({
   },
 
   openVoice() {
-    this.setData({ voiceVisible: true })
+    openModal(this, { voiceVisible: true })
   },
 
   fillVoiceDraft() {
-    this.setData({
+    const draft = getState().voiceDraft
+    closeModal(this, {
       voiceVisible: false,
-      titleValue: '开场不要解释太多',
-      contentValue: '让大家先玩一轮，再补规则，理解会更快。'
+      titleValue: draft ? draft.title : this.data.draftTitle,
+      contentValue: draft ? draft.desc : this.data.draftSummary
     })
     toast('已填入语音草稿')
+  },
+
+  setArrangement(event) {
+    this.setData({ arrangementValue: event.currentTarget.dataset.value }, () => this.syncOptions())
+  },
+
+  toggleTag(event) {
+    const value = event.currentTarget.dataset.value
+    const exists = this.data.selectedTags.includes(value)
+    this.setData({
+      selectedTags: exists
+        ? this.data.selectedTags.filter((item) => item !== value)
+        : this.data.selectedTags.concat(value)
+    }, () => this.syncOptions())
   },
 
   openLink(event) {
     const kind = event.currentTarget.dataset.kind
     const isGame = kind === 'game'
-    this.setData({
+    const state = getState()
+    const rehearsalOptions = (state.rehearsalHistory || []).slice(0, 4).map((item) => ({
+      value: item.title,
+      title: item.title,
+      desc: item.desc
+    }))
+    openModal(this, {
       linkVisible: true,
       linkKind: kind,
-      linkSheetTitle: isGame ? '选择关联' : '选择关联',
+      linkSheetTitle: isGame ? '选择关联游戏' : '选择关联排练',
       linkOptions: isGame
-        ? [
-            { value: '一句话交换身份', title: '一句话交换身份', desc: '用一句台词确认彼此身份，快速建立关系。' },
-            { value: '空间行走切换', title: '空间行走切换', desc: '现场有点散时，适合重新聚焦身体和节奏。' }
-          ]
-        : [
-            { value: '开心即兴团 · 06.01 排练', title: '开心即兴团 · 06.01 排练', desc: '身体到场 -> 关系建立 -> 小复盘' },
-            { value: '开心即兴团 · 05.28 排练', title: '开心即兴团 · 05.28 排练', desc: '新手破冰与身体专注' }
-          ]
+        ? state.games.slice(0, 6).map((item) => ({
+            value: item.title,
+            title: item.title,
+            desc: item.desc
+          }))
+        : rehearsalOptions
     })
   },
 
   chooseLink(event) {
     const value = event.currentTarget.dataset.value
-    this.setData({
+    closeModal(this, {
       linkVisible: false,
       linkedGame: this.data.linkKind === 'game' ? value : this.data.linkedGame,
       linkedRehearsal: this.data.linkKind === 'rehearsal' ? value : this.data.linkedRehearsal
@@ -68,11 +144,11 @@ Page({
   },
 
   openInsight() {
-    this.setData({ insightVisible: true })
+    openModal(this, { insightVisible: true })
   },
 
   closeSheet() {
-    this.setData({ voiceVisible: false, linkVisible: false, insightVisible: false })
+    closeModal(this, { voiceVisible: false, linkVisible: false, insightVisible: false })
   },
 
   async save() {
@@ -81,14 +157,19 @@ Page({
       type: '灵感',
       title: this.data.titleValue,
       desc: this.data.contentValue,
-      meta: ['关系', '新手']
+      meta: this.data.selectedTags,
+      linkedGameTitle: this.data.linkedGame,
+      linkedRehearsalTitle: this.data.linkedRehearsal
     }
     await createInspiration({
       title: item.title,
       desc: item.desc,
-      meta: item.meta
+      meta: item.meta,
+      linkedGameTitle: item.linkedGameTitle,
+      linkedRehearsalTitle: item.linkedRehearsalTitle
     })
-    addTodayItem('todayInspirations', item)
+    addInspiration(item)
+    clearVoiceDraft()
     toast('已保存灵感')
     wx.navigateBack()
   },
@@ -96,10 +177,10 @@ Page({
     this.closeSheet()
     const item = {
       id: `method-${Date.now()}`,
-      type: '带领提醒',
-      title: this.data.titleValue || '一句话交换身份只推进一个信息',
-      desc: this.data.contentValue || '每轮只确认一个关系点，现场会更稳。',
-      meta: ['关系', '游戏变体', '可复用']
+      type: this.data.arrangementValue,
+      title: this.data.titleValue || '未命名方法卡',
+      desc: this.data.contentValue || '待补充',
+      meta: (this.data.selectedTags.length ? this.data.selectedTags : []).concat('可复用')
     }
     await createMethodCardRecord({
       sourceType: 'inspiration',
@@ -107,7 +188,8 @@ Page({
       desc: item.desc,
       meta: item.meta
     })
-    addTodayItem('methodCards', item)
+    addMethodCard(item)
+    clearVoiceDraft()
     toast('已沉淀为方法卡')
   }
 })

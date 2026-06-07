@@ -10,9 +10,10 @@ App({
     if (!wx.cloud) return
     const cloudEnv = getCloudEnvConfig()
     this.globalData.cloudEnv = cloudEnv
-    wx.cloud.init({
-      env: cloudEnv.envId,
-      traceUser: true
-    })
+    const initOptions: any = { traceUser: true }
+    if (cloudEnv.envId) {
+      initOptions.env = cloudEnv.envId
+    }
+    wx.cloud.init(initOptions)
   }
 })

@@ -1,10 +1,13 @@
 Component({
+  options: {
+    multipleSlots: true
+  },
   properties: {
     visible: Boolean,
     title: String,
     maskVariant: {
       type: String,
-      value: 'light'
+      value: 'medium'
     },
     closeOnMask: {
       type: Boolean,
@@ -13,6 +16,14 @@ Component({
     sheetClass: {
       type: String,
       value: ''
+    },
+    showActions: {
+      type: Boolean,
+      value: false
+    },
+    bodyMode: {
+      type: String,
+      value: 'scroll'
     },
     maskClass: {
       type: String,
@@ -23,7 +34,8 @@ Component({
     mounted: false,
     showClass: '',
     maskVisibleClass: '',
-    resolvedMaskVariant: 'light'
+    resolvedMaskVariant: 'light',
+    resolvedBodyMode: 'scroll'
   },
   lifetimes: {
     detached() {
@@ -37,7 +49,8 @@ Component({
         if (this._hideTimer) clearTimeout(this._hideTimer)
         this.setData({
           mounted: true,
-          resolvedMaskVariant: this.normalizeMaskVariant(this.data.maskVariant)
+          resolvedMaskVariant: this.normalizeMaskVariant(this.data.maskVariant),
+          resolvedBodyMode: this.normalizeBodyMode(this.data.bodyMode)
         })
         this._showTimer = setTimeout(() => {
           this.setData({ showClass: 'show', maskVisibleClass: 'visible' })
@@ -52,11 +65,17 @@ Component({
     },
     maskVariant(value) {
       this.setData({ resolvedMaskVariant: this.normalizeMaskVariant(value) })
+    },
+    bodyMode(value) {
+      this.setData({ resolvedBodyMode: this.normalizeBodyMode(value) })
     }
   },
   methods: {
     normalizeMaskVariant(value) {
       return ['light', 'medium', 'strong'].includes(value) ? value : 'light'
+    },
+    normalizeBodyMode(value) {
+      return ['scroll', 'fit'].includes(value) ? value : 'scroll'
     },
     noop() {},
     closeFromMask() {

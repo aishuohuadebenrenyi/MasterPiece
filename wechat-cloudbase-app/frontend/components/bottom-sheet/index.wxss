@@ -1,3 +1,5 @@
+@import "../../styles/theme.wxss";
+
 view,
 button,
 text {
@@ -26,7 +28,8 @@ text {
   height: 100%;
   z-index: 0;
   opacity: 0;
-  background: rgba(36, 50, 74, 0.14);
+  background: rgba(36, 50, 74, 0.34);
+  background: var(--improv-mask-overlay, rgba(36, 50, 74, 0.34));
   transition: opacity 0.2s ease;
   pointer-events: auto;
 }
@@ -36,15 +39,18 @@ text {
 }
 
 .sheet-mask.mask-light {
-  background: rgba(36, 50, 74, 0.14);
+  background: rgba(36, 50, 74, 0.24);
+  background: var(--improv-mask-medium, rgba(36, 50, 74, 0.24));
 }
 
 .sheet-mask.mask-medium {
-  background: rgba(36, 50, 74, 0.24);
+  background: rgba(36, 50, 74, 0.34);
+  background: var(--improv-mask-overlay, rgba(36, 50, 74, 0.34));
 }
 
 .sheet-mask.mask-strong {
-  background: rgba(18, 26, 44, 0.36);
+  background: rgba(18, 26, 44, 0.44);
+  background: var(--improv-mask-solid, rgba(18, 26, 44, 0.44));
 }
 
 .sheet {
@@ -53,12 +59,16 @@ text {
   right: 20rpx;
   bottom: calc(18rpx + env(safe-area-inset-bottom));
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   max-height: 78vh;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 36rpx 30rpx 40rpx;
   border-radius: 40rpx;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--improv-sheet-shadow);
+  background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
+  box-shadow: 0 24rpx 60rpx rgba(27, 45, 87, 0.18);
+  box-shadow: var(--improv-shadow-sheet, 0 24rpx 60rpx rgba(27, 45, 87, 0.18));
   transform: translateY(calc(100% + 40rpx));
   transition: transform 0.24s ease;
   pointer-events: auto;
@@ -66,6 +76,72 @@ text {
 
 .sheet-content {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sheet-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: calc(78vh - 160rpx);
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+}
+
+.sheet-scroll-static {
+  flex: 0 0 auto;
+  width: 100%;
+  max-height: calc(78vh - 160rpx);
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-actions {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 18rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.sheet.compact-sheet {
+  max-height: 65vh;
+}
+
+.sheet.compact-sheet .sheet-scroll {
+  height: calc(65vh - 150rpx);
+}
+
+.sheet.task-sheet {
+  max-height: 82vh;
+}
+
+.sheet.task-sheet .sheet-scroll {
+  height: calc(82vh - 154rpx);
+  padding-bottom: 10rpx;
+}
+
+.sheet.profile-edit-sheet-shell {
+  max-height: 72vh;
+  padding-bottom: 30rpx;
+}
+
+.sheet.profile-edit-sheet-shell .sheet-scroll-static {
+  max-height: calc(72vh - 154rpx);
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet.full-sheet {
+  max-height: 88vh;
+}
+
+.sheet.full-sheet .sheet-scroll {
+  height: calc(88vh - 246rpx);
 }
 
 .sheet.filter-sheet {
@@ -83,6 +159,36 @@ text {
   border-radius: 44rpx;
 }
 
+.sheet.add-sheet {
+  left: 24rpx;
+  right: 24rpx;
+  bottom: calc(14rpx + env(safe-area-inset-bottom));
+  padding: 34rpx 26rpx 28rpx;
+  border-radius: 44rpx;
+  max-height: 82vh;
+  background: #ffffff;
+  background: var(--improv-card-strong, #ffffff);
+}
+
+.sheet.add-sheet .sheet-scroll {
+  height: calc(82vh - 254rpx);
+  padding-bottom: 18rpx;
+}
+
+.sheet.add-sheet .sheet-scroll-static {
+  max-height: calc(82vh - 254rpx);
+  padding-bottom: 18rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet.add-sheet .sheet-actions {
+  padding-top: 18rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), #ffffff 34%);
+  background: linear-gradient(180deg, var(--improv-sheet-action-start, rgba(255, 255, 255, 0.72)), var(--improv-card-strong, #ffffff) 34%);
+}
+
 .sheet.mine-list-sheet,
 .sheet.mine-detail-sheet {
   left: 24rpx;
@@ -91,10 +197,23 @@ text {
   padding: 34rpx 26rpx 30rpx;
   border-radius: 44rpx;
   max-height: 72vh;
+  background: var(--improv-bg-subtle, #f7f9fe);
 }
 
 .sheet.mine-detail-sheet {
   padding-bottom: 34rpx;
+}
+
+.sheet.mine-list-sheet .sheet-scroll,
+.sheet.mine-detail-sheet .sheet-scroll {
+  height: calc(72vh - 150rpx);
+}
+
+.sheet.mine-list-sheet .sheet-scroll-static,
+.sheet.mine-detail-sheet .sheet-scroll-static {
+  max-height: calc(72vh - 150rpx);
+  display: flex;
+  flex-direction: column;
 }
 
 .sheet.show {
@@ -107,6 +226,7 @@ text {
   margin: 0 auto 20rpx;
   border-radius: 999rpx;
   background: #d7dfef;
+  background: var(--improv-handle, #d7dfef);
 }
 
 .sheet-head {
@@ -122,6 +242,7 @@ text {
   flex: 1 1 0;
   min-width: 0;
   color: #24324a;
+  color: var(--improv-text, #24324a);
   font-size: 34rpx;
   font-weight: 900;
 }
@@ -130,22 +251,14 @@ text {
   min-height: 58rpx;
   padding: 0 20rpx;
   border: 2rpx solid rgba(94, 114, 144, 0.14);
+  border: 2rpx solid var(--improv-line, rgba(94, 114, 144, 0.14));
   border-radius: 999rpx;
-  background: #fff;
+  background: #ffffff;
+  background: var(--improv-card-strong, #ffffff);
   color: #667289;
+  color: var(--improv-muted, #667289);
   font-size: 24rpx;
   font-weight: 900;
 }
 
-.sheet-close-btn {
-  width: 86rpx;
-  min-width: 86rpx;
-  max-width: 86rpx;
-  height: 64rpx;
-  min-height: 64rpx;
-  padding: 0;
-  border-radius: 24rpx;
-  box-shadow: none;
-  font-size: 22rpx;
-  margin-left: auto;
-}
+

@@ -4,14 +4,25 @@ import { getState, setGames, setState, subscribe, toggleSaved } from '../../stor
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
+import { getLayoutStyle } from '../../utils/layout'
 
 const tagOptions = [
   { value: 'all', label: '最近排练' },
-  { value: '热身', label: '5 分钟热身' },
-  { value: '关系', label: '关系练习' },
-  { value: '专注', label: '专注切换' },
-  { value: '叙事', label: '叙事' }
+  { value: '破冰', label: '快速破冰' },
+  { value: '热身', label: '5分钟热身' },
+  { value: '关系', label: '关系构建' },
+  { value: '专注', label: '专注力训练' },
+  { value: '身体', label: '肢体表达' },
+  { value: '叙事', label: '即兴叙事' }
 ]
+
+const defaultCategoryOptions = ['热身', '关系', '专注', '叙事']
+
+type NewGameDraft = Partial<Game> & {
+  people?: string
+  duration?: string
+  steps?: string
+}
 
 const fabSizeRpx = 116
 const fabRightRpx = 42
@@ -34,8 +45,17 @@ Page({
     addVisible: false,
     modalOpen: false,
     randomIndex: 0,
+    drawnCount: 1,
     currentRandomGame: null as Game | null,
-    newGame: {} as Partial<Game>,
+    newGame: {} as NewGameDraft,
+    selectedCategoryTags: ['热身'] as string[],
+    customCategoryVisible: false,
+    customCategoryFocus: false,
+    customCategoryInput: '',
+    categorySuggestions: [] as Array<{ value: string; label: string }>,
+    showMoreOptions: false,
+    moreOptionsToggleText: '补充玩法与提示',
+    categoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     listActiveClass: 'active',
     cardActiveClass: '',
     isListView: true,
@@ -46,7 +66,10 @@ Page({
     statusFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     fabReady: false,
     fabX: 0,
-    fabY: 0
+    fabY: 0,
+    layoutStyle: '',
+    loadingGames: true,
+    showEmptyState: false
   },
 
   unsubscribeStore: null as null | (() => void),
@@ -67,8 +90,8 @@ Page({
   getFilteredGames() {
     const { games, query, tag, people, duration, goal, status } = this.data
     const lowerQuery = query.trim().toLowerCase()
-    return games.filter((game) => {
-      const inTag = tag === 'all' || game.tags.includes(tag) || game.category === tag
+    return games.filter((game: Game) => {
+      const inTag = tag === 'all' || (game.tags && game.tags.includes(tag))
       const peopleText = game.meta[0] || ''
       const durationText = game.meta[1] || ''
       const inPeople = people === 'all'
@@ -80,8 +103,7 @@ Page({
         || (duration === '5-15' && /(8|10|12|15)\s*分钟/.test(durationText))
         || (duration === '15+' && /15|20|30/.test(durationText))
       const inGoal = goal === 'all'
-        || game.tags.includes(goal)
-        || game.category === goal
+        || (game.tags && game.tags.includes(goal))
         || `${game.desc} ${game.lead}`.includes(goal)
       const inStatus = status === 'all'
         || (status === 'saved' && game.saved)
@@ -94,12 +116,14 @@ Page({
 
   syncFiltered() {
     const filteredGames = this.getFilteredGames()
+    const showEmptyState = !this.data.loadingGames && this.data.games.length === 0
     this.setData({
       filteredGames,
       currentRandomGame: filteredGames[this.data.randomIndex % Math.max(filteredGames.length, 1)] || this.data.games[0] || null,
       listActiveClass: this.data.view === 'list' ? 'active' : '',
       cardActiveClass: this.data.view === 'card' ? 'active' : '',
       isListView: this.data.view === 'list',
+      showEmptyState,
       tagChips: tagOptions.map((item) => Object.assign({}, item, {
         activeClass: this.data.tag === item.value ? 'active' : ''
       })),
@@ -135,17 +159,46 @@ Page({
         { value: 'saved', label: '收藏' }
       ].map((item) => Object.assign({}, item, {
         activeClass: this.data.status === item.value ? 'active' : ''
-      }))
+      })),
+      categoryOptions: this.getCategoryPool().map((value) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
     })
   },
 
+  getCategoryPool() {
+    const categories: string[] = []
+    defaultCategoryOptions.forEach((item) => categories.push(item))
+    this.data.games.forEach((game: Game) => {
+      if (Array.isArray(game.tags)) {
+        game.tags.forEach((tag) => categories.push(tag))
+      }
+    })
+    return Array.from(new Set(categories.map((item) => String(item).trim()).filter(Boolean)))
+  },
+
+  getCategorySuggestions(input: string) {
+    const keyword = String(input || '').trim().toLowerCase()
+    if (!keyword) return []
+    return this.getCategoryPool()
+      .filter((item) => item.toLowerCase().includes(keyword))
+      .slice(0, 5)
+      .map((value) => ({ value, label: value }))
+  },
+
   async onLoad() {
+    this.setData({ layoutStyle: getLayoutStyle() })
     this.resetFabPosition()
     this.unsubscribeStore = subscribe(() => this.syncFromStore())
     try {
       setGames(await listGames())
     } catch (error) {
       this.syncFromStore()
+    } finally {
+      this.setData({ loadingGames: false }, () => this.syncFiltered())
     }
   },
 
@@ -159,6 +212,7 @@ Page({
   },
 
   onResize() {
+    this.setData({ layoutStyle: getLayoutStyle() })
     this.resetFabPosition()
   },
 
@@ -221,6 +275,8 @@ Page({
 
   openRandom() {
     if (Date.now() < this.fabIgnoreTapUntil) return
+    if (!this.data.games.length) return
+    this.setData({ drawnCount: 1 })
     openModal(this, { randomVisible: true })
   },
 
@@ -256,11 +312,15 @@ Page({
 
   reroll() {
     const candidates = this.data.filteredGames.length ? this.data.filteredGames : this.data.games
-    if (!candidates.length) return
+    if (candidates.length <= 1 || this.data.drawnCount >= candidates.length) {
+      toast('已无更多卡片')
+      return
+    }
     const randomIndex = this.data.randomIndex + 1
     this.setData({
       randomIndex,
-      currentRandomGame: candidates[randomIndex % candidates.length]
+      currentRandomGame: candidates[randomIndex % candidates.length],
+      drawnCount: this.data.drawnCount + 1
     })
   },
 
@@ -292,7 +352,19 @@ Page({
   },
 
   closeSheet() {
-    closeModal(this, { randomVisible: false, filterVisible: false, addVisible: false })
+    closeModal(this, {
+      randomVisible: false,
+      filterVisible: false,
+      addVisible: false,
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: [],
+      newGame: {},
+      selectedCategoryTags: ['热身'],
+      showNewGameSteps: false,
+      stepsToggleText: '补充玩法步骤'
+    })
   },
 
   voiceFill(event: WechatMiniprogram.TouchEvent) {
@@ -301,10 +373,13 @@ Page({
     if (target === 'title') patch['newGame.title'] = '情绪接力'
     if (target === 'title') patch['newGame.people'] = '4-8 人'
     if (target === 'title') patch['newGame.duration'] = '10 分钟'
-    if (target === 'title') patch['newGame.tag'] = '热身 / 情绪'
     if (target === 'desc') patch['newGame.desc'] = '用一个简单动作和一句台词传递情绪，适合让大家快速进入状态。'
     if (target === 'steps') patch['newGame.steps'] = '围成一圈，第一位做出一个动作并说一句台词。\n下一位接住情绪，再放大或反转。\n一圈结束后复盘哪一次情绪最清楚。'
-    this.setData(patch)
+    if (target === 'title') {
+      this.setData(Object.assign(patch, { selectedCategoryTags: ['热身', '情绪'] }), () => this.syncFiltered())
+    } else {
+      this.setData(patch)
+    }
     toast('已模拟语音输入')
   },
 
@@ -313,32 +388,133 @@ Page({
     this.setData({ [`newGame.${field}`]: event.detail.value })
   },
 
+  toggleNewGameCategory(event: WechatMiniprogram.TouchEvent) {
+    const category = String(event.currentTarget.dataset.category || '').trim()
+    if (!category) return
+    const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
+      ? this.data.selectedCategoryTags.filter((item) => item !== category)
+      : this.data.selectedCategoryTags.concat(category)
+    this.setData({ selectedCategoryTags }, () => this.syncFiltered())
+  },
+
+  toggleCustomCategory() {
+    const customCategoryVisible = !this.data.customCategoryVisible
+    if (customCategoryVisible) {
+      this.setData({
+        customCategoryVisible: true,
+        customCategoryFocus: false,
+        customCategoryInput: this.data.customCategoryInput,
+        categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
+      }, () => {
+        this.setData({ customCategoryFocus: true })
+      })
+      return
+    }
+    this.setData({
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: []
+    })
+  },
+
+  handleCustomCategoryFocus() {
+    if (!this.data.customCategoryFocus) {
+      this.setData({ customCategoryFocus: true })
+    }
+  },
+
+  handleCustomCategoryBlur() {
+    if (this.data.customCategoryFocus) {
+      this.setData({ customCategoryFocus: false })
+    }
+  },
+
+  updateCustomCategory(event: WechatMiniprogram.Input) {
+    const customCategoryInput = event.detail.value
+    this.setData({
+      customCategoryInput,
+      categorySuggestions: this.getCategorySuggestions(customCategoryInput)
+    })
+  },
+
+  selectCategorySuggestion(event: WechatMiniprogram.TouchEvent) {
+    const category = String(event.currentTarget.dataset.category || '').trim()
+    if (!category) return
+    this.addCategoryTag(category)
+  },
+
+  confirmCustomCategory() {
+    const category = String(this.data.customCategoryInput || '').trim()
+    if (!category) {
+      toast('先输入分类')
+      return
+    }
+    const existed = this.getCategoryPool().find((item) => item.toLowerCase() === category.toLowerCase())
+    this.addCategoryTag(existed || category)
+  },
+
+  addCategoryTag(category: string) {
+    const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
+      ? this.data.selectedCategoryTags
+      : this.data.selectedCategoryTags.concat(category)
+    this.setData({
+      selectedCategoryTags,
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: []
+    }, () => this.syncFiltered())
+  },
+
+  toggleMoreOptions() {
+    const nextVisible = !this.data.showMoreOptions
+    this.setData({
+      showMoreOptions: nextVisible,
+      moreOptionsToggleText: nextVisible ? '收起玩法与提示' : '补充玩法与提示'
+    })
+  },
+
   async addGame() {
     const title = this.data.newGame.title
     if (!title) {
       toast('先写游戏名称')
       return
     }
+    const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
+    if (!tags.length) tags.push('自定义')
+    const steps = typeof this.data.newGame.steps === 'string' && this.data.newGame.steps.trim()
+      ? this.data.newGame.steps.split('\n').map((item) => item.trim()).filter(Boolean)
+      : ['先用一句话讲清核心规则，试玩后再补完整步骤。']
     const game: Game = {
       id: `custom-${Date.now()}`,
       title,
       desc: this.data.newGame.desc || '这是你添加的新游戏，可以稍后继续完善。',
-      category: this.data.newGame.tag ? String(this.data.newGame.tag).split('/')[0].trim() : '自定义',
-      tags: this.data.newGame.tag ? String(this.data.newGame.tag).split('/').map((item) => item.trim()).filter(Boolean) : ['自定义'],
+      tags,
       meta: [this.data.newGame.people || '待补充', this.data.newGame.duration || '待补充', '自定义'],
-      fit: ['自定义', '待验证', '可试玩'],
+      fit: [],
       lead: this.data.newGame.desc || '先试玩一轮，再补充带领提示。',
-      steps: typeof this.data.newGame.steps === 'string' ? this.data.newGame.steps.split('\n') : ['用一句话说明核心规则。'],
-      tips: '第一次带领时先保持规则短。',
-      variant: '',
-      issue: '',
-      relatedGameId: 'name-chain',
+      steps,
+      tips: this.data.newGame.tips || '第一次带领时先保持规则短。',
+      variant: this.data.newGame.variant || '',
+      issue: this.data.newGame.issue || '',
+      relatedGameId: '',
       stripeTone: 'orange',
       sortOrder: 999
     }
     setGames([game].concat(getState().games))
-    closeModal(this, { addVisible: false, newGame: {} })
+    closeModal(this, {
+      addVisible: false,
+      newGame: {},
+      selectedCategoryTags: ['热身'],
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: [],
+      showMoreOptions: false,
+      moreOptionsToggleText: '补充玩法与提示'
+    }, () => this.syncFiltered())
     await createGame(game)
-    toast('已加入游戏库')
+    toast('已加入游戏库，可稍后继续完善')
   }
 })

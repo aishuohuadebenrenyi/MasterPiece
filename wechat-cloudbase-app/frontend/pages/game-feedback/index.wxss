@@ -1,17 +1,43 @@
-.back {
-  margin-bottom: 24rpx;
+.page-title,
+.section-title {
+  margin-bottom: 20rpx;
+  color: var(--improv-text);
+  font-weight: 900;
 }
 
-.form-card {
-  padding: 32rpx;
-  margin-top: 24rpx;
+.page-title {
+  margin-bottom: 0;
+  font-size: 56rpx;
+  line-height: 1.1;
+}
+
+.feedback {
+  padding-bottom: calc(164rpx + env(safe-area-inset-bottom));
+}
+
+.record-form-card {
+  padding: 38rpx 34rpx;
+  margin-bottom: 28rpx;
+}
+
+.compact-card {
+  padding-bottom: 34rpx;
+}
+
+.section-head {
+  margin-bottom: 18rpx;
 }
 
 .section-title {
-  margin-bottom: 20rpx;
-  color: #24324a;
   font-size: 32rpx;
-  font-weight: 900;
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 8rpx;
 }
 
 .meta {
@@ -23,40 +49,33 @@
 
 .meta text {
   padding: 10rpx 18rpx;
-  background: #f4f6fb;
-  color: #667289;
+  background: var(--improv-bg-soft);
+  color: var(--improv-muted);
   font-size: 24rpx;
   font-weight: 800;
 }
 
 .form-actions,
-.center-actions {
+.save-actions {
   display: flex;
   flex-direction: row;
   gap: 20rpx;
-  margin-top: 28rpx;
+}
+
+.form-actions {
+  flex-direction: row;
+  gap: 20rpx;
 }
 
 .form-actions button,
-.center-actions button {
+.save-actions button {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.center-actions {
-  width: 78%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.field-picker {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.field-picker input {
-  flex: 1;
+.save-actions {
+  width: 84%;
+  margin: 24rpx auto 0;
 }
 
 .option-card {
@@ -71,4 +90,33 @@
 .sheet-submit {
   width: 100%;
   margin-top: 24rpx;
+}
+
+.more-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22rpx;
+  margin-top: 28rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 28rpx;
+  background: var(--improv-bg-subtle);
+}
+
+.more-toggle .muted {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.more-arrow {
+  flex: 0 0 auto;
+  color: var(--improv-secondary-strong);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.more-fields {
+  margin-top: 4rpx;
 }

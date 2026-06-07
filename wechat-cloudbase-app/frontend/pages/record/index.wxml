@@ -1,44 +1,70 @@
-<view class="page record {{modalOpen ? 'modal-open' : ''}}">
+<view class="page record {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
   <view class="record-content">
-  <view class="hero">
-    <view class="title">记录灵感</view>
-    <button class="mic" bindtap="openVoice">🎤</button>
-    <text class="muted">按一下开始，先把感觉留下来。</text>
-    <view class="quick-actions">
-      <button class="small-btn" bindtap="saveVoiceAsInspiration">记录灵感</button>
-      <button class="small-btn" bindtap="openStartRehearsal">记录排练</button>
-    </view>
-    <view class="footnote">
-      <text>今天已记录</text>
-      <button class="record-stat-link" data-kind="inspirations" bindtap="openToday">{{inspirationCount}} 条灵感</button>
-      <text>，</text>
-      <button class="record-stat-link" data-kind="rehearsals" bindtap="openToday">{{rehearsalCount}} 次练习</button>
-    </view>
-  </view>
-
-  <view wx:if="{{pausedRehearsal}}" class="card paused">
-    <view class="row">
-      <view>
-        <text class="mini-title">暂停中的排练</text>
-        <view class="card-title">{{pausedRehearsal.title}}</view>
+    <view class="record-hero">
+      <view class="record-title">记录灵感</view>
+      <button class="record-main" bindtap="openVoice">🎤</button>
+      <text class="record-intro muted">按一下开始，先把感觉留下来。</text>
+      <view class="record-actions">
+        <button class="small-btn record-action-btn" bindtap="openStartGame">记录游戏</button>
+        <button class="small-btn record-action-btn" bindtap="openStartRehearsal">记录排练</button>
       </view>
-      <button class="small-btn" bindtap="resumeRehearsal">继续</button>
+      <view class="record-footnote">
+        <text>今天已记录</text>
+        <text class="record-stat-link record-stat-link-first" data-kind="inspirations" bindtap="openToday">{{inspirationCount}} 条灵感</text>
+        <text class="footnote-sep">，</text>
+        <text class="record-stat-link" data-kind="rehearsals" bindtap="openToday">{{rehearsalCount}} 次练习</text>
+      </view>
     </view>
-    <text class="muted">目标：{{pausedRehearsal.desc}}</text>
+
+    <view class="record-stack">
+      <view wx:if="{{gameCard}}" class="card record-hub-card game-card">
+        <view class="row">
+          <view>
+            <text class="mini-title">{{gameCard.label}}</text>
+            <view class="card-title">{{gameCard.title}}</view>
+          </view>
+          <button class="small-btn" bindtap="resumeGameCard">去查看</button>
+        </view>
+        <text class="muted">时长：{{gameCard.durationText}}</text>
+      </view>
+
+      <view wx:elif="{{rehearsalCard}}" class="card record-hub-card rehearsal-card">
+        <view class="row">
+          <view>
+            <text class="mini-title">{{rehearsalCard.label}}</text>
+            <view class="card-title">{{rehearsalCard.title}}</view>
+          </view>
+          <button class="small-btn" bindtap="resumeRehearsal">继续</button>
+        </view>
+        <text class="muted">目标：{{rehearsalCard.desc}}</text>
+        <view class="mini-plan">
+          <view wx:for="{{rehearsalCard.items}}" wx:key="indexLabel" class="mini-plan-item">
+            <text class="mini-dot">{{item.indexLabel}}</text>
+            <text>{{item.text}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{recommendVisible && recommendTitle}}" class="card recommend-box {{recommendClickable ? '' : 'recommend-box-disabled'}}">
+        <button class="recommend-close" catchtap="closeRecommend">×</button>
+        <view wx:if="{{recommendClickable}}" class="recommend-main recommend-main-clickable" bindtap="openRecommend">
+          <text class="mini-title">今日推荐</text>
+          <view class="card-title">{{recommendTitle}}</view>
+          <text class="muted">{{recommendDesc}}</text>
+        </view>
+        <view wx:else class="recommend-main">
+          <text class="mini-title">今日推荐</text>
+          <view class="card-title">{{recommendTitle}}</view>
+          <text class="muted">{{recommendDesc}}</text>
+        </view>
+      </view>
+    </view>
   </view>
 
-  <view wx:if="{{recommendVisible}}" class="card recommend" bindtap="openRecommend">
-    <button class="close" catchtap="closeRecommend">×</button>
-    <text class="mini-title">今日推荐</text>
-    <view class="card-title">一句话交换身份</view>
-    <text class="muted">如果今天想练关系建立，它会是顺手的一张卡。</text>
-  </view>
-  </view>
-
-  <bottom-sheet visible="{{voiceVisible}}" title="语音速记" maskVariant="medium" bind:close="closeSheet">
-    <text class="muted">先说下来，整理可以稍后再做。</text>
-    <view class="tag-row voice-targets">
-      <button wx:for="{{voiceTargets}}" wx:key="value" class="chip {{item.activeClass}}" data-target="{{item.value}}" bindtap="setVoiceTarget">{{item.label}}</button>
+  <bottom-sheet visible="{{voiceVisible}}" title="记录灵感" maskVariant="medium" bodyMode="fit" bind:close="closeSheet">
+    <text class="muted" wx:if="{{!activeContextName}}">先说下来，整理可以稍后再做。</text>
+    <view wx:if="{{activeContextName}}" class="active-rehearsal-tip">
+      <text>📍 {{activeContextName}}</text>
     </view>
     <view class="pulse">{{timeText}}</view>
     <view class="voice-actions">
@@ -46,37 +72,76 @@
       <button class="primary-btn" bindtap="startTimer">{{recordingText}}</button>
       <button class="small-btn" bindtap="finishVoice">完成</button>
     </view>
-    <view class="card summary">
+    <view class="card summary" wx:if="{{!timer && elapsed > 0}}">
       <text class="mini-title">摘要预览</text>
-      <text class="muted">刚才的起手进入状态很快，后半段节奏开始松掉，下次可以加一句更明确的限制词。</text>
+      <text class="muted">{{voiceSummary}}</text>
     </view>
-    <view class="save-actions">
+    <view class="save-actions" wx:if="{{!timer && elapsed > 0}}">
       <button class="ghost-btn" bindtap="saveVoiceAsInspiration">存为灵感</button>
-      <button class="primary-btn" bindtap="saveVoiceContext">按当前归类</button>
+      <button class="primary-btn" bindtap="archiveToCurrentContext" wx:if="{{activeContextName}}">归档到当前</button>
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bind:close="closeSheet">
+  <bottom-sheet visible="{{startGameVisible}}" title="快速开始游戏" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
+    <view class="search-field-row">
+      <view class="field search-field">
+        <input value="{{gameSearchQuery}}" placeholder="输入游戏名称搜索" bindinput="onGameSearchInput" />
+      </view>
+      <button class="small-btn select-btn" catchtap="toggleGameList">选择</button>
+    </view>
+    <scroll-view scroll-y class="select-list" wx:if="{{showGameListInStart}}">
+      <view wx:for="{{filteredGamesList}}" wx:key="id" class="card item-card {{startGameSelectedId === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="selectGameToStart">
+        <view class="card-title">{{item.title}}</view>
+      </view>
+      <view wx:if="{{filteredGamesList.length === 0}}" class="muted" style="text-align:center; padding: 40rpx 0;">未找到匹配的游戏</view>
+    </scroll-view>
+    <button class="primary-btn start-btn {{!startGameSelectedId ? 'disabled-btn' : ''}}" bindtap="startGameFromRecord" disabled="{{!startGameSelectedId}}">开始游戏</button>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{gameSelectVisible}}" title="选择要关联的游戏" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
+    <scroll-view scroll-y class="select-list">
+      <view wx:for="{{gamesList}}" wx:key="id" class="card item-card" data-id="{{item.id}}" bindtap="selectGameToArchive">
+        <view class="card-title">{{item.title}}</view>
+      </view>
+    </scroll-view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{rehearsalSelectVisible}}" title="选择要关联的排练" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
+    <scroll-view scroll-y class="select-list">
+      <view wx:for="{{rehearsalHistoryList}}" wx:key="id" class="card item-card" data-id="{{item.id}}" bindtap="selectRehearsalToArchive">
+        <view class="card-title">{{item.title || item.teamName + ' 的排练'}}</view>
+      </view>
+    </scroll-view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
     <view wx:for="{{todayItems}}" wx:key="id" class="card item-card">
-      <view class="card-title">{{item.title}}</view>
+      <view class="item-head">
+        <view class="card-title">{{item.title}}</view>
+        <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">待同步</text>
+      </view>
       <text class="muted">{{item.desc}}</text>
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bind:close="closeSheet">
-    <label class="field">团队<input value="{{teamName}}" data-field="teamName" bindinput="updateStartForm" /></label>
+  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
+    <label class="field">团队<input value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" /></label>
     <text class="mini-title">时长</text>
-    <view class="tag-row voice-targets">
+    <view class="sheet-chip-row voice-targets">
       <button wx:for="{{durationOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setDuration">{{item.label}}</button>
     </view>
     <text class="mini-title">本次目标</text>
-    <view class="tag-row voice-targets">
+    <view class="sheet-chip-row voice-targets">
       <button wx:for="{{goalOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="toggleGoal">{{item.label}}</button>
     </view>
     <text class="mini-title">添加游戏</text>
-    <view class="tag-row voice-targets">
+    <view class="sheet-chip-row voice-targets">
       <button wx:for="{{sourceOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setSource">{{item.label}}</button>
     </view>
     <button class="primary-btn start-btn" bindtap="startRehearsal">开始排练</button>
   </bottom-sheet>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
 </view>

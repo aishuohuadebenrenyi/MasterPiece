@@ -1,33 +1,53 @@
-const { games } = require('../../services/mock-data')
 const { listGames } = require('../../services/game')
-const { nextGameStatus, updateGameStatus } = require('../../services/rehearsal')
-const { addTodayItem, writeLocalState } = require('../../services/local-state')
+const { nextGameStatus, updateGameStatus, updateRehearsal } = require('../../services/rehearsal')
+const {
+  addGameToCurrentRehearsal,
+  getState,
+  patchCurrentRehearsal,
+  setCurrentRehearsal,
+  startRehearsal,
+  subscribe,
+  updateCurrentRehearsalPlan,
+  upsertRehearsalHistory
+} = require('../../store/index')
 const { toast } = require('../../utils/page')
+const { getLayoutStyle } = require('../../utils/layout')
+const { closeModal, openModal } = require('../../utils/modal')
 
 Page({
   data: {
-    games,
-    plan: ['name-chain', 'space-walk', 'status-swap'],
-    statuses: {
-      'name-chain': '已完成',
-      'space-walk': '进行中',
-      'status-swap': '未开始'
-    },
+    games: [],
+    rehearsalId: '',
+    title: '',
+    duration: '',
+    desc: '',
+    metaText: '',
+    planGames: [],
+    linkedInspirations: [],
     addVisible: false,
     planVisible: false,
-    query: ''
+    modalOpen: false,
+    query: '',
+    layoutStyle: ''
   },
 
+  unsubscribeStore: null,
+
   getPlanGames() {
-    return this.data.plan.map((id) => {
+    const rehearsal = getState().currentRehearsal
+    const plan = rehearsal && rehearsal.plan && rehearsal.plan.length
+      ? rehearsal.plan.map((item) => item.gameId)
+      : []
+    return plan.map((id) => {
       const game = this.data.games.find((item) => item.id === id)
       if (!game) return null
+      const planItem = rehearsal && rehearsal.plan ? rehearsal.plan.find((item) => item.gameId === id) : null
       return Object.assign({}, game, {
-        status: this.data.statuses[id] || '未开始',
+        status: planItem ? planItem.status : '未开始',
         metaText: game.meta[1],
         tagText: game.tags[0],
-        keepValue: id === 'name-chain' ? '开场很快进入状态' : '',
-        tryValue: id === 'space-walk' ? '口令少一点' : ''
+        keepValue: planItem ? planItem.keep : '',
+        tryValue: planItem ? planItem.try : ''
       })
     }).filter(Boolean)
   },
@@ -41,20 +61,42 @@ Page({
   },
 
   syncPlan() {
+    const state = getState()
+    const rehearsal = state.currentRehearsal
+    const linkedInspirations = rehearsal ? state.todayInspirations.filter(i => i.linkedRehearsalId === rehearsal.id) : []
+    
     this.setData({
+      rehearsalId: rehearsal ? rehearsal.id : '',
+      title: rehearsal ? rehearsal.teamName : '',
+      duration: rehearsal ? rehearsal.duration : '',
+      desc: rehearsal ? rehearsal.desc : '',
+      metaText: rehearsal ? `${rehearsal.plan.length} 个游戏 · ${rehearsal.status}` : '',
       planGames: this.getPlanGames(),
-      filteredGames: this.getFilteredGames()
+      filteredGames: this.getFilteredGames(),
+      linkedInspirations
     })
   },
 
-  async onLoad() {
+  async onLoad(options = {}) {
+    this.setData({ layoutStyle: getLayoutStyle() })
+    const state = getState()
+    const routeId = options.id
+    if (routeId && state.rehearsalHistory) {
+      const matched = state.rehearsalHistory.find((item) => item.id === routeId)
+      if (matched) setCurrentRehearsal(matched)
+    }
+    this.unsubscribeStore = subscribe(() => this.syncPlan())
     this.syncPlan()
     try {
       const cloudGames = await listGames()
-      this.setData({ games: cloudGames.length ? cloudGames : games }, () => this.syncPlan())
+      this.setData({ games: cloudGames }, () => this.syncPlan())
     } catch (error) {
       this.syncPlan()
     }
+  },
+
+  onUnload() {
+    if (this.unsubscribeStore) this.unsubscribeStore()
   },
 
   back() {
@@ -62,15 +104,19 @@ Page({
   },
 
   openAdd() {
-    this.setData({ addVisible: true })
+    openModal(this, { addVisible: true })
   },
 
   openPlan() {
-    this.setData({ planVisible: true })
+    openModal(this, { planVisible: true })
   },
 
   closeSheet() {
-    this.setData({ addVisible: false, planVisible: false })
+    closeModal(this, {
+      addVisible: false,
+      planVisible: false,
+      query: ''
+    }, () => this.syncPlan())
   },
 
   savePlan() {
@@ -84,26 +130,34 @@ Page({
 
   addGame(event) {
     const id = event.currentTarget.dataset.id
-    if (!this.data.plan.includes(id)) {
-      this.setData({
-        plan: this.data.plan.concat(id),
-        [`statuses.${id}`]: '未开始'
-      }, () => this.syncPlan())
-    }
+    addGameToCurrentRehearsal(id)
     this.closeSheet()
     toast('已加入排练')
   },
 
   async toggleStatus(event) {
     const id = event.currentTarget.dataset.id
-    const next = nextGameStatus(this.data.statuses[id] || '未开始')
-    this.setData({ [`statuses.${id}`]: next }, () => this.syncPlan())
+    const target = this.data.planGames.find((item) => item.id === id)
+    const next = nextGameStatus(target ? target.status : '未开始')
+    updateCurrentRehearsalPlan(id, {
+      status: next,
+      keep: target ? target.keepValue : '',
+      try: target ? target.tryValue : ''
+    })
     await updateGameStatus({
-      rehearsalId: 'today-rehearsal',
+      rehearsalId: this.data.rehearsalId,
       gameId: id,
       status: next
     })
     toast(`已标记为${next}`)
+  },
+
+  updatePlanField(event) {
+    const gameId = event.currentTarget.dataset.id
+    const field = event.currentTarget.dataset.field
+    updateCurrentRehearsalPlan(gameId, {
+      [field]: event.detail.value
+    })
   },
 
   openGame(event) {
@@ -111,14 +165,17 @@ Page({
   },
 
   pause() {
-    const pausedRehearsal = {
-      id: 'today-rehearsal',
-      title: '开心即兴团 · 90 分钟',
-      desc: '身体到场 → 关系建立 → 小复盘',
-      status: '暂停中'
+    const current = patchCurrentRehearsal({
+      status: '暂停中',
+      title: `${this.data.title} · ${this.data.duration} 分钟`
+    })
+    if (current) {
+      upsertRehearsalHistory(current)
+      updateRehearsal(current.id, {
+        status: '暂停中',
+        plan: current.plan
+      }).catch(() => {})
     }
-    writeLocalState({ pausedRehearsal })
-    addTodayItem('todayRehearsals', pausedRehearsal)
     toast('排练已暂停')
     wx.switchTab({ url: '/pages/record/index' })
   },

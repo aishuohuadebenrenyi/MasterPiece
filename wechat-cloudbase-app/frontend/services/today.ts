@@ -1,10 +1,10 @@
-import type { TodayItem } from '../types/domain'
+import type { InspirationItem, RehearsalRecord } from '../types/domain'
 import { callImprovAction } from './cloud'
 import { getState, setState } from '../store/index'
 
 export interface TodaySummary {
-  inspirations: TodayItem[]
-  rehearsals: TodayItem[]
+  inspirations: InspirationItem[]
+  rehearsals: RehearsalRecord[]
   recommendGameId: string
 }
 
@@ -12,8 +12,8 @@ export async function fetchTodaySummary() {
   const response = await callImprovAction<TodaySummary>('today.summary')
   if (response.code === 0 && response.data) {
     setState({
-      todayInspirations: response.data.inspirations || [],
-      todayRehearsals: response.data.rehearsals || []
+      todayInspirations: (response.data.inspirations || []) as InspirationItem[],
+      todayRehearsals: (response.data.rehearsals || []) as RehearsalRecord[]
     })
     return response.data
   }
@@ -21,6 +21,6 @@ export async function fetchTodaySummary() {
   return {
     inspirations: state.todayInspirations,
     rehearsals: state.todayRehearsals,
-    recommendGameId: 'status-swap'
+    recommendGameId: state.games[0]?.id || ''
   }
 }

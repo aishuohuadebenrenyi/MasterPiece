@@ -1,10 +1,9 @@
 const { callImprovAction } = require('./cloud')
-const { inspirations } = require('./mock-data')
 
 async function listInspirations(filters = {}) {
   const response = await callImprovAction('inspiration.list', filters)
   if (response.code === 0 && response.data && response.data.items) return response.data.items
-  return inspirations
+  return []
 }
 
 async function createInspiration(payload) {
@@ -15,4 +14,3 @@ module.exports = {
   listInspirations,
   createInspiration
 }
-

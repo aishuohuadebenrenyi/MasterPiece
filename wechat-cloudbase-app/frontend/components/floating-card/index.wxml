@@ -1,14 +1,17 @@
-<view wx:if="{{visible}}" class="float-mask" bindtap="close"></view>
-<view wx:if="{{visible}}" class="float-card">
-  <view class="float-head">
-    <text class="float-title">{{title}}</text>
-    <button class="small-btn" bindtap="close">关闭</button>
+<root-portal wx:if="{{visible}}">
+  <view class="float-layer">
+    <view class="float-mask" catchtap="close" catchtouchmove="noop"></view>
+    <view class="float-card" catchtap="noop" bindtouchstart="handleTouchStart" bindtouchend="handleTouchEnd">
+      <view class="float-head">
+        <text class="float-title">{{title}}</text>
+        <button class="icon-close-btn" catchtap="close">✕</button>
+      </view>
+      <scroll-view scroll-y enable-flex enhanced show-scrollbar="{{false}}" class="float-scroll">
+        <slot></slot>
+      </scroll-view>
+      <view class="detail-nav">
+        <text>{{count}}</text>
+      </view>
+    </view>
   </view>
-  <slot></slot>
-  <view class="detail-nav">
-    <button class="small-btn" bindtap="prev">上一条</button>
-    <text>{{count}}</text>
-    <button class="small-btn" bindtap="next">下一条</button>
-  </view>
-</view>
-
+</root-portal>

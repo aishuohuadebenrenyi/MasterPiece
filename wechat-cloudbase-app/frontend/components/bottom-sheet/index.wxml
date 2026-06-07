@@ -6,9 +6,21 @@
         <view class="handle"></view>
         <view class="sheet-head">
           <text class="sheet-title">{{title}}</text>
-          <button class="small-btn sheet-close-btn" catchtap="close">关闭</button>
+          <button class="icon-close-btn" catchtap="close">✕</button>
         </view>
-        <slot></slot>
+        <block wx:if="{{resolvedBodyMode === 'fit'}}">
+          <view class="sheet-scroll-static">
+            <slot></slot>
+          </view>
+        </block>
+        <block wx:else>
+          <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="sheet-scroll">
+            <slot></slot>
+          </scroll-view>
+        </block>
+        <view wx:if="{{showActions}}" class="sheet-actions">
+          <slot name="actions"></slot>
+        </view>
       </view>
     </view>
   </view>

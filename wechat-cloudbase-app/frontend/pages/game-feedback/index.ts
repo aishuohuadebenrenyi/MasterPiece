@@ -1,28 +1,127 @@
-import type { Game, TodayItem } from '../../types/domain'
+import type { Game, TodayItem, RehearsalRecord, GameRecord } from '../../types/domain'
 import { findLocalGame } from '../../services/game'
 import { createGameRecord } from '../../services/game-record'
 import { createMethodCard as createMethodCardRecord } from '../../services/method-card'
-import { addTodayItem, getState, markPlayed } from '../../store/index'
+import { createRehearsal, updateGameStatus } from '../../services/rehearsal'
+import { addMethodCard, addGameRecord, getState, markPlayed, setVoiceDraft, startRehearsal, updateCurrentRehearsalPlan, upsertRehearsalHistory } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
+import { getLayoutStyle } from '../../utils/layout'
+import { closeModal, openModal } from '../../utils/modal'
 
 Page({
   data: {
     game: null as Game | null,
-    recordVisible: false,
     linkVisible: false,
     insightVisible: false,
     recordType: '游戏实践',
-    linkedRehearsal: '开心即兴团 · 06.01 排练',
-    linkOptions: [
-      { value: '开心即兴团 · 06.01 排练', title: '开心即兴团 · 06.01 排练', desc: '身体到场 -> 关系建立 -> 小复盘' },
-      { value: '开心即兴团 · 05.28 排练', title: '开心即兴团 · 05.28 排练', desc: '新手破冰与身体专注' }
-    ]
+    linkedRehearsal: '',
+    contextType: 'single',
+    attendanceText: '',
+    effectValue: '一般',
+    keepValue: '',
+    tryValue: '',
+    reminderValue: '',
+    moreVisible: false,
+    modalOpen: false,
+    linkOptions: [] as Array<{ value: string; title: string; desc: string }>,
+    contextOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    effectOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    layoutStyle: '',
+    duration: 0,
+    durationText: '',
+    feedbackText: '',
+    rehearsalHistoryList: [] as any[],
+    selectedRehearsalId: '',
+    selectedRehearsalName: ''
+  },
+
+  syncOptions() {
+    this.setData({
+      contextOptions: [
+        { value: 'single', label: '单独记录' },
+        { value: 'current', label: '加入当前排练' },
+        { value: 'new', label: '新建排练' }
+      ].map((item) => Object.assign({}, item, {
+        activeClass: this.data.contextType === item.value ? 'active' : ''
+      })),
+      effectOptions: [
+        { value: '很有效', label: '很有效' },
+        { value: '一般', label: '一般' },
+        { value: '不适合', label: '不适合' }
+      ].map((item) => Object.assign({}, item, {
+        activeClass: this.data.effectValue === item.value ? 'active' : ''
+      }))
+    })
   },
 
   onLoad(options: Record<string, string>) {
-    const id = getRouteParam(options, 'id', 'space-walk')
-    const game = getState().games.find((item) => item.id === id) || findLocalGame(id)
-    this.setData({ game })
+    this.setData({ layoutStyle: getLayoutStyle() })
+    const id = getRouteParam(options, 'id', '')
+    const duration = parseInt(getRouteParam(options, 'duration', '0'), 10)
+
+    if (!id) {
+      toast('未找到游戏')
+      setTimeout(() => this.back(), 1500)
+      return
+    }
+
+    const state = getState()
+    const game = state.games.find((item) => item.id === id) || findLocalGame(id)
+    if (!game) {
+      toast('游戏不存在')
+      setTimeout(() => this.back(), 1500)
+      return
+    }
+
+    const draft = state.voiceDraft
+    const currentRehearsal = state.currentRehearsal
+    const linkOptions = (state.rehearsalHistory || []).slice(0, 6).map((item) => ({
+      value: item.title,
+      title: item.title,
+      desc: item.desc
+    }))
+
+    const rehearsalHistoryList = (state.rehearsalHistory || []).map((r: any) => ({
+      ...r,
+      displayTitle: r.title || `${r.teamName} 的排练`
+    }))
+    
+    let keepValue = ''
+    if (draft && draft.linkedGameId === id) {
+      keepValue = draft.summary
+      // 消费完毕后清除草稿，避免污染后续操作
+      setVoiceDraft(null)
+    }
+
+    let durationText = ''
+    if (duration > 0) {
+      const m = Math.floor(duration / 60)
+      const s = duration % 60
+      durationText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    }
+
+    this.setData({
+      game,
+      keepValue,
+      duration,
+      durationText,
+      rehearsalHistoryList,
+      linkedRehearsal: currentRehearsal ? currentRehearsal.title : (linkOptions[0] ? linkOptions[0].title : ''),
+      contextType: currentRehearsal ? 'current' : 'single',
+      linkOptions
+    })
+    this.syncOptions()
+  },
+
+  onRehearsalChange(e: any) {
+    const index = e.detail.value
+    const selected = this.data.rehearsalHistoryList[index]
+    if (selected) {
+      this.setData({
+        selectedRehearsalId: selected.id,
+        selectedRehearsalName: selected.displayTitle
+      })
+    }
   },
 
   back() {
@@ -30,65 +129,176 @@ Page({
   },
 
   openVoice() {
-    toast('已打开语音速记')
-  },
-
-  openConfirm() {
-    this.setData({ recordVisible: true })
+    const draft = getState().voiceDraft
+    if (!draft) {
+      toast('已打开语音速记')
+      return
+    }
+    this.setData({
+      keepValue: draft.summary,
+      tryValue: this.data.tryValue
+    })
+    toast('已带入最近一条语音草稿')
   },
 
   closeSheet() {
-    this.setData({ recordVisible: false, linkVisible: false, insightVisible: false })
+    closeModal(this, { linkVisible: false, insightVisible: false })
   },
 
   openLink() {
-    this.setData({ linkVisible: true })
+    openModal(this, { linkVisible: true })
   },
 
   chooseLink(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ linkedRehearsal: event.currentTarget.dataset.value, linkVisible: false })
+    closeModal(this, { linkedRehearsal: event.currentTarget.dataset.value, linkVisible: false })
+  },
+
+  setContextType(event: WechatMiniprogram.TouchEvent) {
+    const value = event.currentTarget.dataset.value as string
+    const current = getState().currentRehearsal
+    this.setData({
+      contextType: value,
+      linkedRehearsal: value === 'single'
+        ? '单独记录'
+        : value === 'new'
+          ? `${this.data.game ? this.data.game.title : '本次游戏'} · 新排练`
+          : (current ? current.title : this.data.linkedRehearsal)
+    }, () => this.syncOptions())
+  },
+
+  setEffect(event: WechatMiniprogram.TouchEvent) {
+    this.setData({ effectValue: event.currentTarget.dataset.value }, () => this.syncOptions())
+  },
+
+  toggleMore() {
+    this.setData({ moreVisible: !this.data.moreVisible })
+  },
+
+  updateField(event: WechatMiniprogram.Input) {
+    const field = event.currentTarget.dataset.field
+    this.setData({ [field]: event.detail.value })
+  },
+
+  openInsight() {
+    this.setData({ insightVisible: true })
+  },
+
+  async saveMethodCard() {
+    if (!this.data.game) return
+    const item: TodayItem = {
+      id: `method-${Date.now()}`,
+      type: '游戏实践',
+      title: `${this.data.game.title}的反馈`,
+      desc: `Keep: ${this.data.keepValue || '无'}\nTry: ${this.data.tryValue || '无'}${this.data.reminderValue ? '\n提醒: ' + this.data.reminderValue : ''}`
+    }
+    try {
+      await createMethodCardRecord({
+        sourceType: 'gameRecord',
+        type: '游戏实践',
+        title: item.title,
+        desc: item.desc,
+        meta: ['游戏实践', this.data.game.title, this.data.effectValue]
+      })
+      addMethodCard(item)
+      toast('已沉淀为方法卡')
+    } catch (error) {
+      addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
+      toast('已本地保存，待同步')
+    }
+    this.closeSheet()
   },
 
   async saveRecord() {
     if (!this.data.game) return
     this.closeSheet()
-    const item: TodayItem = {
-      id: `game-record-${Date.now()}`,
-      title: `${this.data.game.title} · 游戏实践`,
-      desc: 'Keep：大家进入状态很快。Try：下一轮口令少一点。',
-      status: '已完成'
+    let syncFailed = false
+    let targetRehearsal = getState().currentRehearsal
+    if (this.data.contextType === 'new') {
+      const rehearsal = {
+        id: `rehearsal-${Date.now()}`,
+        type: '排练',
+        title: this.data.linkedRehearsal,
+        desc: `${this.data.game.title} · ${this.data.effectValue}`,
+        teamName: this.data.linkedRehearsal.replace(' · 新排练', '') || this.data.game.title,
+        duration: '60',
+        goals: ['游戏反馈'],
+        source: 'feedback',
+        status: '进行中' as const,
+        syncStatus: 'pending' as const,
+        plan: [{ gameId: this.data.game.id, status: '已完成' as const, keep: this.data.keepValue, try: this.data.tryValue }],
+        meta: [this.data.attendanceText, '从反馈创建']
+      }
+      startRehearsal(rehearsal)
+      upsertRehearsalHistory(rehearsal)
+      targetRehearsal = rehearsal
+      try {
+        await createRehearsal(rehearsal)
+        const syncedRehearsal = Object.assign({}, rehearsal, { syncStatus: 'synced' as const })
+        startRehearsal(syncedRehearsal)
+        upsertRehearsalHistory(syncedRehearsal)
+        targetRehearsal = syncedRehearsal
+      } catch (error) {
+        syncFailed = true
+      }
     }
-    await createGameRecord({
+    
+    // 生成游戏记录
+    const gameRecord: GameRecord = {
+      id: `gameRecord-${Date.now()}`,
+      title: this.data.game.title,
+      desc: `${this.data.keepValue || this.data.tryValue || this.data.reminderValue || '无反馈'}`,
       gameId: this.data.game.id,
-      gameTitle: this.data.game.title,
-      keep: '大家进入状态很快。',
-      try: '下一轮口令少一点。'
-    })
-    addTodayItem('todayRehearsals', item)
-    markPlayed(this.data.game.id)
-    toast('记录已保存')
-  },
-
-  async createMethodCard() {
-    this.setData({ recordVisible: false, insightVisible: true })
-  },
-
-  async saveMethodCard() {
-    if (!this.data.game) return
-    this.closeSheet()
-    const item: TodayItem = {
-      id: `method-${Date.now()}`,
-      type: '带领提醒',
-      title: `${this.data.game.title}的带领提醒`,
-      desc: '下一轮口令少一点，让感受多一点。'
+      rehearsalId: targetRehearsal ? targetRehearsal.id : '',
+      effect: this.data.effectValue,
+      keep: this.data.keepValue,
+      try: this.data.tryValue,
+      reminder: this.data.reminderValue,
+      duration: this.data.duration,
+      meta: [this.data.effectValue, this.data.attendanceText].filter(Boolean),
+      syncStatus: 'pending' as const,
+      createdAt: Date.now()
     }
-    await createMethodCardRecord({
-      sourceType: 'gameRecord',
-      title: item.title,
-      desc: item.desc,
-      meta: ['游戏实践', this.data.game.title]
-    })
-    addTodayItem('methodCards', item)
-    toast('已沉淀为方法卡')
+    addGameRecord(gameRecord)
+    
+    try {
+      await createGameRecord({
+        gameId: gameRecord.gameId,
+        rehearsalId: gameRecord.rehearsalId,
+        title: gameRecord.title,
+        effect: gameRecord.effect,
+        keep: gameRecord.keep,
+        try: gameRecord.try,
+        reminder: gameRecord.reminder,
+        duration: gameRecord.duration,
+        meta: gameRecord.meta
+      })
+      // Success, we can ignore the local status update for now as a full refresh will fetch it
+    } catch (error) {
+      syncFailed = true
+    }
+
+    if (targetRehearsal && this.data.contextType !== 'single') {
+      updateCurrentRehearsalPlan(this.data.game.id, {
+        status: '已完成',
+        keep: this.data.keepValue,
+        try: this.data.tryValue
+      })
+      try {
+        await updateGameStatus({
+          rehearsalId: targetRehearsal.id,
+          gameId: this.data.game.id,
+          status: '已完成',
+          keep: this.data.keepValue,
+          try: this.data.tryValue
+        })
+      } catch (error) {
+        syncFailed = true
+      }
+    }
+    markPlayed(this.data.game.id)
+    toast(syncFailed ? '已本地保存，待同步' : '已保存游戏记录')
+    setTimeout(() => {
+      wx.switchTab({ url: '/pages/discover/index' })
+    }, 1500)
   }
 })

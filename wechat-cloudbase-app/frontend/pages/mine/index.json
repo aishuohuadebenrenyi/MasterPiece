@@ -1,5 +1,6 @@
 {
   "usingComponents": {
-    "bottom-sheet": "../../components/bottom-sheet/index"
+    "bottom-sheet": "../../components/bottom-sheet/index",
+    "floating-card": "../../components/floating-card/index"
   }
 }

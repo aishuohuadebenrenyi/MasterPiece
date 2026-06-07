@@ -8,7 +8,8 @@
     "pages/game-feedback/index",
     "pages/rehearsal-record/index",
     "pages/rehearsal-review/index",
-    "pages/team-records/index"
+    "pages/team-records/index",
+    "pages/game-records/index"
   ],
   "window": {
     "navigationStyle": "custom",

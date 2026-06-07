@@ -10,65 +10,12 @@ const _ = db.command
 const COLLECTIONS = {
   games: 'improv_games',
   userGameStates: 'improv_user_game_states',
+  profiles: 'improv_profiles',
   inspirations: 'improv_inspirations',
   rehearsals: 'improv_rehearsals',
   gameRecords: 'improv_game_records',
   methodCards: 'improv_method_cards'
 }
-
-const SEED_GAMES = [
-  {
-    id: 'name-chain',
-    title: '名字接龙变奏',
-    desc: '低门槛开场，快速统一声音和注意力。',
-    category: '热身',
-    tags: ['热身', '破冰', '新手'],
-    meta: ['6-12 人', '8 分钟', '低难度'],
-    fit: ['新手友好', '开场', '中等能量'],
-    lead: '适合刚开场时快速让大家进入同一个声音和注意力节奏。',
-    steps: ['围成一圈，每个人说出自己的名字并配一个动作。', '下一位重复前面内容，再加入自己的名字和动作。', '逐渐加快节奏，让大家进入共同注意力。'],
-    tips: '示范动作要轻松、可模仿，先让大家敢做，再追求节奏。',
-    variant: '变体：加入情绪、拍手节奏或不同声音状态。',
-    issue: '翻车点：动作过复杂会拖慢节奏，第一轮保持简单。',
-    relatedGameId: 'status-swap',
-    stripeTone: 'orange',
-    sortOrder: 10
-  },
-  {
-    id: 'status-swap',
-    title: '一句话交换身份',
-    desc: '用一句台词确认彼此身份，快速建立关系。',
-    category: '关系',
-    tags: ['关系', '叙事', '中等'],
-    meta: ['2-6 人', '12 分钟', '关系练习'],
-    fit: ['关系建立', '双人练习', '中等难度'],
-    lead: '当你想快一点进入人物关系、又不想把规则讲得太重的时候，它很合适。',
-    steps: ['一人抛出带身份关系的台词。', '另一人接住关系，并在下一句继续确认。', '几轮后复盘：哪一句让关系变清楚了？'],
-    tips: '提醒参与者不要解释背景，先把“我和你是什么关系”演清楚。',
-    variant: '变体：限定每句话只能新增一个关系信息。',
-    issue: '翻车点：信息一次给太多，关系反而会糊。',
-    relatedGameId: 'space-walk',
-    stripeTone: 'blue',
-    sortOrder: 20
-  },
-  {
-    id: 'space-walk',
-    title: '空间行走切换',
-    desc: '现场有点散时，适合重新聚焦身体和节奏。',
-    category: '专注',
-    tags: ['专注', '热身', '身体'],
-    meta: ['6-12 人', '10 分钟', '中等能量'],
-    fit: ['身体到场', '注意力分散', '开场前'],
-    lead: '如果你感觉大家的身体还没到场，它能比继续解释更快把人带回来。',
-    steps: ['所有人在空间里自由行走，感受彼此距离。', '带领者给出速度、方向、状态切换口令。', '加入停顿、对视或成组，提高现场专注度。'],
-    tips: '口令保持清晰，变化不要过多，让身体先跟上。',
-    variant: '变体：加入情绪温度、重力、身体部位带路。',
-    issue: '翻车点：口令过快会让大家只想做对，而不是感受现场。',
-    relatedGameId: 'name-chain',
-    stripeTone: 'mint',
-    sortOrder: 30
-  }
-]
 
 function ok(data = {}, requestId = '') {
   return { code: 0, message: 'ok', data, requestId }
@@ -98,7 +45,6 @@ function normalizeGamePayload(payload, ownerOpenId) {
     id: payload.id || `custom-${Date.now()}`,
     title: payload.title,
     desc: payload.desc || '',
-    category: payload.category || '自定义',
     tags: Array.isArray(payload.tags) ? payload.tags : ['自定义'],
     meta: Array.isArray(payload.meta) ? payload.meta : [],
     fit: Array.isArray(payload.fit) ? payload.fit : [],
@@ -107,7 +53,7 @@ function normalizeGamePayload(payload, ownerOpenId) {
     tips: payload.tips || '',
     variant: payload.variant || '',
     issue: payload.issue || '',
-    relatedGameId: payload.relatedGameId || 'name-chain',
+    relatedGameId: payload.relatedGameId || '',
     stripeTone: payload.stripeTone || 'orange',
     sortOrder: Number(payload.sortOrder) || 999,
     ownerOpenId,
@@ -117,33 +63,8 @@ function normalizeGamePayload(payload, ownerOpenId) {
   }
 }
 
-async function removeAll(collectionName) {
-  const collection = db.collection(collectionName)
-  let removed = 0
-  while (true) {
-    const result = await collection.limit(100).get()
-    if (!result.data.length) break
-    await Promise.all(result.data.map((doc) => collection.doc(doc._id).remove()))
-    removed += result.data.length
-    if (result.data.length < 100) break
-  }
-  return removed
-}
-
 async function seedGames(requestId) {
-  const removed = await removeAll(COLLECTIONS.games)
-  const collection = db.collection(COLLECTIONS.games)
-  for (const game of SEED_GAMES) {
-    await collection.add({
-      data: Object.assign({}, game, {
-        ownerOpenId: 'system',
-        createdAt: now(),
-        updatedAt: now(),
-        deletedAt: null
-      })
-    })
-  }
-  return ok({ removed, inserted: SEED_GAMES.length, total: SEED_GAMES.length }, requestId)
+  return fail('已移除代码内 seed 数据，请改为手动导入仓库根目录 mock_data/improv_games.json', requestId, 400)
 }
 
 async function listGames(payload, requestId) {
@@ -181,6 +102,36 @@ async function createGame(payload, requestId) {
   const doc = normalizeGamePayload(payload, ownerOpenId)
   const result = await db.collection(COLLECTIONS.games).add({ data: doc })
   return ok({ id: result._id, gameId: doc.id }, requestId)
+}
+
+async function updateGame(payload, requestId) {
+  if (!payload.id) return fail('缺少游戏 ID', requestId, 400)
+  if (!payload.title) return fail('缺少游戏名称', requestId, 400)
+  const ownerOpenId = getOpenId()
+  
+  const collection = db.collection(COLLECTIONS.games)
+  const existing = await collection.where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
+  if (!existing.data.length) return fail('游戏不存在或无权限修改', requestId, 404)
+  
+  const doc = normalizeGamePayload(payload, ownerOpenId)
+  // 保持原有 ID 和创建时间
+  delete doc.id
+  doc.updatedAt = now()
+  
+  await collection.doc(existing.data[0]._id).update({ data: doc })
+  return ok({ gameId: payload.id }, requestId)
+}
+
+async function deleteGame(payload, requestId) {
+  if (!payload.id) return fail('缺少游戏 ID', requestId, 400)
+  const ownerOpenId = getOpenId()
+  
+  const collection = db.collection(COLLECTIONS.games)
+  const existing = await collection.where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
+  if (!existing.data.length) return fail('游戏不存在或无权限删除', requestId, 404)
+  
+  await collection.doc(existing.data[0]._id).update({ data: { deletedAt: now() } })
+  return ok({ gameId: payload.id }, requestId)
 }
 
 async function updateGameState(payload, requestId) {
@@ -241,6 +192,78 @@ async function createOwned(collectionName, payload, requestId) {
   return ok({ id: result._id }, requestId)
 }
 
+async function updateOwned(collectionName, payload, requestId) {
+  if (!payload.id) return fail('缺少 id', requestId, 400)
+  const collection = db.collection(collectionName)
+  const result = await collection.where(ownerWhere({ id: payload.id })).limit(1).get()
+  if (!result.data.length) return fail('未找到记录', requestId, 404)
+  const patch = Object.assign({}, payload.patch || {}, { updatedAt: now() })
+  await collection.doc(result.data[0]._id).update({ data: patch })
+  return ok({ id: payload.id }, requestId)
+}
+
+async function getProfile(requestId) {
+  const result = await db.collection(COLLECTIONS.profiles)
+    .where(ownerWhere())
+    .limit(1)
+    .get()
+  return ok({ item: result.data[0] || null }, requestId)
+}
+
+async function updateProfile(payload, requestId) {
+  const displayName = typeof payload.displayName === 'string' ? payload.displayName.trim() : ''
+  const avatarUrl = typeof payload.avatarUrl === 'string' ? payload.avatarUrl.trim() : ''
+  const troupeName = typeof payload.troupeName === 'string' ? payload.troupeName.trim() : ''
+  if (!displayName) return fail('缺少 displayName', requestId, 400)
+
+  const collection = db.collection(COLLECTIONS.profiles)
+  const existing = await collection.where(ownerWhere()).limit(1).get()
+  const patch = {
+    displayName,
+    avatarUrl,
+    troupeName,
+    updatedAt: now()
+  }
+
+  if (existing.data.length) {
+    await collection.doc(existing.data[0]._id).update({ data: patch })
+    return ok({ item: Object.assign({}, existing.data[0], patch) }, requestId)
+  }
+
+  const profile = Object.assign({}, patch, {
+    id: `profile-${Date.now()}`,
+    ownerOpenId: getOpenId(),
+    createdAt: now(),
+    deletedAt: null
+  })
+  const result = await collection.add({ data: profile })
+  return ok({ item: Object.assign({ _id: result._id }, profile) }, requestId)
+}
+
+async function updateRehearsalGameStatus(payload, requestId) {
+  if (!payload.rehearsalId || !payload.gameId) return fail('缺少 rehearsalId 或 gameId', requestId, 400)
+  const collection = db.collection(COLLECTIONS.rehearsals)
+  const result = await collection.where(ownerWhere({ id: payload.rehearsalId })).limit(1).get()
+  if (!result.data.length) return fail('未找到排练记录', requestId, 404)
+  const rehearsal = result.data[0]
+  const currentPlan = Array.isArray(rehearsal.plan) ? rehearsal.plan : []
+  const plan = currentPlan.map((item) => item.gameId === payload.gameId
+    ? Object.assign({}, item, {
+        status: payload.status || item.status,
+        keep: typeof payload.keep === 'string' ? payload.keep : item.keep || '',
+        try: typeof payload.try === 'string' ? payload.try : item.try || ''
+      })
+    : item)
+  await collection.doc(rehearsal._id).update({
+    data: {
+      plan,
+      status: payload.rehearsalStatus || rehearsal.status || '进行中',
+      updatedAt: now()
+    }
+  })
+  return ok({ rehearsalId: payload.rehearsalId, gameId: payload.gameId }, requestId)
+}
+
 async function todaySummary(requestId) {
   const ownerOpenId = getOpenId()
   const start = new Date()
@@ -273,7 +296,11 @@ exports.main = async (event) => {
     if (action === 'game.seed' || action === 'seed.games') return seedGames(requestId)
     if (action === 'game.list') return listGames(payload, requestId)
     if (action === 'game.create') return createGame(payload, requestId)
+    if (action === 'game.update') return updateGame(payload, requestId)
+    if (action === 'game.delete') return deleteGame(payload, requestId)
     if (action === 'game.updateState' || action === 'game.updateSaved' || action === 'game.updatePlayed') return updateGameState(payload, requestId)
+    if (action === 'profile.get') return getProfile(requestId)
+    if (action === 'profile.update') return updateProfile(payload, requestId)
     if (action === 'today.summary') return todaySummary(requestId)
     if (action === 'inspiration.list') return listOwned(COLLECTIONS.inspirations, payload, requestId)
     if (action === 'inspiration.create') return createOwned(COLLECTIONS.inspirations, payload, requestId)
@@ -281,6 +308,8 @@ exports.main = async (event) => {
     if (action === 'methodCard.create') return createOwned(COLLECTIONS.methodCards, payload, requestId)
     if (action === 'rehearsal.list') return listOwned(COLLECTIONS.rehearsals, payload, requestId)
     if (action === 'rehearsal.create') return createOwned(COLLECTIONS.rehearsals, payload, requestId)
+    if (action === 'rehearsal.update') return updateOwned(COLLECTIONS.rehearsals, payload, requestId)
+    if (action === 'rehearsal.updateGameStatus') return updateRehearsalGameStatus(payload, requestId)
     if (action === 'gameRecord.list') return listOwned(COLLECTIONS.gameRecords, payload, requestId)
     if (action === 'gameRecord.create') return createOwned(COLLECTIONS.gameRecords, payload, requestId)
     return fail(`未知 action: ${action}`, requestId, 404)

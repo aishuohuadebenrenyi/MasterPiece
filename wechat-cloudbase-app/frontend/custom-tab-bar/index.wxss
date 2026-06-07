@@ -1,3 +1,5 @@
+@import "../styles/theme.wxss";
+
 view,
 button,
 text {
@@ -16,7 +18,7 @@ text {
 }
 
 .tabbar-shell.is-hidden {
-  display: none;
+  display: none !important;
 }
 
 .tab-item::after {
@@ -34,7 +36,9 @@ text {
   padding: 8rpx;
   border-radius: 54rpx;
   background: rgba(255, 255, 255, 0.92);
+  background: var(--improv-card-translucent, rgba(255, 255, 255, 0.92));
   box-shadow: 0 18rpx 40rpx rgba(50, 68, 120, 0.12);
+  box-shadow: 0 18rpx 40rpx var(--improv-shadow-fixed-color, rgba(50, 68, 120, 0.12));
   pointer-events: auto;
   overflow: visible;
 }
@@ -56,14 +60,18 @@ text {
   border-radius: 44rpx;
   background: transparent;
   color: #96a1b4;
+  color: var(--improv-light, #96a1b4);
   font-size: 22rpx;
   font-weight: 900;
 }
 
 .tab-item.active {
   background: linear-gradient(135deg, #4f8cff, #ff7a45);
-  color: #fff;
+  background: linear-gradient(135deg, var(--improv-secondary, #4f8cff), var(--improv-primary, #ff7a45));
+  color: #ffffff;
+  color: var(--improv-on-brand, #ffffff);
   box-shadow: 0 14rpx 26rpx rgba(255, 91, 46, 0.16);
+  box-shadow: 0 14rpx 26rpx var(--improv-shadow-tab-color, rgba(255, 91, 46, 0.16));
   overflow: hidden;
 }
 

@@ -1,0 +1,66 @@
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="game-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <view class="game-records-page">
+    <view class="subpage-header safe-right">
+      <view class="game-back" aria-label="返回" bindtap="back">←</view>
+      <view class="page-title">游戏记录</view>
+    </view>
+
+    <view class="card record-form-card summary-card">
+      <view class="card-head">
+        <view>
+          <view class="section-title">游戏实践</view>
+          <text class="muted">按时间回看单次游戏反馈和经验。</text>
+        </view>
+        <text class="pill blue">{{records.length}} 条</text>
+      </view>
+    </view>
+
+    <view wx:if="{{errorText}}" class="notice-card">{{errorText}}</view>
+
+    <view wx:if="{{loading}}" class="state-card">正在同步游戏记录...</view>
+    <view wx:elif="{{!records.length}}" class="state-card empty-state">
+      <view class="section-title">暂无记录</view>
+      <text class="muted">还没有游戏记录，去玩一次吧。</text>
+    </view>
+
+    <view wx:else class="record-list">
+      <view wx:for="{{records}}" wx:key="id" class="card record-item">
+        <view class="card-head">
+          <view>
+            <text class="mini-title">{{item.dateLabel}}</text>
+            <view class="section-title">{{item.title}}</view>
+          </view>
+          <button class="small-btn" data-id="{{item.id}}" bindtap="openRecord">查看</button>
+        </view>
+        <text class="muted">{{item.displayDesc}}</text>
+        <view class="meta"><text wx:for="{{item.displayMeta}}" wx:key="*this">{{item}}</text><text wx:if="{{item.syncStatus === 'pending'}}" class="pending">待同步</text></view>
+      </view>
+    </view>
+  </view>
+
+  <bottom-sheet visible="{{detailVisible}}" title="记录详情" sheetClass="record-detail-sheet" bind:close="closeSheet">
+    <view wx:if="{{selectedRecord}}" class="detail-card">
+      <view class="detail-title">{{selectedRecord.title}}</view>
+      <view class="meta detail-meta">
+        <text wx:for="{{selectedRecord.displayMeta}}" wx:key="*this">{{item}}</text>
+        <text wx:if="{{selectedRecord.syncStatus === 'pending'}}" class="pending">待同步</text>
+      </view>
+    </view>
+
+    <view class="detail-section">
+      <view class="section-title">反馈详情</view>
+      <view class="detail-notes">
+        <text wx:if="{{selectedRecord.keep}}">Keep：{{selectedRecord.keep}}</text>
+        <text wx:if="{{selectedRecord.try}}">Try：{{selectedRecord.try}}</text>
+        <text wx:if="{{selectedRecord.reminder}}">提醒：{{selectedRecord.reminder}}</text>
+        <text wx:if="{{!selectedRecord.keep && !selectedRecord.try && !selectedRecord.reminder}}">无具体反馈内容。</text>
+      </view>
+    </view>
+
+    <view class="readonly-note">这是历史记录的只读回看。需要再次玩这个游戏时，可前往游戏详情页开启。</view>
+  </bottom-sheet>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>

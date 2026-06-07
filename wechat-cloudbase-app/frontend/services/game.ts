@@ -1,6 +1,6 @@
 import type { Game } from '../types/domain'
 import { callImprovAction } from './cloud'
-import { games as seedGames } from './mock-data'
+import { getState } from '../store/index'
 
 export function normalizeGame(raw: Partial<Game> & { _id?: string }): Game {
   const id = raw.id || raw._id || 'unknown-game'
@@ -8,7 +8,6 @@ export function normalizeGame(raw: Partial<Game> & { _id?: string }): Game {
     id,
     title: '',
     desc: '',
-    category: '即兴练习',
     tags: [],
     meta: [],
     fit: [],
@@ -19,7 +18,7 @@ export function normalizeGame(raw: Partial<Game> & { _id?: string }): Game {
     tips: '',
     variant: '',
     issue: '',
-    relatedGameId: 'name-chain',
+    relatedGameId: '',
     stripeTone: 'orange',
     sortOrder: 999,
     saved: false,
@@ -27,7 +26,7 @@ export function normalizeGame(raw: Partial<Game> & { _id?: string }): Game {
     playedCount: 0
   }, raw, {
     id,
-    relatedGameId: raw.relatedGameId || (raw as { related?: string }).related || 'name-chain'
+    relatedGameId: raw.relatedGameId || (raw as { related?: string }).related || ''
   }) as Game
 }
 
@@ -36,11 +35,19 @@ export async function listGames(filters: Record<string, unknown> = {}) {
   if (response.code === 0 && response.data && response.data.items) {
     return response.data.items.map(normalizeGame).sort((a, b) => a.sortOrder - b.sortOrder)
   }
-  return seedGames
+  return []
 }
 
 export async function createGame(payload: Partial<Game>) {
   return callImprovAction<{ id: string }>('game.create', payload as Record<string, unknown>)
+}
+
+export async function updateGame(payload: Partial<Game>) {
+  return callImprovAction<{ gameId: string }>('game.update', payload as Record<string, unknown>)
+}
+
+export async function deleteGame(id: string) {
+  return callImprovAction<{ gameId: string }>('game.delete', { id })
 }
 
 export async function updateGameState(gameId: string, patch: { saved?: boolean; played?: boolean }) {
@@ -56,6 +63,6 @@ export async function updatePlayed(gameId: string, value: boolean) {
   return updateGameState(gameId, { played: true })
 }
 
-export function findLocalGame(id: string) {
-  return seedGames.find((game) => game.id === id) || seedGames[0]
+export function findLocalGame(id: string): Game | null {
+  return getState().games.find((game) => game.id === id) || null
 }

@@ -1,47 +1,53 @@
-<view class="page">
-  <view class="safe-right">
-    <button class="back" bindtap="back">← 返回</button>
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <view class="subpage-header safe-right">
+    <view class="back" aria-label="返回" bindtap="back">←</view>
     <text class="kicker">排练复盘</text>
-    <view class="title">结束并复盘</view>
+    <view class="page-title">结束并复盘</view>
   </view>
 
-  <view class="card form-card">
-    <view class="section-title">整体复盘</view>
-    <label class="field">整体 Keep<textarea value="大家进入身体状态很快，空间行走后注意力明显集中。" /></label>
-    <label class="field">整体 Try<textarea value="关系练习前需要更短的示范，不要一开始解释太多规则。" /></label>
-    <label class="field">下次提醒<input value="后半段加更明确的限制词，避免信息一次给太多。" /></label>
+  <view class="card record-form-card">
+    <view class="section-head">
+      <view>
+        <text class="mini-title">整体复盘</text>
+        <view class="section-title">{{reviewTitle}}</view>
+      </view>
+    </view>
+    <label class="field">整体 Keep<textarea value="{{keepValue}}" data-field="keepValue" bindblur="updateField" /></label>
+    <label class="field">整体 Try<textarea value="{{tryValue}}" data-field="tryValue" bindblur="updateField" /></label>
+    <label class="field">下次提醒<input value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" /></label>
   </view>
 
-  <view class="card form-card">
-    <view class="section-title">沉淀方向</view>
-    <view class="tag-row">
-      <button class="chip active">带领提醒</button>
-      <button class="chip">游戏调整</button>
-      <button class="chip active">下次计划</button>
+  <view class="card record-form-card">
+    <view class="section-head">
+      <view>
+        <text class="mini-title">沉淀方向</text>
+        <view class="section-title">这次想留下什么</view>
+      </view>
+    </view>
+    <view class="form-chip-row">
+      <button class="chip {{selectedDirections.indexOf('带领提醒') >= 0 ? 'active' : ''}}" data-value="带领提醒" bindtap="toggleDirection">带领提醒</button>
+      <button class="chip {{selectedDirections.indexOf('游戏调整') >= 0 ? 'active' : ''}}" data-value="游戏调整" bindtap="toggleDirection">游戏调整</button>
+      <button class="chip {{selectedDirections.indexOf('下次计划') >= 0 ? 'active' : ''}}" data-value="下次计划" bindtap="toggleDirection">下次计划</button>
     </view>
   </view>
 
-  <view class="form-actions">
-    <button class="ghost-btn" bindtap="back">返回修改</button>
-    <button class="primary-btn" bindtap="openConfirm">保存复盘</button>
-  </view>
-
-  <bottom-sheet visible="{{confirmVisible}}" title="记录确认" bind:close="closeSheet">
-    <label class="field">记录类型<input value="排练复盘" /></label>
-    <label class="field">关联排练<input value="开心即兴团 · 06.01 排练" /></label>
-    <label class="field">Keep / Try<textarea value="Keep：大家进入状态很快。Try：下一轮口令少一点。" /></label>
-    <view class="center-actions">
+  <root-portal wx:if="{{!modalOpen}}">
+    <view class="form-actions">
       <button class="ghost-btn" bindtap="createMethodCard">沉淀为方法卡</button>
-      <button class="primary-btn" bindtap="save">保存记录</button>
+      <button class="primary-btn" bindtap="save">保存复盘</button>
     </view>
-  </bottom-sheet>
+  </root-portal>
 
-  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bind:close="closeSheet">
+  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" bind:close="closeSheet">
     <view class="card insight-card">
       <text class="pill orange">带领提醒</text>
-      <view class="section-title insight-title">开场不要解释太多</view>
-      <text class="muted">新手场先用身体和声音统一节奏。</text>
+      <view class="section-title insight-title">{{methodTitle}}</view>
+      <text class="muted">{{reminderValue}}</text>
     </view>
     <button class="primary-btn sheet-submit" bindtap="saveMethodCard">保存为方法卡</button>
   </bottom-sheet>
-</view>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>
