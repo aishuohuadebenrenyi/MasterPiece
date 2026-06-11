@@ -1,5 +1,5 @@
 {
-  "appid": "appid",
+  "appid": "your-appid",
   "compileType": "miniprogram",
   "miniprogramRoot": "frontend/",
   "cloudfunctionRoot": "backend/cloudfunctions/",

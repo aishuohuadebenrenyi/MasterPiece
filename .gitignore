@@ -2,4 +2,10 @@
 .trae/
 node_modules/
 wechat-cloudbase-app/node_modules/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
 wechat-cloudbase-app/project.private.config.json
