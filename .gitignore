@@ -1,5 +1,8 @@
 .DS_Store
 .trae/
+.codex/
+old/
+project_memory/
 node_modules/
 wechat-cloudbase-app/node_modules/
 .env
