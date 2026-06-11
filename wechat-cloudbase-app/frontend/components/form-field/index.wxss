@@ -1,0 +1,55 @@
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.form-field {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-field-vertical {
+  flex-direction: column;
+}
+
+.form-field-horizontal {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-label-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16rpx;
+}
+
+.form-field-horizontal .field-label-group {
+  margin-bottom: 0;
+  margin-right: 20rpx;
+  flex: 0 0 auto;
+}
+
+.field-label {
+  color: var(--improv-text);
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.field-desc {
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  line-height: 1.4;
+  margin-top: 6rpx;
+}
+
+.field-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}

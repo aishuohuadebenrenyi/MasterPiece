@@ -1,0 +1,22 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+}
+
+.record-card {
+  padding: 36rpx;
+  margin-bottom: 18rpx;
+}
+
+.record-card-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.record-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}

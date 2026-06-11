@@ -1,0 +1,68 @@
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-height: 84rpx;
+  padding: 0 24rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-light);
+  border: 2rpx solid var(--improv-line-soft);
+  box-sizing: border-box;
+}
+
+.search-bar-compact {
+  min-height: 76rpx;
+  padding: 0 20rpx;
+  border-radius: 24rpx;
+}
+
+.search-icon {
+  flex: 0 0 auto;
+  color: var(--improv-light);
+  font-size: 26rpx;
+  line-height: 1;
+}
+
+.search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 84rpx;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--improv-text);
+  font-size: 28rpx;
+}
+
+.search-bar-compact .search-input {
+  height: 76rpx;
+  font-size: 26rpx;
+}
+
+.search-clear,
+.search-hint {
+  flex: 0 0 auto;
+  color: var(--improv-light);
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.search-clear {
+  width: auto;
+  min-height: 52rpx;
+  margin: 0;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  background: var(--improv-bg-soft);
+  color: var(--improv-muted);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 52rpx;
+}

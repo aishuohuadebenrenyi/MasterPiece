@@ -1,4 +1,6 @@
 {
-  "usingComponents": {}
+  "usingComponents": {
+    "game-form": "../../components/game-form/index",
+    "subpage-header": "../../components/subpage-header/index"
+  }
 }
-

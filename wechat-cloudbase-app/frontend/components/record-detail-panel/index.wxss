@@ -1,0 +1,81 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+}
+
+.detail-card {
+  padding: 34rpx;
+  border-radius: 32rpx;
+  background: var(--improv-card-light);
+}
+
+.detail-desc {
+  margin-top: 10rpx;
+}
+
+.detail-meta {
+  margin-top: 18rpx;
+}
+
+.detail-section {
+  margin-top: 24rpx;
+}
+
+.detail-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 18rpx;
+  color: var(--improv-muted);
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.detail-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 18rpx;
+}
+
+.detail-game {
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-light);
+}
+
+.detail-game-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.step-index {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 22rpx;
+  background: var(--improv-primary-soft);
+  color: var(--improv-primary-strong);
+  text-align: center;
+  line-height: 44rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.detail-game-title {
+  color: var(--improv-text);
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.readonly-note {
+  margin-top: 24rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-light);
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  line-height: 1.6;
+}

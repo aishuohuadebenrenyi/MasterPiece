@@ -1,6 +1,10 @@
 {
+  "navigationBarTitleText": "排练复盘",
+  "disableScroll": true,
   "usingComponents": {
-    "bottom-sheet": "../../components/bottom-sheet/index"
+    "bottom-sheet": "../../components/bottom-sheet/index",
+    "form-card": "../../components/form-card/index",
+    "form-field": "../../components/form-field/index",
+    "subpage-header": "../../components/subpage-header/index"
   }
 }
-

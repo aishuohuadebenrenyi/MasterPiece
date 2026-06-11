@@ -1,5 +1,5 @@
 <root-portal wx:if="{{mounted}}">
-  <view class="sheet-layer">
+  <view class="sheet-layer {{themeClass}}">
     <view class="sheet-mask mask-{{resolvedMaskVariant}} {{maskVisibleClass}} {{maskClass}}" catchtap="closeFromMask" catchtouchmove="noop"></view>
     <view class="sheet {{showClass}} {{sheetClass}}" catchtap="noop">
       <view class="sheet-content">

@@ -10,18 +10,6 @@
   margin-bottom: 12rpx;
 }
 
-.page-title,
-.section-title,
-.game-title {
-  color: var(--improv-text);
-  font-weight: 900;
-}
-
-.page-title {
-  font-size: 56rpx;
-  line-height: 1.1;
-}
-
 .record-form-card {
   padding: 32rpx;
   margin-bottom: 24rpx;
@@ -42,24 +30,10 @@
   min-height: 56rpx;
 }
 
-.section-title,
 .game-title {
   font-size: 32rpx;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 18rpx;
-}
-
-.meta text {
-  padding: 10rpx 18rpx;
-  background: var(--improv-bg-soft);
-  color: var(--improv-muted);
-  font-size: 24rpx;
-  font-weight: 800;
+  color: var(--improv-text);
+  font-weight: 900;
 }
 
 .option-card {
@@ -101,6 +75,25 @@
 
 .rehearsal-game {
   padding: 28rpx;
+  margin-top: 24rpx;
+}
+
+.plan-empty-card,
+.add-empty-card {
+  padding: 28rpx;
+  margin-top: 24rpx;
+}
+
+.plan-empty-card .muted,
+.add-empty-card .muted {
+  display: block;
+  margin-top: 10rpx;
+  line-height: 1.6;
+}
+
+.plan-empty-btn {
+  width: 280rpx;
+  max-width: 72%;
   margin-top: 24rpx;
 }
 
@@ -158,13 +151,19 @@
 .form-actions {
   display: flex;
   flex-direction: row;
+  justify-content: center;
   gap: 20rpx;
 }
 
-.quick-feedback label,
-.form-actions button {
+.quick-feedback label {
   flex: 1 1 0;
   min-width: 0;
+}
+
+.form-actions button {
+  flex: 0 1 268rpx;
+  min-width: 0;
+  max-width: 268rpx;
 }
 
 .plan-sheet-summary {

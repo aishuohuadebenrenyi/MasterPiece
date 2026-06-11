@@ -1,3 +1,5 @@
+const { subscribe, getThemeClass } = require('../../store/index')
+
 Component({
   options: {
     multipleSlots: true
@@ -31,6 +33,7 @@ Component({
     }
   },
   data: {
+    themeClass: 'theme-default',
     mounted: false,
     showClass: '',
     maskVisibleClass: '',
@@ -38,7 +41,16 @@ Component({
     resolvedBodyMode: 'scroll'
   },
   lifetimes: {
+    attached() {
+      this._unsubscribe = subscribe(() => {
+        const themeClass = getThemeClass()
+        if (this.data.themeClass !== themeClass) {
+          this.setData({ themeClass })
+        }
+      })
+    },
     detached() {
+      if (this._unsubscribe) this._unsubscribe()
       if (this._hideTimer) clearTimeout(this._hideTimer)
       if (this._showTimer) clearTimeout(this._showTimer)
     }

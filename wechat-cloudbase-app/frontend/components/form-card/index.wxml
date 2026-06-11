@@ -1,0 +1,15 @@
+<view class="form-card card">
+  <view class="card-head" wx:if="{{title || kicker}}">
+    <view class="card-head-title">
+      <text class="kicker" wx:if="{{kicker}}">{{kicker}}</text>
+      <view class="title" wx:if="{{title}}">{{title}}</view>
+    </view>
+    <button class="small-btn action-btn" wx:if="{{actionText}}" bindtap="onActionTap">
+      <text wx:if="{{actionIcon}}" class="action-icon">{{actionIcon}}</text>
+      <text>{{actionText}}</text>
+    </button>
+  </view>
+  <view class="card-body">
+    <slot></slot>
+  </view>
+</view>

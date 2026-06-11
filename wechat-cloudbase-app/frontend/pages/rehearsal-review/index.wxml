@@ -1,35 +1,29 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
-  <view class="subpage-header safe-right">
-    <view class="back" aria-label="返回" bindtap="back">←</view>
-    <text class="kicker">排练复盘</text>
-    <view class="page-title">结束并复盘</view>
-  </view>
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}">
+  <subpage-header kicker="排练复盘" title="结束并复盘" bind:back="back" />
 
-  <view class="card record-form-card">
-    <view class="section-head">
-      <view>
-        <text class="mini-title">整体复盘</text>
-        <view class="section-title">{{reviewTitle}}</view>
+  <form-card title="{{reviewTitle}}" kicker="整体复盘">
+    <view class="form-field-stack">
+      <form-field label="整体 Keep">
+        <textarea class="app-textarea" value="{{keepValue}}" data-field="keepValue" bindblur="updateField" />
+      </form-field>
+      <form-field label="整体 Try">
+        <textarea class="app-textarea" value="{{tryValue}}" data-field="tryValue" bindblur="updateField" />
+      </form-field>
+      <form-field label="下次提醒">
+        <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" />
+      </form-field>
+    </view>
+  </form-card>
+
+  <form-card title="这次想留下什么" kicker="沉淀方向">
+    <view class="choice-section">
+      <view class="form-chip-row">
+        <button class="chip compact-filter-chip {{selectedDirections.indexOf('带领提醒') >= 0 ? 'active' : ''}}" data-value="带领提醒" bindtap="toggleDirection">带领提醒</button>
+        <button class="chip compact-filter-chip {{selectedDirections.indexOf('游戏调整') >= 0 ? 'active' : ''}}" data-value="游戏调整" bindtap="toggleDirection">游戏调整</button>
+        <button class="chip compact-filter-chip {{selectedDirections.indexOf('下次计划') >= 0 ? 'active' : ''}}" data-value="下次计划" bindtap="toggleDirection">下次计划</button>
       </view>
     </view>
-    <label class="field">整体 Keep<textarea value="{{keepValue}}" data-field="keepValue" bindblur="updateField" /></label>
-    <label class="field">整体 Try<textarea value="{{tryValue}}" data-field="tryValue" bindblur="updateField" /></label>
-    <label class="field">下次提醒<input value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" /></label>
-  </view>
-
-  <view class="card record-form-card">
-    <view class="section-head">
-      <view>
-        <text class="mini-title">沉淀方向</text>
-        <view class="section-title">这次想留下什么</view>
-      </view>
-    </view>
-    <view class="form-chip-row">
-      <button class="chip {{selectedDirections.indexOf('带领提醒') >= 0 ? 'active' : ''}}" data-value="带领提醒" bindtap="toggleDirection">带领提醒</button>
-      <button class="chip {{selectedDirections.indexOf('游戏调整') >= 0 ? 'active' : ''}}" data-value="游戏调整" bindtap="toggleDirection">游戏调整</button>
-      <button class="chip {{selectedDirections.indexOf('下次计划') >= 0 ? 'active' : ''}}" data-value="下次计划" bindtap="toggleDirection">下次计划</button>
-    </view>
-  </view>
+  </form-card>
 
   <root-portal wx:if="{{!modalOpen}}">
     <view class="form-actions">
@@ -48,6 +42,6 @@
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
-    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>

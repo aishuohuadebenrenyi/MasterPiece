@@ -1,0 +1,26 @@
+<view class="filter-section choice-section {{customClass}}">
+  <text wx:if="{{label}}" class="filter-label">{{label}}</text>
+  <scroll-view wx:if="{{!wrap}}" class="chip-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
+    <view class="chip-row filter-chip-track {{rowClass}}">
+      <button
+        wx:for="{{options}}"
+        wx:key="value"
+        class="chip compact-filter-chip filter-chip {{chipClass}} {{item.activeClass}}"
+        data-value="{{item.value}}"
+        catchtap="onSelect"
+      >{{item.label}}</button>
+      <slot name="suffix"></slot>
+    </view>
+  </scroll-view>
+  <view wx:else class="chip-row filter-chip-wrap {{rowClass}}">
+    <button
+      wx:for="{{options}}"
+      wx:key="value"
+      class="chip compact-filter-chip filter-chip {{chipClass}} {{item.activeClass}}"
+      data-value="{{item.value}}"
+      catchtap="onSelect"
+    >{{item.label}}</button>
+    <slot name="suffix"></slot>
+  </view>
+  <slot></slot>
+</view>

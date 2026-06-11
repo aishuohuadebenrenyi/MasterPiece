@@ -1,0 +1,37 @@
+<view class="detail-card">
+  <view class="detail-title">{{title}}</view>
+  <text wx:if="{{desc}}" class="muted detail-desc">{{desc}}</text>
+  <view wx:if="{{meta.length || pending}}" class="meta-row detail-meta">
+    <text wx:for="{{meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+    <text wx:if="{{pending}}" class="meta-pill pending">本地暂存</text>
+  </view>
+</view>
+
+<view class="detail-section">
+  <view class="section-title">{{sectionTitle}}</view>
+  <block wx:if="{{plan.length}}">
+    <view class="detail-plan">
+      <view wx:for="{{plan}}" wx:key="gameId" class="detail-game">
+        <view class="detail-game-head">
+          <text class="step-index">{{index + 1}}</text>
+          <view>
+            <view class="detail-game-title">{{item.title}}</view>
+            <text class="muted">{{item.status}}</text>
+          </view>
+        </view>
+        <view wx:if="{{item.keep || item.try}}" class="detail-notes">
+          <text wx:if="{{item.keep}}">Keep：{{item.keep}}</text>
+          <text wx:if="{{item.try}}">Try：{{item.try}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+  <block wx:elif="{{notes.length}}">
+    <view class="detail-notes">
+      <text wx:for="{{notes}}" wx:key="*this">{{item}}</text>
+    </view>
+  </block>
+  <text wx:else class="muted">{{planEmptyText || emptyText}}</text>
+</view>
+
+<view wx:if="{{readonlyNote}}" class="readonly-note">{{readonlyNote}}</view>

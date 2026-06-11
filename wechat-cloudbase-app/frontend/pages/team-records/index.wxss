@@ -15,33 +15,6 @@
   margin-bottom: 28rpx;
 }
 
-.team-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64rpx;
-  min-width: 64rpx;
-  height: 64rpx;
-  min-height: 64rpx;
-  margin-bottom: 18rpx;
-  padding: 0;
-  color: var(--improv-text);
-  font-size: 36rpx;
-  line-height: 1;
-  font-weight: 900;
-}
-
-.page-title,
-.section-title {
-  color: var(--improv-text);
-  font-weight: 900;
-}
-
-.page-title {
-  font-size: 56rpx;
-  line-height: 1.1;
-}
-
 .record-form-card,
 .record-item {
   padding: 36rpx;
@@ -49,39 +22,6 @@
 
 .summary-card {
   margin-bottom: 30rpx;
-}
-
-.section-title {
-  font-size: 34rpx;
-  line-height: 1.18;
-}
-
-.card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 18rpx;
-}
-
-.meta text {
-  padding: 12rpx 20rpx;
-  border-radius: 0;
-  background: var(--improv-bg-soft);
-  color: var(--improv-muted);
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.meta .pending {
-  background: var(--improv-primary-tint);
-  color: var(--improv-warm);
 }
 
 .record-list {
@@ -105,36 +45,15 @@
   margin-top: 16rpx;
 }
 
-.state-card,
-.notice-card {
-  padding: 28rpx;
-  border-radius: 30rpx;
-  color: var(--improv-muted);
-  font-size: 26rpx;
-  line-height: 1.5;
-  font-weight: 800;
+.empty-actions {
+  justify-content: center;
+  margin-top: 24rpx;
 }
 
-.state-card {
-  background: var(--improv-card-light);
-}
-
-.empty-state {
-  padding: 42rpx 36rpx 40rpx;
-  border-radius: 40rpx;
-  background: var(--improv-card-strong);
-  border: 2rpx solid var(--improv-line-soft);
-  box-shadow: var(--improv-shadow-xs);
-}
-
-.notice-card {
-  margin-bottom: 22rpx;
-  background: var(--improv-primary-tint);
-  color: var(--improv-warm);
-}
-
-.empty-state .section-title {
-  margin-bottom: 10rpx;
+.empty-action-btn {
+  flex: 0 1 240rpx;
+  min-width: 0;
+  max-width: 240rpx;
 }
 
 .detail-card {

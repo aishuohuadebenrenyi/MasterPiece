@@ -1,4 +1,5 @@
 export type ViewMode = 'list' | 'card'
+export type ThemeMode = 'default' | 'vivid'
 export type VoiceTarget = 'inspiration' | 'game_feedback' | 'rehearsal'
 export type StripeTone = 'orange' | 'blue' | 'mint'
 export type RehearsalStatus = '未开始' | '进行中' | '已完成' | '暂停中'
@@ -20,10 +21,6 @@ export interface Game {
   desc: string
   tags: string[]
   meta: string[]
-  fit: string[]
-  verdict?: string
-  avoid?: string
-  lead: string
   steps: string[]
   tips: string
   variant: string
@@ -104,8 +101,10 @@ export interface VoiceDraft {
 }
 
 export interface AppState {
+  themeMode: ThemeMode
   viewMode: ViewMode
   games: Game[]
+  recommendGameId: string
   savedGameIds: string[]
   playedGameIds: string[]
   todayInspirations: InspirationItem[]
@@ -116,6 +115,7 @@ export interface AppState {
   currentGame: GameSession | null
   rehearsalHistory: RehearsalRecord[]
   gameRecordsHistory: GameRecord[]
+  dismissedPendingKeys: string[]
   voiceDraft: VoiceDraft | null
   profile: { displayName: string; avatarUrl: string; troupeName?: string } | null
 }

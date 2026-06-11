@@ -1,57 +1,38 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
-  <view class="subpage-header safe-right">
-    <view class="back" aria-label="返回" bindtap="back">←</view>
-    <text class="kicker">灵感记录</text>
-    <view class="page-title">先把想法留下来</view>
-  </view>
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}">
+  <subpage-header kicker="灵感记录" title="先把想法留下来" bind:back="back" />
 
-  <view class="card record-form-card">
-    <view class="section-head">
-      <view>
-        <text class="mini-title">整理方式</text>
-        <view class="section-title">先定下这条灵感的方向</view>
-      </view>
-    </view>
-    <view class="form-chip-row">
-      <button wx:for="{{arrangementOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setArrangement">{{item.label}}</button>
-    </view>
-    <view class="form-chip-row tag-row-spaced">
-      <button wx:for="{{tagOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="toggleTag">{{item.label}}</button>
-    </view>
-  </view>
+  <form-card title="先定下这条灵感的方向" kicker="整理方式">
+    <filter-section label="整理方式" options="{{arrangementOptions}}" wrap="{{true}}" customClass="arrangement-section" rowClass="form-chip-row" bind:select="setArrangement" />
+    <filter-section label="标签" options="{{tagOptions}}" wrap="{{true}}" customClass="tag-section" rowClass="form-chip-row tag-row-spaced" bind:select="toggleTag" />
+  </form-card>
 
-  <view class="card record-form-card">
-    <view class="card-head">
-      <view>
-        <text class="mini-title">语音 / 文字</text>
-        <view class="section-title">灵感草稿</view>
-      </view>
-      <button class="small-btn" bindtap="openVoice">语音</button>
+  <form-card title="灵感草稿" kicker="语音 / 文字" actionText="语音" bind:action="openVoice">
+    <view class="form-field-stack">
+      <form-field label="标题">
+        <input class="app-input" value="{{titleValue}}" data-field="titleValue" bindblur="updateField" bindconfirm="updateField" />
+      </form-field>
+      <form-field label="内容">
+        <textarea class="app-textarea" value="{{contentValue}}" data-field="contentValue" bindblur="updateField" />
+      </form-field>
     </view>
-    <label class="field">标题<input value="{{titleValue}}" data-field="titleValue" bindblur="updateField" bindconfirm="updateField" /></label>
-    <label class="field">内容<textarea value="{{contentValue}}" data-field="contentValue" bindblur="updateField" /></label>
-  </view>
+  </form-card>
 
-  <view class="card record-form-card">
-    <view class="section-head">
-      <view>
-        <text class="mini-title">可选关联</text>
-        <view class="section-title">把灵感挂到游戏或排练里</view>
-      </view>
+  <form-card wx:if="{{showLinkSection}}" title="把灵感挂到游戏或排练里" kicker="可选关联">
+    <view class="form-field-stack">
+      <form-field label="关联游戏">
+        <view class="field-picker">
+          <input class="app-input" value="{{linkedGame}}" placeholder="选择关联游戏" disabled />
+          <button class="small-btn" data-kind="game" bindtap="openLink">选择</button>
+        </view>
+      </form-field>
+      <form-field label="关联排练">
+        <view class="field-picker">
+          <input class="app-input" value="{{linkedRehearsal}}" placeholder="可选，例如：开心即兴团 06.01 排练" disabled />
+          <button class="small-btn" data-kind="rehearsal" bindtap="openLink">选择</button>
+        </view>
+      </form-field>
     </view>
-    <label class="field">关联游戏
-      <view class="field-picker">
-        <input value="{{linkedGame}}" placeholder="选择关联游戏" disabled />
-        <button class="small-btn" data-kind="game" bindtap="openLink">选择</button>
-      </view>
-    </label>
-    <label class="field">关联排练
-      <view class="field-picker">
-        <input value="{{linkedRehearsal}}" placeholder="可选，例如：开心即兴团 06.01 排练" disabled />
-        <button class="small-btn" data-kind="rehearsal" bindtap="openLink">选择</button>
-      </view>
-    </label>
-  </view>
+  </form-card>
 
   <root-portal wx:if="{{!modalOpen}}">
     <view class="form-actions">
@@ -72,15 +53,18 @@
   </bottom-sheet>
 
   <bottom-sheet visible="{{linkVisible}}" title="{{linkSheetTitle}}" bodyMode="fit" bind:close="closeSheet">
-    <view wx:for="{{linkOptions}}" wx:key="value" class="card option-card">
-      <view class="card-head">
-        <view>
-          <view class="entry-title">{{item.title}}</view>
-          <text class="muted">{{item.desc}}</text>
-        </view>
-        <button class="small-btn" data-value="{{item.value}}" bindtap="chooseLink">选择</button>
-      </view>
-    </view>
+    <empty-state-panel wx:if="{{!linkOptions.length}}" customClass="empty-link-card" title="{{linkEmptyTitle}}" desc="{{linkEmptyDesc}}" secondaryText="先不关联" bind:secondary="closeSheet" />
+    <selection-card
+      wx:for="{{linkOptions}}"
+      wx:key="value"
+      itemId="{{item.value}}"
+      customClass="option-card"
+      title="{{item.title}}"
+      desc="{{item.desc}}"
+      actionText="选择"
+      bind:action="chooseLink"
+      bind:tapcard="chooseLink"
+    />
   </bottom-sheet>
 
   <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" bind:close="closeSheet">
@@ -100,6 +84,6 @@
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
-    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>

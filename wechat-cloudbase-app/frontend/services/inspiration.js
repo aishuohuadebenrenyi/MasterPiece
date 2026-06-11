@@ -3,7 +3,7 @@ const { callImprovAction } = require('./cloud')
 async function listInspirations(filters = {}) {
   const response = await callImprovAction('inspiration.list', filters)
   if (response.code === 0 && response.data && response.data.items) return response.data.items
-  return []
+  throw new Error(response.message || '加载灵感失败')
 }
 
 async function createInspiration(payload) {

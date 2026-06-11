@@ -61,16 +61,6 @@
   font-weight: 800;
 }
 
-.verdict {
-  margin-top: 22rpx;
-  padding: 24rpx;
-  border-radius: 32rpx;
-  background: var(--improv-primary-faint);
-  color: var(--improv-primary-strong);
-  font-size: 24rpx;
-  font-weight: 900;
-}
-
 .block-title {
   margin-bottom: 20rpx;
   color: var(--improv-text);
@@ -108,16 +98,40 @@
 
 .fixed-actions {
   flex-direction: row;
+  justify-content: center;
   gap: 14rpx;
 }
 
 .fixed-actions button {
-  flex: 1 1 0;
+  flex: 0 1 176rpx;
   min-width: 0;
+  max-width: 176rpx;
 }
 
 .fixed-actions button:last-child {
-  flex-grow: 1.25;
+  flex: 0 1 240rpx;
+  max-width: 240rpx;
+}
+
+.save-toggle-btn {
+  min-height: 58rpx;
+  padding: 0 10rpx;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "PingFang SC", sans-serif;
+  font-size: 25rpx;
+  font-weight: 500;
+}
+
+.save-toggle-idle {
+  color: var(--improv-favorite-idle, #b7c5e6);
+  opacity: 0.96;
+}
+
+.save-toggle-active {
+  color: var(--improv-favorite-active, #f2aea4);
+  opacity: 0.98;
 }
 
 .delete-btn {
@@ -147,7 +161,10 @@
 }
 
 .add-sheet-field {
-  margin-top: 22rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  margin-top: 28rpx;
 }
 
 .add-sheet-field:first-child {
@@ -240,7 +257,7 @@
   display: flex;
   align-items: center;
   gap: 14rpx;
-  margin-top: 10rpx;
+  margin-top: 0 !important;
 }
 
 .textarea-voice-row {

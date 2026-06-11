@@ -3,7 +3,7 @@ const { listInspirations } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
 const { listGameRecords } = require('../../services/game-record')
 const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
-const { addMethodCard, getState } = require('../../store/index')
+const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, toggleThemeMode } = require('../../store/index')
 const { closeModal, openModal } = require('../../utils/modal')
 const { syncTabBar } = require('../../utils/tabbar')
 const { getLayoutStyle } = require('../../utils/layout')
@@ -46,6 +46,10 @@ function getSourceKey(item = {}) {
   return `${sourceType}:${item.sourceTitle || item.title || ''}`
 }
 
+function filterItemMeta(item = {}) {
+  return (item.meta || []).filter((entry) => entry && entry !== item.type)
+}
+
 function normalizePendingItem(item, sourceType) {
   const label = getSourceLabel(sourceType)
   const title = item.title || (sourceType === 'gameRecord' ? '未命名游戏记录' : '未命名记录')
@@ -62,7 +66,8 @@ function normalizePendingItem(item, sourceType) {
     sourceTitle: title,
     title,
     desc,
-    meta: [label].concat(meta.filter((entry) => entry !== label))
+    meta: [label].concat(meta.filter((entry) => entry !== label)),
+    filteredMeta: meta.filter((entry) => entry && entry !== label)
   })
 }
 
@@ -97,11 +102,17 @@ function filterSediments(sediments = [], methodFilter = 'all') {
 function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', discardedPendingKeys = [] } = {}) {
   const mappedSediments = sediments.map(item => Object.assign({}, item, {
     sourceType: normalizeMethodSourceType(item.sourceType),
-    type: item.type || getSourceLabel(item.sourceType)
+    type: item.type || getSourceLabel(item.sourceType),
+    filteredMeta: filterItemMeta(Object.assign({}, item, {
+      type: item.type || getSourceLabel(item.sourceType)
+    }))
   }))
   const mappedInspirations = inspirations.map((item) => Object.assign({}, item, {
     sourceType: item.sourceType || 'inspiration',
-    type: item.type || '灵感'
+    type: item.type || '灵感',
+    filteredMeta: filterItemMeta(Object.assign({}, item, {
+      type: item.type || '灵感'
+    }))
   }))
   const discarded = new Set(discardedPendingKeys)
   const pendingItems = buildPendingItems({ inspirations: mappedInspirations, rehearsals, gameRecords, sediments: mappedSediments })
@@ -111,6 +122,14 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
   const rehearsalCount = getRehearsalCount(rehearsals)
   const gameRecordsCount = gameRecords.length || 0
   const showIntroState = methodCount === 0 && mappedInspirations.length === 0 && rehearsalCount === 0 && gameRecordsCount === 0
+  const showPendingCard = pendingItems.length > 0
+  const showSedimentsCard = methodCount > 0
+  const showInspirationsCard = mappedInspirations.length > 0
+  const showGameRecordsCard = gameRecordsCount > 0
+  const showRehearsalCard = rehearsalCount > 0
+  const visibleAssetCardCount = [showSedimentsCard, showInspirationsCard, showGameRecordsCard, showRehearsalCard].filter(Boolean).length
+  const showStatsCard = !showIntroState && (totalRecords > 1 || playedCount > 0 || methodCount > 0)
+  const showLiteGuideCard = !showIntroState && visibleAssetCardCount <= 1
   const nextProfile = normalizeProfile(profile || DEFAULT_PROFILE)
   return {
     sediments: mappedSediments,
@@ -125,6 +144,13 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
     rehearsalCount,
     gameRecordsCount,
     showIntroState,
+    showPendingCard,
+    showSedimentsCard,
+    showInspirationsCard,
+    showGameRecordsCard,
+    showRehearsalCard,
+    showStatsCard,
+    showLiteGuideCard,
     layoutStyle,
     profileName: nextProfile.displayName,
     profileAvatar: nextProfile.avatarUrl,
@@ -165,6 +191,7 @@ Page({
     detailCanSediment: false,
     sedimentSaving: false,
     layoutStyle: '',
+    themeClass: 'theme-default',
     showIntroState: false,
     profileName: DEFAULT_PROFILE.displayName,
     profileAvatar: DEFAULT_PROFILE.avatarUrl,
@@ -178,7 +205,21 @@ Page({
     profileDraftAvatar: DEFAULT_PROFILE.avatarUrl,
     profileDraftAvatarText: getAvatarText(DEFAULT_PROFILE.displayName),
     profileDraftAvatarTemp: '',
-    profileSaving: false
+    profileSaving: false,
+    showPendingCard: false,
+    showSedimentsCard: false,
+    showInspirationsCard: false,
+    showGameRecordsCard: false,
+    showRehearsalCard: false,
+    showStatsCard: false,
+    showLiteGuideCard: false
+  },
+
+  onLoad() {
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
   },
 
   async onShow() {
@@ -188,7 +229,7 @@ Page({
     const localInspirations = state.todayInspirations || []
     const localRehearsals = state.rehearsalHistory || []
     const localGameRecords = state.gameRecordsHistory || []
-    this.setData(buildMineViewData({
+    this.setData(Object.assign({}, buildMineViewData({
       sediments: localSediments,
       inspirations: localInspirations,
       rehearsals: localRehearsals,
@@ -197,7 +238,9 @@ Page({
       layoutStyle: getLayoutStyle(),
       profile: state.profile || DEFAULT_PROFILE,
       methodFilter: this.data.methodFilter,
-      discardedPendingKeys: this.data.discardedPendingKeys
+      discardedPendingKeys: state.dismissedPendingKeys || this.data.discardedPendingKeys
+    }), {
+      themeClass: getThemeClass()
     }))
     const [sedimentsResult, inspirationsResult, rehearsalsResult, gameRecordsResult, profileResult] = await Promise.allSettled([
       listMethodCards(),
@@ -215,8 +258,42 @@ Page({
       layoutStyle: getLayoutStyle(),
       profile: profileResult.status === 'fulfilled' ? profileResult.value : (state.profile || DEFAULT_PROFILE),
       methodFilter: this.data.methodFilter,
-      discardedPendingKeys: this.data.discardedPendingKeys
+      discardedPendingKeys: getState().dismissedPendingKeys || this.data.discardedPendingKeys
     }))
+  },
+
+  refreshMineView(overrides = {}, callback) {
+    const hasOwn = (key) => Object.prototype.hasOwnProperty.call(overrides, key)
+    const nextSediments = hasOwn('sediments') ? overrides.sediments : this.data.sediments
+    const nextInspirations = hasOwn('inspirations') ? overrides.inspirations : this.data.inspirations
+    const nextRehearsals = hasOwn('rehearsals') ? overrides.rehearsals : this.data.rehearsals
+    const nextGameRecords = hasOwn('gameRecords') ? overrides.gameRecords : this.data.gameRecords
+    const nextMethodFilter = hasOwn('methodFilter') ? overrides.methodFilter : this.data.methodFilter
+    const nextDiscardedPendingKeys = hasOwn('discardedPendingKeys') ? overrides.discardedPendingKeys : this.data.discardedPendingKeys
+    const nextProfile = {
+      displayName: hasOwn('profileName') ? overrides.profileName : this.data.profileName,
+      avatarUrl: hasOwn('profileAvatar') ? overrides.profileAvatar : this.data.profileAvatar,
+      troupeName: hasOwn('profileTroupeName') ? overrides.profileTroupeName : this.data.profileTroupeName
+    }
+    const nextViewData = buildMineViewData({
+      sediments: nextSediments,
+      inspirations: nextInspirations,
+      rehearsals: nextRehearsals,
+      gameRecords: nextGameRecords,
+      playedCount: this.data.playedCount,
+      layoutStyle: this.data.layoutStyle,
+      profile: nextProfile,
+      methodFilter: nextMethodFilter,
+      discardedPendingKeys: nextDiscardedPendingKeys
+    })
+    const nextListItems = this.data.currentKind === 'sediments'
+      ? filterSediments(nextViewData.sediments, nextMethodFilter)
+      : this.data.currentKind === 'pending'
+        ? nextViewData.pendingItems
+        : nextViewData.inspirations
+    this.setData(Object.assign({}, nextViewData, overrides, {
+      listItems: nextListItems
+    }), callback)
   },
 
   openList(event) {
@@ -264,9 +341,19 @@ Page({
   noop() {},
 
   openDetail(event) {
-    const index = Number(event.currentTarget.dataset.index)
+    const items = this.data.currentKind === 'sediments'
+      ? filterSediments(this.data.sediments, this.data.methodFilter)
+      : this.data.currentKind === 'pending'
+        ? this.data.pendingItems
+        : this.data.inspirations
+    const targetId = event.detail && event.detail.id
+      ? event.detail.id
+      : ''
+    const index = targetId
+      ? items.findIndex((item) => item.id === targetId)
+      : Number(event.currentTarget.dataset.index)
     openModal(this, {
-      currentIndex: index,
+      currentIndex: index < 0 ? 0 : index,
       listVisible: false,
       detailVisible: true
     }, () => {
@@ -325,25 +412,20 @@ Page({
     if (!source || this.data.currentKind !== 'pending') return
     const sourceKey = getSourceKey(source)
     const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
-    const pendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
-    if (!pendingItems.length) {
-      this.setData({
+    setDismissedPendingKeys(discardedPendingKeys)
+    const nextPendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
+    if (!nextPendingItems.length) {
+      this.refreshMineView({
         discardedPendingKeys,
-        pendingItems,
-        pendingCount: 0,
-        listItems: [],
         currentIndex: 0
       })
       this.closeDetail()
       toast('已不再整理，原记录仍保留')
       return
     }
-    const currentIndex = Math.min(this.data.currentIndex, pendingItems.length - 1)
-    this.setData({
+    const currentIndex = Math.min(this.data.currentIndex, nextPendingItems.length - 1)
+    this.refreshMineView({
       discardedPendingKeys,
-      pendingItems,
-      pendingCount: pendingItems.length,
-      listItems: pendingItems,
       currentIndex
     }, () => this.syncDetail())
     toast('已不再整理，原记录仍保留')
@@ -378,14 +460,11 @@ Page({
       addMethodCard(item)
       const sourceKey = getSourceKey(source)
       const sediments = [item].concat(this.data.sediments)
-      const pendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
-      this.setData({
+      const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
+      setDismissedPendingKeys(discardedPendingKeys)
+      this.refreshMineView({
         sediments,
-        pendingItems,
-        pendingCount: pendingItems.length,
-        methodCount: sediments.length,
-        totalRecords: this.data.totalRecords + 1,
-        methodFilterOptions: buildMethodFilterOptions(sediments, this.data.methodFilter),
+        discardedPendingKeys,
         sedimentSaving: false
       })
       this.closeDetail()
@@ -395,14 +474,11 @@ Page({
       addMethodCard(pendingItem)
       const sourceKey = getSourceKey(source)
       const sediments = [pendingItem].concat(this.data.sediments)
-      const pendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
-      this.setData({
+      const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
+      setDismissedPendingKeys(discardedPendingKeys)
+      this.refreshMineView({
         sediments,
-        pendingItems,
-        pendingCount: pendingItems.length,
-        methodCount: sediments.length,
-        totalRecords: this.data.totalRecords + 1,
-        methodFilterOptions: buildMethodFilterOptions(sediments, this.data.methodFilter),
+        discardedPendingKeys,
         sedimentSaving: false
       })
       this.closeDetail()
@@ -526,5 +602,10 @@ Page({
 
   goDiscover() {
     wx.switchTab({ url: '/pages/discover/index' })
+  },
+
+  toggleTheme() {
+    toggleThemeMode()
+    this.setData({ themeClass: getThemeClass() })
   }
 })

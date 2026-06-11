@@ -10,10 +10,6 @@ export function normalizeGame(raw: Partial<Game> & { _id?: string }): Game {
     desc: '',
     tags: [],
     meta: [],
-    fit: [],
-    verdict: '',
-    avoid: '',
-    lead: '',
     steps: [],
     tips: '',
     variant: '',
@@ -35,7 +31,7 @@ export async function listGames(filters: Record<string, unknown> = {}) {
   if (response.code === 0 && response.data && response.data.items) {
     return response.data.items.map(normalizeGame).sort((a, b) => a.sortOrder - b.sortOrder)
   }
-  return []
+  throw new Error(response.message || '加载游戏失败')
 }
 
 export async function createGame(payload: Partial<Game>) {

@@ -3,9 +3,9 @@ const { nextGameStatus, updateGameStatus, updateRehearsal } = require('../../ser
 const {
   addGameToCurrentRehearsal,
   getState,
+  getThemeClass,
   patchCurrentRehearsal,
   setCurrentRehearsal,
-  startRehearsal,
   subscribe,
   updateCurrentRehearsalPlan,
   upsertRehearsalHistory
@@ -16,6 +16,7 @@ const { closeModal, openModal } = require('../../utils/modal')
 
 Page({
   data: {
+    themeClass: 'theme-default',
     games: [],
     rehearsalId: '',
     title: '',
@@ -23,14 +24,20 @@ Page({
     desc: '',
     metaText: '',
     planGames: [],
+    filteredGames: [],
     linkedInspirations: [],
     addVisible: false,
     planVisible: false,
     modalOpen: false,
     query: '',
+    addEmptyTitle: '',
+    addEmptyDesc: '',
     layoutStyle: ''
   },
 
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
+  },
   unsubscribeStore: null,
 
   getPlanGames() {
@@ -54,7 +61,9 @@ Page({
 
   getFilteredGames() {
     const query = this.data.query.trim().toLowerCase()
+    const plannedIds = new Set(((getState().currentRehearsal && getState().currentRehearsal.plan) || []).map((item) => item.gameId))
     return this.data.games.filter((game) => {
+      if (plannedIds.has(game.id)) return false
       const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
       return !query || text.includes(query)
     })
@@ -65,20 +74,40 @@ Page({
     const rehearsal = state.currentRehearsal
     const linkedInspirations = rehearsal ? state.todayInspirations.filter(i => i.linkedRehearsalId === rehearsal.id) : []
     
+    const planGames = this.getPlanGames()
+    const filteredGames = this.getFilteredGames()
+    const hasGameLibrary = this.data.games.length > 0
+    const availableGamesCount = hasGameLibrary
+      ? this.data.games.filter((game) => !planGames.some((item) => item.id === game.id)).length
+      : 0
+    const hasQuery = !!this.data.query.trim()
     this.setData({
       rehearsalId: rehearsal ? rehearsal.id : '',
       title: rehearsal ? rehearsal.teamName : '',
       duration: rehearsal ? rehearsal.duration : '',
       desc: rehearsal ? rehearsal.desc : '',
       metaText: rehearsal ? `${rehearsal.plan.length} 个游戏 · ${rehearsal.status}` : '',
-      planGames: this.getPlanGames(),
-      filteredGames: this.getFilteredGames(),
+      planGames,
+      filteredGames,
+      addEmptyTitle: availableGamesCount === 0
+        ? '可加入的游戏都已经在计划里了'
+        : hasGameLibrary
+        ? (hasQuery ? '没有找到匹配的游戏' : '暂时没有可加入的游戏')
+        : '还没有可加入的游戏',
+      addEmptyDesc: availableGamesCount === 0
+        ? '如果还想加新内容，先去发现页补充几个游戏，再回来安排这次排练。'
+        : hasGameLibrary
+        ? (hasQuery ? '换个关键词试试，或清空搜索继续浏览。' : '去发现页添加常用游戏后，再回来安排这次排练。')
+        : '先去发现页添加几个常用游戏，再来安排这次排练。',
       linkedInspirations
     })
   },
 
   async onLoad(options = {}) {
-    this.setData({ layoutStyle: getLayoutStyle() })
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
     const state = getState()
     const routeId = options.id
     if (routeId && state.rehearsalHistory) {
@@ -104,11 +133,11 @@ Page({
   },
 
   openAdd() {
-    openModal(this, { addVisible: true })
+    openModal(this, { addVisible: true, planVisible: false })
   },
 
   openPlan() {
-    openModal(this, { planVisible: true })
+    openModal(this, { planVisible: true, addVisible: false })
   },
 
   closeSheet() {
@@ -129,14 +158,32 @@ Page({
   },
 
   addGame(event) {
-    const id = event.currentTarget.dataset.id
-    addGameToCurrentRehearsal(id)
+    const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
+    if (this.data.planGames.some((item) => item.id === id)) {
+      toast('这个游戏已经在排练计划里')
+      return
+    }
+    const next = addGameToCurrentRehearsal(id)
+    if (!next) {
+      toast('当前没有进行中的排练')
+      return
+    }
     this.closeSheet()
     toast('已加入排练')
   },
 
+  clearAddSearch() {
+    this.setData({ query: '' }, () => this.syncPlan())
+  },
+
+  goDiscover() {
+    closeModal(this, { addVisible: false, planVisible: false, query: '' }, () => {
+      wx.switchTab({ url: '/pages/discover/index' })
+    })
+  },
+
   async toggleStatus(event) {
-    const id = event.currentTarget.dataset.id
+    const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
     const target = this.data.planGames.find((item) => item.id === id)
     const next = nextGameStatus(target ? target.status : '未开始')
     updateCurrentRehearsalPlan(id, {

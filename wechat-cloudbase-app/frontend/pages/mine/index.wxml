@@ -1,4 +1,4 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page mine {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page mine {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
   <view class="mine-content {{showIntroState ? 'mine-content-intro' : ''}}">
     <block wx:if="{{showIntroState}}">
       <view class="mine-intro-layout">
@@ -68,63 +68,70 @@
         <text class="muted">把热身、关系和灵感收集成一套顺手可用的排练工具，让每次现场都能更快进入状态。</text>
       </view>
 
-      <view class="card mine-stats-card">
+      <view wx:if="{{showStatsCard}}" class="card mine-stats-card">
         <view><text>{{totalRecords}}</text><text>累计记录</text></view>
         <view><text>{{playedCount}}</text><text>玩过游戏</text></view>
         <view><text>{{methodCount}}</text><text>方法卡</text></view>
       </view>
 
       <view class="mine-card-list">
-        <view class="card mine-entry-card mine-pending-card" data-kind="pending" bindtap="openList">
+        <view wx:if="{{showPendingCard}}" class="card mine-entry-card mine-pending-card" data-kind="pending" bindtap="openList">
           <view class="mine-entry-main">
             <text class="kicker">待整理</text>
             <view class="mine-entry-title">{{pendingCount}} 条可沉淀记录</view>
-            <text wx:if="{{pendingCount > 0}}" class="muted">把灵感、游戏实践和排练复盘整理成方法卡。</text>
-            <text wx:else class="muted">当前没有待整理记录。</text>
+            <text class="muted">把灵感、游戏实践和排练复盘整理成方法卡。</text>
           </view>
           <view class="mine-entry-action">整理</view>
           <view class="tags"><text>灵感</text><text>游戏实践</text><text>排练复盘</text></view>
         </view>
 
-        <view class="card mine-entry-card" data-kind="sediments" bindtap="openList">
+        <view wx:if="{{showSedimentsCard}}" class="card mine-entry-card" data-kind="sediments" bindtap="openList">
           <view class="mine-entry-main">
             <text class="kicker">个人沉淀</text>
             <view class="mine-entry-title">{{sediments.length}} 张方法卡</view>
-            <text wx:if="{{sediments.length > 0}}" class="muted">带领提醒、游戏变体、复盘方法。</text>
-            <text wx:else class="muted">还没沉淀方法卡，去整理一条吧。</text>
+            <text class="muted">带领提醒、游戏变体、复盘方法。</text>
           </view>
           <view class="mine-entry-action">查看</view>
           <view class="tags"><text>带领提醒</text><text>游戏改造</text><text>排练复盘</text></view>
         </view>
 
-        <view class="card mine-entry-card" data-kind="inspirations" bindtap="openList">
+        <view wx:if="{{showInspirationsCard}}" class="card mine-entry-card" data-kind="inspirations" bindtap="openList">
           <view class="mine-entry-main">
             <text class="kicker">灵感记录</text>
             <view class="mine-entry-title">{{inspirations.length}} 条灵感</view>
-            <text wx:if="{{inspirations.length > 0}}" class="muted">还没完全整理，但值得回看。</text>
-            <text wx:else class="muted">还没有灵感记录，随时记下闪念。</text>
+            <text class="muted">还没完全整理，但值得回看。</text>
           </view>
           <view class="mine-entry-action">查看</view>
         </view>
 
-        <view class="card mine-entry-card" bindtap="openGameRecords">
+        <view wx:if="{{showGameRecordsCard}}" class="card mine-entry-card" bindtap="openGameRecords">
           <view class="mine-entry-main">
             <text class="kicker">游戏记录</text>
             <view class="mine-entry-title">{{gameRecordsCount}} 次游戏实践</view>
-            <text wx:if="{{gameRecordsCount > 0}}" class="muted">看看在游戏里的 Keep & Try。</text>
-            <text wx:else class="muted">还没有游戏记录，去玩一次吧。</text>
+            <text class="muted">看看在游戏里的 Keep & Try。</text>
           </view>
           <view class="mine-entry-action">查看</view>
         </view>
 
-        <view class="card mine-entry-card" bindtap="openTeamRecords">
+        <view wx:if="{{showRehearsalCard}}" class="card mine-entry-card" bindtap="openTeamRecords">
           <view class="mine-entry-main">
             <text class="kicker">排练记录</text>
             <view class="mine-entry-title">{{rehearsalCount}} 次排练</view>
-            <text wx:if="{{rehearsalCount > 0}}" class="muted">最近更新于今天。</text>
-            <text wx:else class="muted">还没有排练过，去开启一次吧。</text>
+            <text class="muted">最近更新于今天。</text>
           </view>
           <view class="mine-entry-action">查看</view>
+        </view>
+
+        <view wx:if="{{showLiteGuideCard}}" class="card mine-entry-card mine-guide-card mine-lite-guide-card">
+          <view class="mine-entry-main no-action">
+            <text class="kicker">继续积累</text>
+            <view class="mine-entry-title">这里只保留已经发生的沉淀</view>
+            <text class="muted">还没有更多资产时，不需要把所有入口都摆出来。去记录一次，内容会慢慢长出来。</text>
+          </view>
+          <view class="intro-actions mine-lite-guide-actions">
+            <button class="ghost-btn intro-link-btn" bindtap="goDiscover">去发现</button>
+            <button class="primary-btn intro-primary-btn" bindtap="goRecord">去记录</button>
+          </view>
         </view>
       </view>
     </block>
@@ -134,54 +141,16 @@
     <view class="list-stack">
       <scroll-view wx:if="{{currentKind === 'sediments' && methodFilterOptions.length > 1}}" class="mine-filter-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
         <view class="mine-filter-row">
-          <button wx:for="{{methodFilterOptions}}" wx:key="value" class="chip mine-filter-chip {{item.activeClass}}" data-filter="{{item.value}}" catchtap="filterMethodCards">{{item.label}}</button>
+          <button wx:for="{{methodFilterOptions}}" wx:key="value" class="chip compact-filter-chip mine-filter-chip {{item.activeClass}}" data-filter="{{item.value}}" catchtap="filterMethodCards">{{item.label}}</button>
         </view>
       </scroll-view>
-      <view wx:if="{{!listItems.length}}" class="empty-list">
-        <view class="mine-entry-title">暂无记录</view>
-        <text wx:if="{{currentKind === 'sediments'}}" class="muted">还没沉淀方法卡，去整理一条吧。</text>
-        <text wx:elif="{{currentKind === 'pending'}}" class="muted">当前没有待整理记录。</text>
-        <text wx:else class="muted">还没有灵感记录，随时记下闪念。</text>
-      </view>
-      <view wx:for="{{listItems}}" wx:key="title" class="card list-item" data-index="{{index}}" bindtap="openDetail">
-        <view class="list-item-head">
-          <text wx:if="{{item.type}}" class="pill {{item.type === '游戏实践' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}">{{item.type}}</text>
-          <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">本地暂存</text>
-        </view>
-        <view class="mine-entry-title">{{item.title}}</view>
-        <text class="muted">{{item.desc}}</text>
-        <view wx:if="{{item.meta && item.meta.length}}" class="tags list-tags">
-          <block wx:for="{{item.meta}}" wx:key="*this" wx:for-item="metaItem">
-            <text wx:if="{{metaItem !== item.type}}">{{metaItem}}</text>
-          </block>
-        </view>
-      </view>
+      <empty-state-panel wx:if="{{!listItems.length}}" customClass="empty-list" title="暂无记录" desc="{{currentKind === 'sediments' ? '还没沉淀方法卡，去整理一条吧。' : (currentKind === 'pending' ? '当前没有待整理记录。' : '还没有灵感记录，随时记下闪念。')}}" />
+      <record-card wx:for="{{listItems}}" wx:key="title" itemId="{{item.id}}" badgeText="{{item.type}}" badgeTone="{{item.type === '游戏实践' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{item.syncStatus === 'pending'}}" title="{{item.title}}" desc="{{item.desc}}" meta="{{item.filteredMeta}}" bind:tapcard="openDetail" />
     </view>
   </bottom-sheet>
 
   <floating-card visible="{{detailVisible}}" title="{{detailTitle}}" count="{{detailCount}}" bind:close="closeDetail" bind:prev="prevDetail" bind:next="nextDetail">
-    <view wx:if="{{detailItem}}" class="detail-card">
-      <view class="detail-panel">
-        <view class="detail-content-wrapper">
-          <view class="list-item-head">
-            <text wx:if="{{detailItem.type}}" class="pill {{detailItem.type === '游戏实践' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}">{{detailItem.type}}</text>
-            <text wx:if="{{detailItem.syncStatus === 'pending'}}" class="sync-pill">本地暂存</text>
-          </view>
-          <view class="detail-title">{{detailItem.title}}</view>
-          <text class="muted detail-desc">{{detailItem.desc}}</text>
-          <view class="tags detail-tags">
-            <block wx:for="{{detailItem.meta}}" wx:key="*this" wx:for-item="metaItem">
-              <text wx:if="{{metaItem !== detailItem.type}}" class="pill-meta">{{metaItem}}</text>
-            </block>
-          </view>
-        </view>
-        <view wx:if="{{detailCanSediment}}" class="detail-action-row">
-          <button class="ghost-btn detail-discard-btn" bindtap="discardCurrentDetail">不再整理</button>
-          <button class="primary-btn detail-action-btn" loading="{{sedimentSaving}}" bindtap="sedimentCurrentDetail">沉淀为方法卡</button>
-        </view>
-        <text wx:if="{{detailCanSediment}}" class="detail-action-note">整理后会生成方法卡，原记录仍保留。</text>
-      </view>
-    </view>
+    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '游戏实践' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" loading="{{sedimentSaving}}" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" />
   </floating-card>
 
   <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" bind:close="closeSheet">
@@ -194,33 +163,31 @@
         <text class="profile-avatar-tip">点击更换头像</text>
       </view>
 
-      <label class="field profile-name-field">
-        <text>名字</text>
-        <view class="input-shell">
-          <input type="nickname" value="{{profileDraftName}}" maxlength="12" placeholder="输入你的名字" bindblur="updateProfileName" bindconfirm="updateProfileName" />
-        </view>
-      </label>
+      <form-field label="名字">
+        <input class="app-input" type="nickname" value="{{profileDraftName}}" maxlength="12" placeholder="输入你的名字" bindblur="updateProfileName" bindconfirm="updateProfileName" />
+      </form-field>
 
-      <label class="field profile-name-field">
-        <text>剧团</text>
-        <view class="input-shell">
-          <input type="text" value="{{profileDraftTroupeName}}" maxlength="12" placeholder="输入剧团名字（选填）" bindblur="updateProfileTroupeName" bindconfirm="updateProfileTroupeName" />
-        </view>
-      </label>
+      <form-field label="剧团">
+        <input class="app-input" type="text" value="{{profileDraftTroupeName}}" maxlength="12" placeholder="输入剧团名字（选填）" bindblur="updateProfileTroupeName" bindconfirm="updateProfileTroupeName" />
+      </form-field>
 
-      <view class="profile-tag-field">
-        <text class="mini-title">个人标签</text>
-        <view class="role-line profile-tag-line">
+      <form-field label="个人标签" desc="如果没有设置剧团名字，默认显示「即兴主理人」。">
+        <view class="role-line profile-tag-line info-primary">
           <text wx:for="{{profileDraftTags}}" wx:key="*this" class="role-pill">{{item}}</text>
         </view>
-        <text class="muted">如果没有设置剧团名字，默认显示「即兴主理人」。</text>
-      </view>
+      </form-field>
+
+      <form-field label="偏好设置" desc="点击切换主题，即时生效并保存在本机">
+        <view class="profile-tag-line info-primary">
+          <view class="role-pill" catchtap="toggleTheme" style="padding: 10rpx 32rpx; min-height: 64rpx; background: var(--improv-card); color: var(--improv-text); border: 2rpx solid var(--improv-line-soft);">当前主题：{{themeClass === 'theme-vivid' ? '沉浸模式' : '默认模式'}}</view>
+        </view>
+      </form-field>
 
       <button class="primary-btn profile-save-btn" loading="{{profileSaving}}" bindtap="saveProfile">保存</button>
     </view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
-    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>

@@ -1,3 +1,5 @@
+const { subscribe, getThemeClass } = require('../../store/index')
+
 Component({
   properties: {
     visible: Boolean,
@@ -5,8 +7,22 @@ Component({
     count: String
   },
   data: {
+    themeClass: 'theme-default',
     touchStartX: 0,
     touchStartY: 0
+  },
+  lifetimes: {
+    attached() {
+      this._unsubscribe = subscribe(() => {
+        const themeClass = getThemeClass()
+        if (this.data.themeClass !== themeClass) {
+          this.setData({ themeClass })
+        }
+      })
+    },
+    detached() {
+      if (this._unsubscribe) this._unsubscribe()
+    }
   },
   methods: {
     noop() {},

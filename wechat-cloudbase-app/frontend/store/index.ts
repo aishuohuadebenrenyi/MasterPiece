@@ -14,10 +14,14 @@ import type {
 type Listener = (state: AppState) => void
 
 const listeners: Listener[] = []
+const DISMISSED_PENDING_KEYS_STORAGE = 'improv_dismissed_pending_keys'
+const THEME_MODE_STORAGE = 'improv_theme_mode'
 
 const defaultState: AppState = {
+  themeMode: 'default',
   viewMode: 'list',
   games: [] as Game[],
+  recommendGameId: '',
   savedGameIds: [] as string[],
   playedGameIds: [] as string[],
   todayInspirations: [] as InspirationItem[],
@@ -28,6 +32,7 @@ const defaultState: AppState = {
   currentGame: null,
   rehearsalHistory: [] as RehearsalRecord[],
   gameRecordsHistory: [] as GameRecord[],
+  dismissedPendingKeys: [] as string[],
   voiceDraft: null,
   profile: null as { displayName: string; avatarUrl: string } | null
 }
@@ -39,11 +44,31 @@ function clone<T>(value: T): T {
 }
 
 function readInitialState(): AppState {
-  return clone(defaultState)
+  const initialState = clone(defaultState)
+  try {
+    const themeMode = wx.getStorageSync(THEME_MODE_STORAGE)
+    if (themeMode === 'default' || themeMode === 'vivid') {
+      initialState.themeMode = themeMode
+    }
+    const dismissedPendingKeys = wx.getStorageSync(DISMISSED_PENDING_KEYS_STORAGE)
+    if (Array.isArray(dismissedPendingKeys)) {
+      initialState.dismissedPendingKeys = dismissedPendingKeys
+        .map((item) => String(item || '').trim())
+        .filter(Boolean)
+    }
+  } catch (error) {
+    // Ignore storage read failures and keep in-memory defaults.
+  }
+  return initialState
 }
 
 function persist() {
-  // Current development phase intentionally keeps store state in memory only.
+  try {
+    wx.setStorageSync(THEME_MODE_STORAGE, state.themeMode)
+    wx.setStorageSync(DISMISSED_PENDING_KEYS_STORAGE, state.dismissedPendingKeys || [])
+  } catch (error) {
+    // Ignore storage write failures for UI-only local preferences.
+  }
 }
 
 function emit() {
@@ -148,6 +173,26 @@ export function setProfile(profile: { displayName: string; avatarUrl: string } |
   setState({ profile })
 }
 
+export function setThemeMode(mode: 'default' | 'vivid') {
+  setState({ themeMode: mode })
+}
+
+export function setRecommendGameId(recommendGameId: string) {
+  setState({ recommendGameId })
+}
+
+export function setDismissedPendingKeys(dismissedPendingKeys: string[]) {
+  setState({ dismissedPendingKeys })
+}
+
+export function toggleThemeMode() {
+  setState({ themeMode: state.themeMode === 'default' ? 'vivid' : 'default' })
+}
+
+export function getThemeClass() {
+  return state.themeMode === 'vivid' ? 'theme-vivid' : 'theme-default'
+}
+
 export function clearVoiceDraft() {
   setState({ voiceDraft: null })
 }
@@ -159,6 +204,33 @@ function buildPausedRehearsal(rehearsal: RehearsalRecord | null) {
     title: rehearsal.title,
     desc: rehearsal.desc
   }
+}
+
+function hasActiveRehearsal() {
+  return !!(state.currentRehearsal || state.pausedRehearsal)
+}
+
+function getRehearsalMutexLabel() {
+  if (state.currentRehearsal?.status === '暂停中' || state.pausedRehearsal) return '暂停中的排练'
+  if (state.currentRehearsal) return '进行中的排练'
+  return ''
+}
+
+function getGameMutexLabel() {
+  if (!state.currentGame) return ''
+  return state.currentGame.status === '暂停中' ? '暂停中的游戏' : '进行中的游戏'
+}
+
+export function getTaskMutexError(target: 'rehearsal' | 'game') {
+  if (target === 'rehearsal') {
+    if (state.currentGame) return `当前有${getGameMutexLabel()}，请先结束后再开始排练`
+    if (hasActiveRehearsal()) return `当前有${getRehearsalMutexLabel()}，请先结束后再开始排练`
+    return ''
+  }
+
+  if (hasActiveRehearsal()) return `当前有${getRehearsalMutexLabel()}，请先结束后再开始游戏`
+  if (state.currentGame) return `当前有${getGameMutexLabel()}，请先结束后再开始游戏`
+  return ''
 }
 
 export function setCurrentRehearsal(rehearsal: RehearsalRecord | null) {
@@ -201,9 +273,8 @@ export function addGameRecord(record: GameRecord) {
 }
 
 export function startRehearsal(rehearsal: RehearsalRecord) {
-  if (state.currentGame) {
-    throw new Error('当前有正在进行的游戏，请先结束或暂停')
-  }
+  const mutexError = getTaskMutexError('rehearsal')
+  if (mutexError) throw new Error(mutexError)
   setState({
     currentRehearsal: rehearsal,
     pausedRehearsal: null,
@@ -213,9 +284,8 @@ export function startRehearsal(rehearsal: RehearsalRecord) {
 }
 
 export function startGameSession(session: GameSession) {
-  if (state.currentRehearsal) {
-    throw new Error('当前有正在进行的排练，请先结束或暂停')
-  }
+  const mutexError = getTaskMutexError('game')
+  if (mutexError) throw new Error(mutexError)
   setState({ currentGame: session })
 }
 

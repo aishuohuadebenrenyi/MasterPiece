@@ -1,0 +1,17 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+}
+
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+}
+
+.detail-content-wrapper .detail-tags {
+  justify-content: flex-start;
+  gap: 16rpx;
+}

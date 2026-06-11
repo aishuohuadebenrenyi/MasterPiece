@@ -1,0 +1,15 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+}
+
+.empty-state-panel {
+  margin-bottom: 0;
+}
+
+.empty-state-kicker {
+  align-self: flex-start;
+  margin-bottom: 16rpx;
+}

@@ -24,7 +24,7 @@ function nextGameStatus(status) {
 async function listRehearsals(filters = {}) {
   const response = await callImprovAction('rehearsal.list', filters)
   if (response.code === 0 && response.data && response.data.items) return response.data.items.map(normalizeRehearsal)
-  return []
+  throw new Error(response.message || '加载排练记录失败')
 }
 
 async function createRehearsal(payload) {

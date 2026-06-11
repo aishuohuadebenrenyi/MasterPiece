@@ -1,0 +1,9 @@
+<view class="form-field form-field-{{layout}}">
+  <view class="field-label-group" wx:if="{{label || desc}}">
+    <text class="field-label" wx:if="{{label}}">{{label}}</text>
+    <text class="field-desc" wx:if="{{desc}}">{{desc}}</text>
+  </view>
+  <view class="field-content">
+    <slot></slot>
+  </view>
+</view>

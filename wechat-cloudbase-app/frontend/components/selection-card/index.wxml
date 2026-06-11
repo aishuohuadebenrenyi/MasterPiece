@@ -1,0 +1,19 @@
+<view class="card selection-card {{selected ? 'selection-card-selected' : ''}} {{customClass}}" bindtap="onCardTap">
+  <view class="selection-card-head">
+    <view class="selection-card-main">
+      <text wx:if="{{kicker}}" class="mini-title">{{kicker}}</text>
+      <view class="selection-card-title">{{title}}</view>
+    </view>
+    <view class="selection-card-actions">
+      <text wx:if="{{badgeText}}" class="pill {{badgeTone}}">{{badgeText}}</text>
+      <text wx:if="{{pending}}" class="sync-pill">本地暂存</text>
+      <text wx:if="{{selected}}" class="selected-pill selection-card-selected-pill">{{selectedText}}</text>
+      <button wx:if="{{actionText}}" class="small-btn" catchtap="onActionTap">{{actionText}}</button>
+    </view>
+  </view>
+  <text wx:if="{{desc}}" class="muted selection-card-desc">{{desc}}</text>
+  <view wx:if="{{meta.length}}" class="meta-row selection-card-meta">
+    <text wx:for="{{meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+  </view>
+  <slot name="extra"></slot>
+</view>

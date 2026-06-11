@@ -1,6 +1,6 @@
 # CloudBase 数据库与接口说明
 
-更新时间：2026-06-06
+更新时间：2026-06-08
 
 本小程序使用 `improv_` 前缀集合。当前版本采用重建策略，不兼容旧数据。
 
@@ -23,8 +23,6 @@
 - `desc`
 - `tags`
 - `meta`
-- `fit`
-- `lead`
 - `steps`
 - `tips`
 - `variant`
@@ -75,6 +73,58 @@
 - `improv_game_records`
 - `improv_method_cards`
 
+### improv_rehearsals
+
+固定字段：
+
+- `id`
+- `title`
+- `desc`
+- `teamName`
+- `duration`
+- `goals`
+- `source`
+- `status`
+- `plan`
+- `reviewKeep`
+- `reviewTry`
+- `reviewReminder`
+- `ownerOpenId`
+- `createdAt`
+- `updatedAt`
+- `deletedAt`
+
+说明：
+
+- `goals` 支持固定目标与自定义目标混合写入。
+- 排练复盘直接更新在 `improv_rehearsals` 上，不额外写入 `improv_game_records`。
+- 历史排练保持只读，不支持事后追加编辑；后续归档统一在“我的 -> 待整理”中完成。
+
+### improv_game_records
+
+固定字段：
+
+- `id`
+- `gameId`
+- `rehearsalId`
+- `title`
+- `desc`
+- `effect`
+- `keep`
+- `try`
+- `reminder`
+- `duration`
+- `meta`
+- `ownerOpenId`
+- `createdAt`
+- `updatedAt`
+- `deletedAt`
+
+说明：
+
+- `title` 为本次反馈对应的游戏名。
+- `rehearsalId` 只记录当前排练或从反馈新建的排练，不回写历史排练。
+
 ### improv_profiles
 
 固定字段：
@@ -82,6 +132,7 @@
 - `id`
 - `displayName`
 - `avatarUrl`
+- `troupeName`
 - `ownerOpenId`
 - `createdAt`
 - `updatedAt`
@@ -100,18 +151,18 @@
 | `game.delete` | 软删除当前用户创建的自定义游戏。 |
 | `game.updateState` | 统一更新 `saved` / `played` / `lastRehearsalAt`。 |
 | `profile.get` | 返回当前用户个人资料；没有资料时返回空。 |
-| `profile.update` | 更新当前用户的名字和头像。 |
-| `today.summary` | 返回记录页今日统计和推荐游戏。 |
+| `profile.update` | 更新当前用户的名字、头像和 `troupeName`。 |
+| `today.summary` | 返回记录页今日聚合：`inspirations`、`rehearsals`、`recommendGameId`。 |
 | `inspiration.list` | 返回当前用户灵感记录。 |
 | `inspiration.create` | 创建灵感记录。 |
 | `methodCard.list` | 返回当前用户方法卡。 |
 | `methodCard.create` | 创建方法卡。 |
 | `rehearsal.list` | 返回当前用户排练记录。 |
-| `rehearsal.create` | 创建排练记录。 |
-| `rehearsal.update` | 更新排练记录。 |
+| `rehearsal.create` | 创建排练记录；`goals` 支持自定义字符串。 |
+| `rehearsal.update` | 更新排练记录，也承载暂停、完成与复盘字段写回。 |
 | `rehearsal.updateGameStatus` | 更新排练计划中单个游戏的状态、Keep、Try。 |
 | `gameRecord.list` | 返回当前用户单次游戏实践反馈。 |
-| `gameRecord.create` | 创建单次游戏实践反馈。 |
+| `gameRecord.create` | 创建单次游戏实践反馈，不用于保存排练复盘。 |
 
 兼容别名：
 
@@ -179,6 +230,7 @@ wx.cloud.callFunction({
 - 前端暂不启用 `store` 本地持久化缓存，只保留当前会话内存态。
 - 云端接口成功返回空数组时，前端应按空态处理，不回退旧本地缓存数据。
 - 云端接口失败时，前端才进入错误态；如当前会话内存在 `pending` 记录，可继续展示这些记录。
+- 文档里的“本地记录”统一指当前会话内存态，不等同于持久化历史缓存。
 - 如果之前运行过旧版本，而页面仍显示历史数据，请先在微信开发者工具中清除 Storage / 清缓存 / 编译缓存，再重新打开小程序验证空态。
 
 ## 8. 权限

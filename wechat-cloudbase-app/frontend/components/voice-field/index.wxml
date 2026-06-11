@@ -1,0 +1,8 @@
+<form-field label="{{label}}" desc="{{desc}}">
+  <view class="{{multiline ? 'textarea-voice-row' : 'input-voice-row'}}">
+    <view class="{{multiline ? 'textarea-shell' : 'input-shell'}}">
+      <slot></slot>
+    </view>
+    <button class="voice-circle-btn {{multiline ? 'voice-circle-btn-bottom' : ''}}" bindtap="onVoiceTap">语音</button>
+  </view>
+</form-field>

@@ -1,0 +1,41 @@
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+}
+
+.input-voice-row,
+.textarea-voice-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.textarea-voice-row {
+  align-items: flex-end;
+}
+
+.input-shell,
+.textarea-shell {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.voice-circle-btn {
+  flex: 0 0 86rpx;
+  width: 86rpx;
+  min-width: 86rpx;
+  height: 86rpx;
+  min-height: 86rpx;
+  border-radius: 43rpx;
+  background: var(--improv-card-soft);
+  border: 1rpx solid var(--improv-overlay-line);
+  box-shadow: 0 10rpx 24rpx var(--improv-shadow-panel-color);
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.voice-circle-btn-bottom {
+  margin-bottom: 2rpx;
+}

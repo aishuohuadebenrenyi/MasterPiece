@@ -1,7 +1,10 @@
 {
   "usingComponents": {
     "game-card": "../../components/game-card/index",
-    "bottom-sheet": "../../components/bottom-sheet/index"
+    "bottom-sheet": "../../components/bottom-sheet/index",
+    "search-bar": "../../components/search-bar/index",
+    "game-form": "../../components/game-form/index",
+    "empty-state-panel": "../../components/empty-state-panel/index",
+    "filter-section": "../../components/filter-section/index"
   }
 }
-

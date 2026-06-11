@@ -1,0 +1,6 @@
+<view class="search-bar search-bar-{{size}} {{customClass}}">
+  <text class="search-icon">⌕</text>
+  <input class="search-input" value="{{value}}" placeholder="{{placeholder}}" confirm-type="search" bindfocus="onFocus" bindblur="onBlur" bindconfirm="onConfirm" />
+  <button wx:if="{{showClear && value}}" class="search-clear" catchtap="onClear">清空</button>
+  <text wx:elif="{{hint}}" class="search-hint">{{hint}}</text>
+</view>

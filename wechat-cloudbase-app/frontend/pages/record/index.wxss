@@ -258,23 +258,19 @@
   margin-top: 28rpx;
 }
 
-.item-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18rpx;
+.sheet-empty-card {
+  margin-top: 16rpx;
+  text-align: left;
 }
 
-.sync-pill {
-  flex: 0 0 auto;
-  min-height: 44rpx;
-  padding: 0 16rpx;
-  border-radius: 999rpx;
-  background: var(--improv-primary-tint);
-  color: var(--improv-warm);
-  font-size: 22rpx;
-  line-height: 44rpx;
-  font-weight: 900;
+.sheet-empty-card .card-title {
+  margin-top: 0;
+}
+
+.sheet-empty-card .muted {
+  display: block;
+  margin-top: 10rpx;
+  line-height: 1.6;
 }
 
 .start-btn {
@@ -293,11 +289,11 @@
 
 .start-rehearsal-section {
   margin-top: 0;
-  margin-bottom: 28rpx;
+  margin-bottom: 34rpx;
 }
 
 .start-rehearsal-section:last-of-type {
-  margin-bottom: 18rpx;
+  margin-bottom: 22rpx;
 }
 
 .start-rehearsal-section.field {
@@ -308,14 +304,18 @@
   min-height: 70rpx;
   height: 70rpx;
   line-height: 70rpx;
-  margin-top: 14rpx;
+  margin-top: 0;
   padding: 18rpx 24rpx;
   border-radius: 24rpx;
   font-size: 26rpx;
 }
 
 .start-rehearsal-section .mini-title {
-  margin-bottom: 14rpx;
+  margin-bottom: 0;
+  font-size: 23rpx;
+}
+
+.start-rehearsal-section .filter-label {
   font-size: 23rpx;
 }
 
@@ -325,27 +325,53 @@
 }
 
 .start-rehearsal-chips .chip {
-  min-height: 64rpx;
-  padding: 0 18rpx;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.start-goal-section .chip-scroll {
+  height: 92rpx;
+  margin: 0 -18rpx;
+}
+
+.start-rehearsal-goal-row {
+  padding: 10rpx 18rpx;
+}
+
+.start-rehearsal-goal-chip {
+  flex: 0 0 auto !important;
+  min-width: 92rpx;
+  width: auto !important;
+}
+
+.custom-goal-chip {
+  max-width: 240rpx;
+}
+
+.custom-goal-panel {
+  margin-top: 12rpx;
+}
+
+.custom-goal-field {
+  margin-top: 0;
   font-size: 24rpx;
-  line-height: 1.1;
 }
 
-.start-rehearsal-chips-wrap {
-  flex-wrap: wrap;
-}
-
-.start-rehearsal-chips-wrap .chip {
-  flex: 0 0 auto;
-  min-width: 138rpx;
-  width: auto;
+.custom-goal-field input {
+  min-height: 68rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  margin-top: 0;
+  padding: 16rpx 22rpx;
+  border-radius: 24rpx;
+  font-size: 26rpx;
 }
 
 .start-rehearsal-submit {
   width: 280rpx;
   max-width: 64%;
   min-height: 68rpx;
-  margin-top: 8rpx;
+  margin-top: 14rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
 }
@@ -406,19 +432,7 @@
   box-shadow: 0 8rpx 18rpx var(--improv-shadow-xs-color);
 }
 
-.start-game-option.active {
-  border-color: var(--improv-primary);
-  background: var(--improv-primary-tint);
-}
-
-.start-game-option-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.start-game-option .card-title {
+.start-game-option .selection-card-title {
   flex: 1 1 auto;
   min-width: 0;
   margin-top: 0;
@@ -426,34 +440,8 @@
   line-height: 1.3;
 }
 
-.selected-pill {
-  flex: 0 0 auto;
-  min-height: 42rpx;
-  padding: 0 16rpx;
-  border-radius: 999rpx;
-  background: var(--improv-primary-wash);
-  color: var(--improv-primary);
-  font-size: 22rpx;
-  line-height: 42rpx;
-  font-weight: 900;
-}
-
 .start-game-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
   margin-top: 16rpx;
-}
-
-.start-game-meta text {
-  min-height: 42rpx;
-  padding: 0 14rpx;
-  border-radius: 999rpx;
-  background: var(--improv-secondary-soft);
-  color: var(--improv-secondary-strong);
-  font-size: 22rpx;
-  line-height: 42rpx;
-  font-weight: 800;
 }
 
 .start-game-empty {
@@ -477,6 +465,7 @@
   font-weight: 600;
   border: none;
   text-align: center;
+  white-space: nowrap;
 }
 
 bottom-sheet > .mini-title {

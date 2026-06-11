@@ -1,0 +1,6 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+}

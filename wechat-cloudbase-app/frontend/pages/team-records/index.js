@@ -1,5 +1,5 @@
 const { listRehearsals } = require('../../services/rehearsal')
-const { getState } = require('../../store/index')
+const { getState , getThemeClass } = require('../../store/index')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
 
@@ -66,35 +66,50 @@ function buildRecordViewModels(records = []) {
 
 Page({
   data: {
+    themeClass: 'theme-default',
     records: [],
     layoutStyle: '',
     loading: false,
     errorText: '',
+    showSummaryCard: false,
     detailVisible: false,
     modalOpen: false,
     selectedRecord: null,
-    selectedPlan: []
+    selectedPlan: [],
+    selectedDetailMeta: []
+  },
+  onLoad() {
+    this.setData({
+      themeClass: getThemeClass(),
+      layoutStyle: getLayoutStyle()
+    })
   },
   async onShow() {
+    this.setData({ themeClass: getThemeClass() })
     const state = getState()
     this.setData({
       records: buildRecordViewModels(state.rehearsalHistory || []),
       layoutStyle: getLayoutStyle(),
       loading: true,
-      errorText: ''
+      errorText: '',
+      showSummaryCard: false
     })
     try {
       const records = await listRehearsals()
+      const normalizedRecords = buildRecordViewModels(records)
       this.setData({
-        records: buildRecordViewModels(records),
+        records: normalizedRecords,
         loading: false,
-        errorText: ''
+        errorText: '',
+        showSummaryCard: normalizedRecords.length > 0
       })
     } catch (error) {
+      const fallbackRecords = buildRecordViewModels(state.rehearsalHistory || [])
       this.setData({
-        records: buildRecordViewModels(state.rehearsalHistory || []),
+        records: fallbackRecords,
         loading: false,
-        errorText: '云端暂时不可用，已显示本地记录。'
+        errorText: '云端暂时不可用，当前只显示本次会话里的排练记录。',
+        showSummaryCard: fallbackRecords.length > 0
       })
     }
   },
@@ -102,20 +117,34 @@ Page({
     wx.navigateBack()
   },
   openRecord(event) {
-    const id = event.currentTarget.dataset.id
+    const id = event.detail && event.detail.id
+      ? event.detail.id
+      : event.currentTarget.dataset.id
     const selectedRecord = (this.data.records || []).find((item) => item.id === id)
     if (!selectedRecord) return
     openModal(this, {
       detailVisible: true,
       selectedRecord,
-      selectedPlan: selectedRecord.plan || []
+      selectedPlan: selectedRecord.plan || [],
+      selectedDetailMeta: [
+        `${selectedRecord.duration} 分钟`,
+        selectedRecord.statusLabel,
+        `${(selectedRecord.plan || []).length} 个游戏`
+      ].filter(Boolean)
     })
   },
   closeSheet() {
     closeModal(this, {
       detailVisible: false,
       selectedRecord: null,
-      selectedPlan: []
+      selectedPlan: [],
+      selectedDetailMeta: []
     })
+  },
+  goRecord() {
+    wx.switchTab({ url: '/pages/record/index' })
+  },
+  goDiscover() {
+    wx.switchTab({ url: '/pages/discover/index' })
   }
 })

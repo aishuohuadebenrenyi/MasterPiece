@@ -1,26 +1,20 @@
-<view class="game-card card {{modeClass}}" bindtap="open">
+<view class="game-card card {{modeClass}}" hover-class="card-hover" bindtap="open">
   <view class="stripe {{stripeClass}}"></view>
   <view class="game-main">
-    <view class="row">
-      <view>
-        <text wx:if="{{isCard}}" class="pill blue">{{primaryTag}}</text>
+    <view class="row game-head">
+      <view class="game-head-text">
+        <text wx:if="{{isCard}}" class="pill blue game-tag-pill">{{primaryTag}}</text>
         <view class="game-title">{{game.title}}</view>
       </view>
-      <button class="save" catchtap="save">{{saveIcon}}</button>
+      <button class="save {{saved || game.saved ? 'save-active' : 'save-idle'}}" catchtap="save">{{saveIcon}}</button>
     </view>
-    <text class="muted">{{game.desc}}</text>
-    <view class="meta">
-      <text wx:for="{{game.meta}}" wx:key="*this">{{item}}</text>
+
+    <view wx:if="{{game.desc}}" class="game-desc-block">
+      <text class="game-desc">{{game.desc}}</text>
     </view>
-    <view wx:if="{{isCard}}" class="fit-box">
-      <text class="mini-title">适合现在玩</text>
-      <view class="meta">
-        <text wx:for="{{game.fit}}" wx:key="*this">{{item}}</text>
-      </view>
-      <text class="muted">{{game.lead}}</text>
-    </view>
-    <view wx:if="{{isCard}}" class="actions">
-      <button class="primary-btn" catchtap="open">查看详情</button>
+
+    <view wx:if="{{isCard && displayMeta && displayMeta.length}}" class="meta">
+      <text wx:for="{{displayMeta}}" wx:key="*this">{{item}}</text>
     </view>
   </view>
 </view>

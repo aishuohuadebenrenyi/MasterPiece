@@ -47,8 +47,6 @@ function normalizeGamePayload(payload, ownerOpenId) {
     desc: payload.desc || '',
     tags: Array.isArray(payload.tags) ? payload.tags : ['自定义'],
     meta: Array.isArray(payload.meta) ? payload.meta : [],
-    fit: Array.isArray(payload.fit) ? payload.fit : [],
-    lead: payload.lead || payload.desc || '',
     steps: Array.isArray(payload.steps) ? payload.steps : [],
     tips: payload.tips || '',
     variant: payload.variant || '',
@@ -118,7 +116,14 @@ async function updateGame(payload, requestId) {
   delete doc.id
   doc.updatedAt = now()
   
-  await collection.doc(existing.data[0]._id).update({ data: doc })
+  await collection.doc(existing.data[0]._id).update({
+    data: Object.assign({}, doc, {
+      fit: _.remove(),
+      lead: _.remove(),
+      avoid: _.remove(),
+      verdict: _.remove()
+    })
+  })
   return ok({ gameId: payload.id }, requestId)
 }
 

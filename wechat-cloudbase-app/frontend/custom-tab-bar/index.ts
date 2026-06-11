@@ -1,5 +1,8 @@
+import { subscribe, getThemeClass } from '../store/index'
+
 Component({
   data: {
+    themeClass: 'theme-default',
     selected: 0,
     hidden: false,
     tabs: [
@@ -18,6 +21,15 @@ Component({
   lifetimes: {
     attached() {
       this.syncTabs(this.data.selected)
+      this._unsubscribe = subscribe(() => {
+        const themeClass = getThemeClass()
+        if (this.data.themeClass !== themeClass) {
+          this.setData({ themeClass })
+        }
+      })
+    },
+    detached() {
+      if (this._unsubscribe) this._unsubscribe()
     }
   },
 

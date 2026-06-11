@@ -1,14 +1,5 @@
-.page-title,
-.section-title {
-  margin-bottom: 20rpx;
-  color: var(--improv-text);
-  font-weight: 900;
-}
-
 .page-title {
   margin-bottom: 0;
-  font-size: 56rpx;
-  line-height: 1.1;
 }
 
 .feedback {
@@ -17,7 +8,7 @@
 
 .record-form-card {
   padding: 38rpx 34rpx;
-  margin-bottom: 28rpx;
+  margin-bottom: 32rpx;
 }
 
 .compact-card {
@@ -25,40 +16,14 @@
 }
 
 .section-head {
-  margin-bottom: 18rpx;
-}
-
-.section-title {
-  font-size: 32rpx;
-}
-
-.card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 8rpx;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 18rpx;
-}
-
-.meta text {
-  padding: 10rpx 18rpx;
-  background: var(--improv-bg-soft);
-  color: var(--improv-muted);
-  font-size: 24rpx;
-  font-weight: 800;
+  margin-bottom: 14rpx;
 }
 
 .form-actions,
 .save-actions {
   display: flex;
   flex-direction: row;
+  justify-content: center;
   gap: 20rpx;
 }
 
@@ -69,8 +34,9 @@
 
 .form-actions button,
 .save-actions button {
-  flex: 1 1 0;
+  flex: 0 1 268rpx;
   min-width: 0;
+  max-width: 268rpx;
 }
 
 .save-actions {
@@ -118,5 +84,15 @@
 }
 
 .more-fields {
-  margin-top: 4rpx;
+  margin-top: 12rpx;
+}
+
+.field-static {
+  margin-top: 10rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 24rpx;
+  background: var(--improv-bg-subtle);
+  color: var(--improv-text);
+  font-size: 28rpx;
+  font-weight: 800;
 }

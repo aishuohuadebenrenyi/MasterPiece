@@ -1,0 +1,39 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.filter-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.filter-label {
+  color: var(--improv-text);
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.filter-chip-track {
+  width: auto;
+  min-width: auto;
+  padding: 10rpx 0;
+  white-space: nowrap;
+}
+
+.filter-chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.filter-chip {
+  flex: 0 0 auto;
+  min-width: 88rpx;
+  white-space: nowrap;
+}

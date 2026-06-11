@@ -7,11 +7,13 @@ const {
   addInspiration,
   addMethodCard,
   clearVoiceDraft,
-  getState
+  getState,
+  getThemeClass
 } = require('../../store/index')
 
 Page({
   data: {
+    themeClass: 'theme-default',
     titleValue: '',
     contentValue: '',
     linkedGame: '',
@@ -25,6 +27,9 @@ Page({
     linkKind: 'game',
     linkSheetTitle: '选择关联游戏',
     linkOptions: [],
+    linkEmptyTitle: '',
+    linkEmptyDesc: '',
+    showLinkSection: true,
     arrangementOptions: [],
     tagOptions: [],
     arrangementLabel: '带领提醒',
@@ -33,6 +38,24 @@ Page({
     layoutStyle: ''
   },
 
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
+  },
+  getLinkOptions(kind) {
+    const state = getState()
+    if (kind === 'game') {
+      return (state.games || []).slice(0, 6).map((item) => ({
+        value: item.title,
+        title: item.title,
+        desc: item.desc
+      }))
+    }
+    return (state.rehearsalHistory || []).slice(0, 4).map((item) => ({
+      value: item.title,
+      title: item.title,
+      desc: item.desc
+    }))
+  },
   syncOptions() {
     this.setData({
       arrangementOptions: [
@@ -56,21 +79,31 @@ Page({
   },
 
   onLoad() {
-    this.setData({ layoutStyle: getLayoutStyle() })
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
     const state = getState()
     const draft = state.voiceDraft
     const currentRehearsal = state.currentRehearsal
+    const rehearsalHistory = state.rehearsalHistory || []
     if (draft) {
       const linkedGame = state.games.find((item) => item.id === draft.linkedGameId)
+      const linkedRehearsal = (currentRehearsal && currentRehearsal.id === draft.linkedRehearsalId
+        ? currentRehearsal
+        : rehearsalHistory.find((item) => item.id === draft.linkedRehearsalId)) || null
       this.setData({
         titleValue: draft.title,
         contentValue: draft.desc,
         linkedGame: linkedGame ? linkedGame.title : this.data.linkedGame,
-        linkedRehearsal: currentRehearsal && currentRehearsal.id === draft.linkedRehearsalId ? currentRehearsal.title : this.data.linkedRehearsal,
+        linkedRehearsal: linkedRehearsal ? linkedRehearsal.title : this.data.linkedRehearsal,
         draftTitle: draft.title,
         draftSummary: draft.summary
       })
     }
+    this.setData({
+      showLinkSection: !!((state.games || []).length || rehearsalHistory.length || this.data.linkedGame || this.data.linkedRehearsal)
+    })
     this.syncOptions()
   },
 
@@ -98,11 +131,12 @@ Page({
   },
 
   setArrangement(event) {
-    this.setData({ arrangementValue: event.currentTarget.dataset.value }, () => this.syncOptions())
+    const value = (event.detail && event.detail.value) || event.currentTarget.dataset.value
+    this.setData({ arrangementValue: value }, () => this.syncOptions())
   },
 
   toggleTag(event) {
-    const value = event.currentTarget.dataset.value
+    const value = (event.detail && event.detail.value) || event.currentTarget.dataset.value
     const exists = this.data.selectedTags.includes(value)
     this.setData({
       selectedTags: exists
@@ -114,28 +148,21 @@ Page({
   openLink(event) {
     const kind = event.currentTarget.dataset.kind
     const isGame = kind === 'game'
-    const state = getState()
-    const rehearsalOptions = (state.rehearsalHistory || []).slice(0, 4).map((item) => ({
-      value: item.title,
-      title: item.title,
-      desc: item.desc
-    }))
+    const linkOptions = this.getLinkOptions(kind)
     openModal(this, {
       linkVisible: true,
       linkKind: kind,
       linkSheetTitle: isGame ? '选择关联游戏' : '选择关联排练',
-      linkOptions: isGame
-        ? state.games.slice(0, 6).map((item) => ({
-            value: item.title,
-            title: item.title,
-            desc: item.desc
-          }))
-        : rehearsalOptions
+      linkOptions,
+      linkEmptyTitle: isGame ? '暂时没有可关联的游戏' : '暂时没有可关联的排练',
+      linkEmptyDesc: isGame
+        ? '还没有游戏库时，先把灵感存下来，之后再补关联也可以。'
+        : '还没有排练记录时，不需要先补全结构，保存灵感更重要。'
     })
   },
 
   chooseLink(event) {
-    const value = event.currentTarget.dataset.value
+    const value = (event.detail && event.detail.id) || event.currentTarget.dataset.value
     closeModal(this, {
       linkVisible: false,
       linkedGame: this.data.linkKind === 'game' ? value : this.data.linkedGame,
@@ -161,16 +188,21 @@ Page({
       linkedGameTitle: this.data.linkedGame,
       linkedRehearsalTitle: this.data.linkedRehearsal
     }
-    await createInspiration({
-      title: item.title,
-      desc: item.desc,
-      meta: item.meta,
-      linkedGameTitle: item.linkedGameTitle,
-      linkedRehearsalTitle: item.linkedRehearsalTitle
-    })
-    addInspiration(item)
+    try {
+      await createInspiration({
+        title: item.title,
+        desc: item.desc,
+        meta: item.meta,
+        linkedGameTitle: item.linkedGameTitle,
+        linkedRehearsalTitle: item.linkedRehearsalTitle
+      })
+      addInspiration(item)
+      toast('已保存灵感')
+    } catch (error) {
+      addInspiration(Object.assign({}, item, { syncStatus: 'pending' }))
+      toast('已本地保存，待同步')
+    }
     clearVoiceDraft()
-    toast('已保存灵感')
     wx.navigateBack()
   },
   async createMethodCard() {
@@ -182,14 +214,19 @@ Page({
       desc: this.data.contentValue || '待补充',
       meta: (this.data.selectedTags.length ? this.data.selectedTags : []).concat('可复用')
     }
-    await createMethodCardRecord({
-      sourceType: 'inspiration',
-      title: item.title,
-      desc: item.desc,
-      meta: item.meta
-    })
-    addMethodCard(item)
+    try {
+      await createMethodCardRecord({
+        sourceType: 'inspiration',
+        title: item.title,
+        desc: item.desc,
+        meta: item.meta
+      })
+      addMethodCard(item)
+      toast('已沉淀为方法卡')
+    } catch (error) {
+      addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
+      toast('已本地保存，待同步')
+    }
     clearVoiceDraft()
-    toast('已沉淀为方法卡')
   }
 })

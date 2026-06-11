@@ -24,11 +24,11 @@
 
 .record-form-card {
   padding: 32rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 32rpx;
 }
 
 .section-head {
-  margin-bottom: 18rpx;
+  margin-bottom: 14rpx;
 }
 
 .section-title {
@@ -38,12 +38,14 @@
 .form-actions {
   display: flex;
   flex-direction: row;
+  justify-content: center;
   gap: 20rpx;
 }
 
 .form-actions button {
-  flex: 1 1 0;
+  flex: 0 1 268rpx;
   min-width: 0;
+  max-width: 268rpx;
 }
 
 .field-picker {
@@ -57,7 +59,16 @@
 }
 
 .tag-row-spaced {
-  margin-top: 12rpx;
+  margin-top: 14rpx;
+}
+
+.arrangement-section + .tag-section {
+  margin-top: 18rpx;
+}
+
+.arrangement-section .filter-label,
+.tag-section .filter-label {
+  font-size: 24rpx;
 }
 
 .card-head {
@@ -65,7 +76,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
-  margin-bottom: 8rpx;
+  margin-bottom: 14rpx;
 }
 
 .entry-title {
@@ -104,6 +115,17 @@
 .insight-card {
   padding: 28rpx;
   margin-top: 20rpx;
+}
+
+.empty-link-card {
+  padding: 28rpx;
+  margin-top: 12rpx;
+}
+
+.empty-link-card .muted {
+  display: block;
+  margin-top: 8rpx;
+  line-height: 1.6;
 }
 
 .insight-list .entry-title {

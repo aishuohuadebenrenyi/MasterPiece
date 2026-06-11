@@ -1,0 +1,9 @@
+<view class="state-note-card empty-state-card empty-state-panel {{customClass}}">
+  <text wx:if="{{kicker}}" class="pill {{kickerTone}} empty-state-kicker">{{kicker}}</text>
+  <view class="section-title">{{title}}</view>
+  <text class="muted">{{desc}}</text>
+  <view wx:if="{{primaryText || secondaryText}}" class="empty-actions">
+    <button wx:if="{{secondaryText}}" class="ghost-btn empty-action-btn" bindtap="onSecondary">{{secondaryText}}</button>
+    <button wx:if="{{primaryText}}" class="primary-btn empty-action-btn" bindtap="onPrimary">{{primaryText}}</button>
+  </view>
+</view>

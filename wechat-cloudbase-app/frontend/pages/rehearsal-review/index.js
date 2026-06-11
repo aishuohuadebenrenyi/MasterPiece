@@ -1,13 +1,13 @@
 const { toast } = require('../../utils/page')
-const { createGameRecord } = require('../../services/game-record')
 const { createMethodCard: createMethodCardRecord } = require('../../services/method-card')
 const { updateRehearsal } = require('../../services/rehearsal')
-const { addMethodCard, finishCurrentRehearsal, getState, upsertRehearsalHistory } = require('../../store/index')
+const { addMethodCard, finishCurrentRehearsal, getState, upsertRehearsalHistory , getThemeClass } = require('../../store/index')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
 
 Page({
   data: {
+    themeClass: 'theme-default',
     insightVisible: false,
     modalOpen: false,
     reviewTitle: '',
@@ -18,8 +18,14 @@ Page({
     selectedDirections: [],
     layoutStyle: ''
   },
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
+  },
   onLoad() {
-    this.setData({ layoutStyle: getLayoutStyle() })
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
     const current = getState().currentRehearsal
     if (current) {
       this.setData({
@@ -55,17 +61,6 @@ Page({
     }
     this.closeSheet()
     let syncFailed = false
-    try {
-      await createGameRecord({
-        type: 'rehearsalReview',
-        rehearsalId: current.id,
-        keep: this.data.keepValue,
-        try: this.data.tryValue,
-        reminder: this.data.reminderValue
-      })
-    } catch (error) {
-      syncFailed = true
-    }
     const finished = finishCurrentRehearsal({
       desc: this.data.keepValue,
       syncStatus: 'pending',
@@ -93,20 +88,28 @@ Page({
   },
 
   async saveMethodCard() {
-    await createMethodCardRecord({
-      sourceType: 'rehearsalReview',
-      title: this.data.methodTitle,
-      desc: this.data.reminderValue
-    })
-    addMethodCard({
+    const item = {
       id: `method-${Date.now()}`,
       type: '带领提醒',
       title: this.data.methodTitle,
       desc: this.data.reminderValue,
       meta: ['排练复盘', '带领提醒'],
       sourceType: 'rehearsalReview'
-    })
-    this.closeSheet()
-    toast('已沉淀为方法卡')
+    }
+    try {
+      await createMethodCardRecord({
+        sourceType: 'rehearsalReview',
+        title: item.title,
+        desc: item.desc,
+        meta: item.meta
+      })
+      addMethodCard(item)
+      this.closeSheet()
+      toast('已沉淀为方法卡')
+    } catch (error) {
+      addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
+      this.closeSheet()
+      toast('已本地保存，待同步')
+    }
   }
 })

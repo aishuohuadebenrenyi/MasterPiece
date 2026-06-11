@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "form-field": "../form-field/index",
+    "voice-field": "../voice-field/index"
+  }
+}

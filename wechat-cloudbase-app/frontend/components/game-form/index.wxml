@@ -1,0 +1,54 @@
+<view class="game-form">
+  <voice-field label="游戏名称" voiceTarget="title" bind:voice="emitVoice">
+    <input class="app-input" value="{{value.title}}" data-field="title" placeholder="例如：情绪接力" bindblur="emitFieldChange" bindconfirm="emitFieldChange" />
+  </voice-field>
+
+  <view class="field add-sheet-field category-field add-sheet-section">
+    <text>分类</text>
+    <scroll-view class="chip-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
+      <view class="chip-row">
+        <button wx:for="{{categoryOptions}}" wx:key="value" class="chip category-chip {{item.activeClass}}" data-category="{{item.value}}" catchtap="toggleCategory">{{item.label}}</button>
+        <button class="chip category-chip custom-category-chip {{customCategoryVisible ? 'active' : ''}}" catchtap="toggleCustomCategory">+ 自定义</button>
+      </view>
+    </scroll-view>
+    <view wx:if="{{customCategoryVisible}}" class="custom-category-panel custom-category-block">
+      <view class="input-shell custom-category-input">
+        <input value="{{customCategoryInput}}" focus="{{customCategoryFocus}}" placeholder="输入或选择已有分类" bindfocus="customCategoryFocus" bindblur="customCategoryBlur" bindconfirm="customCategoryConfirm" />
+      </view>
+      <view wx:if="{{categorySuggestions.length}}" class="category-suggestions">
+        <button wx:for="{{categorySuggestions}}" wx:key="value" class="category-suggestion" data-category="{{item.value}}" catchtap="selectSuggestion">{{item.label}}</button>
+      </view>
+      <button class="ghost-btn custom-category-confirm" catchtap="customCategoryConfirm">添加分类</button>
+    </view>
+  </view>
+
+  <view class="form-grid add-sheet-grid">
+    <form-field class="compact-field add-sheet-field add-sheet-grid-item" label="适合人数">
+      <input class="app-input" value="{{value.people}}" data-field="people" placeholder="4-8 人" bindblur="emitFieldChange" bindconfirm="emitFieldChange" />
+    </form-field>
+    <form-field class="compact-field add-sheet-field add-sheet-grid-item" label="时长">
+      <input class="app-input" value="{{value.duration}}" data-field="duration" placeholder="10 分钟" bindblur="emitFieldChange" bindconfirm="emitFieldChange" />
+    </form-field>
+  </view>
+
+  <voice-field label="简短描述" voiceTarget="desc" multiline="{{true}}" bind:voice="emitVoice">
+    <textarea class="app-textarea" value="{{value.desc}}" data-field="desc" placeholder="用一句话说清它适合什么时候玩" bindblur="emitFieldChange"></textarea>
+  </voice-field>
+
+  <button class="steps-toggle" catchtap="toggleMore">{{moreOptionsToggleText}}</button>
+
+  <view wx:if="{{showMoreOptions}}" class="add-sheet-section">
+    <voice-field label="补充玩法步骤" voiceTarget="steps" multiline="{{true}}" bind:voice="emitVoice">
+      <textarea class="app-textarea steps-textarea" value="{{value.steps}}" data-field="steps" placeholder="每行一步，例如：先围成一圈..." bindblur="emitFieldChange"></textarea>
+    </voice-field>
+    <voice-field label="带领提示" voiceTarget="tips" multiline="{{true}}" bind:voice="emitVoice">
+      <textarea class="app-textarea steps-textarea" value="{{value.tips}}" data-field="tips" placeholder="第一次带领时需要注意什么？" bindblur="emitFieldChange"></textarea>
+    </voice-field>
+    <voice-field label="变体玩法" voiceTarget="variant" multiline="{{true}}" bind:voice="emitVoice">
+      <textarea class="app-textarea steps-textarea" value="{{value.variant}}" data-field="variant" placeholder="这个游戏还有什么其他玩法？" bindblur="emitFieldChange"></textarea>
+    </voice-field>
+    <voice-field label="可能翻车点" voiceTarget="issue" multiline="{{true}}" bind:voice="emitVoice">
+      <textarea class="app-textarea steps-textarea" value="{{value.issue}}" data-field="issue" placeholder="大家最容易在哪个环节卡住？" bindblur="emitFieldChange"></textarea>
+    </voice-field>
+  </view>
+</view>

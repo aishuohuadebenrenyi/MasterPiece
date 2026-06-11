@@ -1,4 +1,4 @@
-<view class="page record {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+<view class="page record {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}">
   <view class="record-content">
     <view class="record-hero">
       <view class="record-title">记录灵感</view>
@@ -8,7 +8,7 @@
         <button class="small-btn record-action-btn" bindtap="openStartGame">记录游戏</button>
         <button class="small-btn record-action-btn" bindtap="openStartRehearsal">记录排练</button>
       </view>
-      <view class="record-footnote">
+      <view wx:if="{{showTodaySummary}}" class="record-footnote">
         <text>今天已记录</text>
         <text class="record-stat-link record-stat-link-first" data-kind="inspirations" bindtap="openToday">{{inspirationCount}} 条灵感</text>
         <text class="footnote-sep">，</text>
@@ -84,66 +84,64 @@
 
   <bottom-sheet visible="{{startGameVisible}}" title="快速开始游戏" maskVariant="light" sheetClass="start-game-sheet task-sheet" bodyMode="fit" bind:close="closeSheet">
     <view class="start-game-picker">
-      <view class="start-game-search">
-        <text class="start-game-search-icon">⌕</text>
-        <input value="{{gameSearchQuery}}" placeholder="搜索游戏、标签或目标" bindfocus="showStartGameList" bindblur="onGameSearchInput" bindconfirm="onGameSearchInput" />
-      </view>
+      <search-bar customClass="start-game-search" value="{{gameSearchQuery}}" placeholder="搜索游戏、标签或目标" showClear="{{true}}" bind:focus="showStartGameList" bind:blur="onGameSearchInput" bind:confirm="onGameSearchInput" bind:clear="clearGameSearch" />
       <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="start-game-list">
-        <view wx:for="{{filteredGamesList}}" wx:key="id" class="card start-game-option {{startGameSelectedId === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="selectGameToStart">
-          <view class="start-game-option-head">
-            <view class="card-title">{{item.title}}</view>
-            <text wx:if="{{startGameSelectedId === item.id}}" class="selected-pill">已选</text>
+        <selection-card
+          wx:for="{{filteredGamesList}}"
+          wx:key="id"
+          itemId="{{item.id}}"
+          customClass="start-game-option"
+          title="{{item.title}}"
+          desc="{{item.desc}}"
+          selected="{{startGameSelectedId === item.id}}"
+          selectedText="已选"
+          bind:tapcard="selectGameToStart"
+        >
+          <view slot="extra" class="meta-row start-game-meta" wx:if="{{item.meta.length || item.tags.length}}">
+            <text wx:for="{{item.meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+            <text wx:for="{{item.tags}}" wx:key="*this" class="meta-pill">{{item}}</text>
           </view>
-          <text class="muted">{{item.desc}}</text>
-          <view class="start-game-meta" wx:if="{{item.meta.length || item.tags.length}}">
-            <text wx:for="{{item.meta}}" wx:key="*this">{{item}}</text>
-            <text wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
-          </view>
-        </view>
-        <view wx:if="{{filteredGamesList.length === 0}}" class="start-game-empty">
-          <text class="muted">未找到匹配的游戏</text>
-        </view>
+        </selection-card>
+        <empty-state-panel wx:if="{{filteredGamesList.length === 0}}" customClass="start-game-empty" title="{{startGameEmptyTitle}}" desc="{{startGameEmptyDesc}}" />
       </scroll-view>
     </view>
     <button class="primary-btn start-btn {{!startGameSelectedId ? 'disabled-btn' : ''}}" bindtap="startGameFromRecord" disabled="{{!startGameSelectedId}}">开始游戏</button>
   </bottom-sheet>
 
   <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
-    <view wx:for="{{todayItems}}" wx:key="id" class="card item-card">
-      <view class="item-head">
-        <view class="card-title">{{item.title}}</view>
-        <text wx:if="{{item.syncStatus === 'pending'}}" class="sync-pill">本地暂存</text>
-      </view>
-      <text class="muted">{{item.desc}}</text>
-    </view>
+    <empty-state-panel wx:if="{{!todayItems.length}}" customClass="sheet-empty-card" title="{{todayEmptyTitle}}" desc="{{todayEmptyDesc}}" />
+    <selection-card
+      wx:for="{{todayItems}}"
+      wx:key="id"
+      itemId="{{item.id}}"
+      customClass="item-card"
+      title="{{item.title}}"
+      desc="{{item.desc}}"
+      pending="{{item.syncStatus === 'pending'}}"
+    />
   </bottom-sheet>
 
   <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" sheetClass="start-rehearsal-sheet task-sheet" bind:close="closeSheet">
     <view class="start-rehearsal-form">
-      <label class="field start-rehearsal-section">团队<input value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" /></label>
-      <view class="start-rehearsal-section">
-        <text class="mini-title">时长</text>
-        <view class="sheet-chip-row start-rehearsal-chips">
-          <button wx:for="{{durationOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setDuration">{{item.label}}</button>
+      <form-field class="start-rehearsal-section" label="团队">
+        <input class="app-input" value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" />
+      </form-field>
+      <filter-section label="时长" options="{{durationOptions}}" customClass="start-rehearsal-section" rowClass="start-rehearsal-chips" bind:select="setDuration" />
+      <filter-section label="本次目标" options="{{goalOptions}}" customClass="start-rehearsal-section start-goal-section" rowClass="start-rehearsal-goal-row" chipClass="start-rehearsal-goal-chip" bind:select="toggleGoal">
+        <button slot="suffix" class="chip compact-filter-chip start-rehearsal-goal-chip custom-goal-chip {{customGoalInput ? 'active' : ''}}" bindtap="toggleCustomGoal">{{customGoalInput ? customGoalInput : '+ 自定义'}}</button>
+        <view wx:if="{{customGoalVisible}}" class="custom-goal-panel">
+          <form-field label="自定义目标">
+            <input class="app-input" value="{{customGoalInput}}" placeholder="例如：默契升温" bindblur="updateCustomGoal" bindconfirm="updateCustomGoal" />
+          </form-field>
         </view>
-      </view>
-      <view class="start-rehearsal-section">
-        <text class="mini-title">本次目标</text>
-        <view class="sheet-chip-row start-rehearsal-chips start-rehearsal-chips-wrap">
-          <button wx:for="{{goalOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="toggleGoal">{{item.label}}</button>
-        </view>
-      </view>
-      <view class="start-rehearsal-section">
-        <text class="mini-title">添加游戏</text>
-        <view class="sheet-chip-row start-rehearsal-chips">
-          <button wx:for="{{sourceOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setSource">{{item.label}}</button>
-        </view>
-      </view>
-      <button class="primary-btn start-btn start-rehearsal-submit" bindtap="startRehearsal">开始排练</button>
+      </filter-section>
+      <filter-section label="添加游戏" options="{{sourceOptions}}" customClass="start-rehearsal-section" rowClass="start-rehearsal-chips" bind:select="setSource" />
+      <text wx:if="{{rehearsalSourceHint}}" class="muted">{{rehearsalSourceHint}}</text>
+      <button class="primary-btn start-btn start-rehearsal-submit {{savedSourceUnavailable ? 'disabled-btn' : ''}}" bindtap="startRehearsal" disabled="{{savedSourceUnavailable}}">开始排练</button>
     </view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
-    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </view>

@@ -1,6 +1,13 @@
 {
+  "navigationBarTitleText": "记录现场",
+  "disableScroll": true,
   "usingComponents": {
-    "bottom-sheet": "../../components/bottom-sheet/index"
+    "bottom-sheet": "../../components/bottom-sheet/index",
+    "form-card": "../../components/form-card/index",
+    "form-field": "../../components/form-field/index",
+    "search-bar": "../../components/search-bar/index",
+    "empty-state-panel": "../../components/empty-state-panel/index",
+    "filter-section": "../../components/filter-section/index",
+    "selection-card": "../../components/selection-card/index"
   }
 }
-

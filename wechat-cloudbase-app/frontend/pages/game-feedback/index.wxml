@@ -1,47 +1,33 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}" wx:if="{{game}}">
-  <view class="subpage-header safe-right">
-    <view class="back" aria-label="返回" bindtap="back">←</view>
-    <text class="kicker" wx:if="{{duration > 0}}">本次游戏时长：{{durationText}}</text>
-    <text class="kicker" wx:else>游戏实践反馈</text>
-    <view class="page-title">{{game.title}}</view>
-  </view>
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}" wx:if="{{game}}">
+  <subpage-header kicker="{{duration > 0 ? '本次游戏时长：' + durationText : '游戏实践反馈'}}" title="{{game.title}}" bind:back="back" />
 
-  <view class="card record-form-card">
-    <view class="card-head">
-      <view>
-        <text class="mini-title">本次记录对象</text>
-        <view class="section-title">{{game.title}}</view>
-      </view>
-      <button class="small-btn" bindtap="openVoice">语音</button>
-    </view>
+  <form-card title="{{game.title}}" kicker="本次记录对象" actionText="语音" bind:action="openVoice">
     <text class="muted">{{game.desc}}</text>
-    <view class="meta"><text wx:for="{{game.meta}}" wx:key="*this">{{item}}</text></view>
-  </view>
+    <view class="meta-row"><text wx:for="{{game.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
+  </form-card>
 
-  <view class="card record-form-card compact-card">
-    <view class="section-head">
-      <view>
-        <text class="mini-title">归属场景</text>
-        <view class="section-title">这次在哪玩？</view>
+  <form-card title="这次在哪玩？" kicker="归属场景" class="compact-card">
+    <view class="choice-section">
+      <view class="form-chip-row">
+        <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
       </view>
     </view>
-    <view class="form-chip-row">
-      <button wx:for="{{contextOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
-    </view>
-  </view>
+  </form-card>
 
-  <view class="card record-form-card">
-    <view class="section-head">
-      <view>
-        <text class="mini-title">效果反馈</text>
-        <view class="section-title">记录本次 Keep / Try</view>
+  <form-card title="记录本次 Keep / Try" kicker="效果反馈">
+    <view class="choice-section">
+      <view class="form-chip-row">
+        <button wx:for="{{effectOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setEffect">{{item.label}}</button>
       </view>
     </view>
-    <view class="form-chip-row">
-      <button wx:for="{{effectOptions}}" wx:key="value" class="chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setEffect">{{item.label}}</button>
+    <view class="form-field-stack">
+      <form-field label="Keep">
+        <textarea class="app-textarea" value="{{keepValue}}" data-field="keepValue" bindblur="updateField" />
+      </form-field>
+      <form-field label="Try">
+        <textarea class="app-textarea" value="{{tryValue}}" data-field="tryValue" bindblur="updateField" />
+      </form-field>
     </view>
-    <label class="field">Keep<textarea value="{{keepValue}}" data-field="keepValue" bindblur="updateField" /></label>
-    <label class="field">Try<textarea value="{{tryValue}}" data-field="tryValue" bindblur="updateField" /></label>
     <view class="more-toggle" bindtap="toggleMore">
       <view>
         <text class="mini-title">更多信息</text>
@@ -50,25 +36,19 @@
       <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
     </view>
     <view wx:if="{{moreVisible}}" class="more-fields">
-      <label class="field">人数<input value="{{attendanceText}}" data-field="attendanceText" bindblur="updateField" /></label>
-      <label class="field">关联排练 / 场景
-        <view class="field-picker">
-          <input value="{{linkedRehearsal}}" disabled />
-          <button class="small-btn" bindtap="openLink">选择</button>
-        </view>
-      </label>
-      <label class="field">下次提醒<input value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" /></label>
-    </view>
-  </view>
-
-  <view class="card input-card" wx:if="{{rehearsalHistoryList.length > 0}}">
-    <view class="label">追加到历史排练（可选）</view>
-    <picker mode="selector" range="{{rehearsalHistoryList}}" range-key="displayTitle" bindchange="onRehearsalChange">
-      <view class="picker-view" style="padding: 24rpx 0; font-size: 30rpx; color: {{selectedRehearsalId ? 'var(--improv-text)' : 'var(--improv-text-muted)'}};">
-        {{selectedRehearsalName || '点击选择排练'}}
+      <view class="form-field-stack">
+        <form-field label="人数">
+          <input class="app-input" value="{{attendanceText}}" data-field="attendanceText" bindblur="updateField" />
+        </form-field>
+        <form-field label="当前归属场景">
+          <view class="field-static">{{linkedRehearsal}}</view>
+        </form-field>
+        <form-field label="下次提醒">
+          <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" />
+        </form-field>
       </view>
-    </picker>
-  </view>
+    </view>
+  </form-card>
 
   <root-portal wx:if="{{!modalOpen}}">
     <view class="form-actions">
@@ -76,18 +56,6 @@
       <button class="primary-btn" bindtap="saveRecord">保存记录</button>
     </view>
   </root-portal>
-
-  <bottom-sheet visible="{{linkVisible}}" title="选择关联排练" bodyMode="fit" bind:close="closeSheet">
-    <view wx:for="{{linkOptions}}" wx:key="value" class="card option-card">
-      <view class="card-head">
-        <view>
-          <view class="section-title">{{item.title}}</view>
-          <text class="muted">{{item.desc}}</text>
-        </view>
-        <button class="small-btn" data-value="{{item.value}}" bindtap="chooseLink">选择</button>
-      </view>
-    </view>
-  </bottom-sheet>
 
   <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" bind:close="closeSheet">
     <view class="card insight-card">
@@ -99,6 +67,6 @@
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
-    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>

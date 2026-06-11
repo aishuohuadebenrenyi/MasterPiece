@@ -86,7 +86,10 @@
   position: relative;
 }
 
+
 .profile-card-main {
+  flex: 1 1 0;
+  min-width: 0;
   padding-right: 120rpx;
 }
 
@@ -302,6 +305,19 @@
   padding-right: 0;
 }
 
+.mine-lite-guide-card {
+  padding-bottom: 34rpx;
+}
+
+.mine-lite-guide-card .muted {
+  max-width: 100%;
+}
+
+.mine-lite-guide-actions {
+  margin-top: 28rpx;
+  justify-content: center;
+}
+
 .intro-fill-card {
   flex: 1 1 auto;
   min-height: 320rpx;
@@ -370,7 +386,7 @@
 .profile-edit-sheet {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 84rpx;
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 }
 
@@ -381,7 +397,7 @@
   justify-content: center;
   gap: 16rpx;
   margin-top: 10rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
 }
 
 .profile-editor-avatar {
@@ -411,7 +427,6 @@
 
 .profile-name-field > text {
   display: block;
-  margin-bottom: 12rpx;
   color: var(--improv-muted);
   font-size: 24rpx;
   font-weight: 800;
@@ -422,18 +437,25 @@
 }
 
 .profile-tag-line {
-  margin-top: 14rpx;
+  margin-top: 0;
 }
 
 .profile-tag-field .muted {
   display: block;
-  margin-top: 12rpx;
+}
+
+.profile-tag-field .info-primary {
+  margin-top: 0 !important;
+}
+
+.profile-tag-field .info-note {
+  margin-top: 14rpx;
 }
 
 .profile-save-btn {
   width: 320rpx;
   max-width: 72%;
-  margin: 24rpx auto 0;
+  margin: 28rpx auto 0;
   align-self: center;
 }
 
@@ -480,15 +502,11 @@
 .mine-filter-chip {
   flex: 0 0 auto;
   width: auto;
-  min-width: 112rpx;
-  min-height: 64rpx;
-  padding: 0 26rpx;
-  font-size: 24rpx;
+  min-width: 0;
 }
 
 .mine-filter-chip.active {
-  background: var(--improv-action-gradient);
-  color: var(--improv-on-brand);
+  box-shadow: none;
 }
 
 .list-item-head {
@@ -498,24 +516,17 @@
   gap: 16rpx;
 }
 
-.sync-pill {
-  flex: 0 0 auto;
-  min-height: 44rpx;
-  padding: 0 16rpx;
-  border-radius: 999rpx;
-  background: var(--improv-primary-tint);
-  color: var(--improv-warm);
-  font-size: 22rpx;
-  line-height: 44rpx;
-  font-weight: 900;
+.list-item-head + .mine-entry-title {
+  margin-top: -8rpx;
+}
+
+.mine-entry-title + .muted {
+  margin-top: 4rpx;
+  display: block;
 }
 
 .empty-list {
-  padding: 42rpx 36rpx 40rpx;
-  border-radius: 40rpx;
-  background: var(--improv-card-strong);
-  border: 2rpx solid var(--improv-line-soft);
-  box-shadow: var(--improv-shadow-xs);
+  text-align: left;
 }
 
 .empty-list .muted {
@@ -562,20 +573,8 @@
 }
 
 .detail-content-wrapper .detail-tags {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: flex-start;
   gap: 16rpx;
-}
-
-.detail-tags .pill-meta {
-  display: inline-block;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: var(--improv-bg-soft);
-  color: var(--improv-muted);
-  font-size: 24rpx;
-  font-weight: 800;
 }
 
 .detail-action-row {

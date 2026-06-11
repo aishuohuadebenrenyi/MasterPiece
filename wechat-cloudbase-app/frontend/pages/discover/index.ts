@@ -1,6 +1,6 @@
 import type { Game, ViewMode } from '../../types/domain'
 import { createGame, listGames, updateSaved } from '../../services/game'
-import { getState, setGames, setState, subscribe, toggleSaved } from '../../store/index'
+import { getState, setGames, setState, subscribe, toggleSaved , getThemeClass } from '../../store/index'
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
@@ -29,8 +29,14 @@ const fabRightRpx = 42
 const fabBottomRpx = 160
 const fabDragThreshold = 6
 
+function buildGameMeta(people = '', duration = '') {
+  if (!people && !duration) return []
+  return [people || '', duration || '']
+}
+
 Page({
   data: {
+    themeClass: 'theme-default',
     games: [] as Game[],
     filteredGames: [] as Game[],
     view: 'list' as ViewMode,
@@ -46,6 +52,7 @@ Page({
     modalOpen: false,
     randomIndex: 0,
     drawnCount: 1,
+    randomUseAllGames: false,
     currentRandomGame: null as Game | null,
     newGame: {} as NewGameDraft,
     selectedCategoryTags: ['热身'] as string[],
@@ -69,7 +76,10 @@ Page({
     fabY: 0,
     layoutStyle: '',
     loadingGames: true,
-    showEmptyState: false
+    loadErrorText: '',
+    showEmptyState: false,
+    showLoadErrorState: false,
+    showFilterNoMatchState: false
   },
 
   unsubscribeStore: null as null | (() => void),
@@ -78,6 +88,10 @@ Page({
   fabWindow: null as null | { width: number; height: number; size: number },
   fabMoved: false,
   fabIgnoreTapUntil: 0,
+
+  getRandomCandidates() {
+    return this.data.randomUseAllGames ? this.data.games : this.data.filteredGames
+  },
 
   syncFromStore() {
     const state = getState()
@@ -104,7 +118,7 @@ Page({
         || (duration === '15+' && /15|20|30/.test(durationText))
       const inGoal = goal === 'all'
         || (game.tags && game.tags.includes(goal))
-        || `${game.desc} ${game.lead}`.includes(goal)
+        || `${game.desc}`.includes(goal)
       const inStatus = status === 'all'
         || (status === 'saved' && game.saved)
         || (status === 'played' && game.played)
@@ -116,14 +130,19 @@ Page({
 
   syncFiltered() {
     const filteredGames = this.getFilteredGames()
-    const showEmptyState = !this.data.loadingGames && this.data.games.length === 0
+    const randomCandidates = this.getRandomCandidates()
+    const showLoadErrorState = !this.data.loadingGames && !!this.data.loadErrorText && this.data.games.length === 0
+    const showEmptyState = !this.data.loadingGames && !this.data.loadErrorText && this.data.games.length === 0
+    const showFilterNoMatchState = !this.data.loadingGames && this.data.games.length > 0 && filteredGames.length === 0
     this.setData({
       filteredGames,
-      currentRandomGame: filteredGames[this.data.randomIndex % Math.max(filteredGames.length, 1)] || this.data.games[0] || null,
+      currentRandomGame: randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null,
       listActiveClass: this.data.view === 'list' ? 'active' : '',
       cardActiveClass: this.data.view === 'card' ? 'active' : '',
       isListView: this.data.view === 'list',
       showEmptyState,
+      showLoadErrorState,
+      showFilterNoMatchState,
       tagChips: tagOptions.map((item) => Object.assign({}, item, {
         activeClass: this.data.tag === item.value ? 'active' : ''
       })),
@@ -189,20 +208,34 @@ Page({
       .map((value) => ({ value, label: value }))
   },
 
-  async onLoad() {
-    this.setData({ layoutStyle: getLayoutStyle() })
-    this.resetFabPosition()
-    this.unsubscribeStore = subscribe(() => this.syncFromStore())
+  async loadGames(showRetryToast = false) {
+    this.setData({ loadingGames: true, loadErrorText: '' }, () => this.syncFiltered())
     try {
       setGames(await listGames())
     } catch (error) {
       this.syncFromStore()
+      const loadErrorText = getState().games.length
+        ? '云端同步失败，先继续查看本次会话里的内容。'
+        : '云端暂时不可用，稍后重试，或先手动添加游戏。'
+      this.setData({ loadErrorText })
+      if (showRetryToast) toast(loadErrorText)
     } finally {
       this.setData({ loadingGames: false }, () => this.syncFiltered())
     }
   },
 
+  async onLoad() {
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
+    this.resetFabPosition()
+    this.unsubscribeStore = subscribe(() => this.syncFromStore())
+    await this.loadGames()
+  },
+
   onShow() {
+    this.setData({ themeClass: getThemeClass() })
     syncTabBar(this, 0)
     this.syncFromStore()
   },
@@ -239,24 +272,32 @@ Page({
     this.setData({ query: event.detail.value }, () => this.syncFiltered())
   },
 
+  clearSearchQuery() {
+    this.setData({ query: '' }, () => this.syncFiltered())
+  },
+
   filterTag(event: WechatMiniprogram.TouchEvent) {
     this.setData({ tag: event.currentTarget.dataset.tag }, () => this.syncFiltered())
   },
 
   filterStatus(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ status: event.currentTarget.dataset.status }, () => this.syncFiltered())
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.status
+    this.setData({ status: value }, () => this.syncFiltered())
   },
 
   filterPeople(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ people: event.currentTarget.dataset.value }, () => this.syncFiltered())
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ people: value }, () => this.syncFiltered())
   },
 
   filterDuration(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ duration: event.currentTarget.dataset.value }, () => this.syncFiltered())
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ duration: value }, () => this.syncFiltered())
   },
 
   filterGoal(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ goal: event.currentTarget.dataset.value }, () => this.syncFiltered())
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ goal: value }, () => this.syncFiltered())
   },
 
   openGame(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
@@ -266,14 +307,25 @@ Page({
   async toggleSave(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
     const id = event.detail.id
     const nextValue = toggleSaved(id)
-    await updateSaved(id, nextValue)
+    try {
+      await updateSaved(id, nextValue)
+    } catch (error) {
+      toggleSaved(id, !nextValue)
+      toast('收藏状态同步失败，请稍后再试')
+    }
   },
 
   openRandom() {
     if (Date.now() < this.fabIgnoreTapUntil) return
     if (!this.data.games.length) return
-    this.setData({ drawnCount: 1 })
-    openModal(this, { randomVisible: true })
+    this.setData({
+      drawnCount: 1,
+      randomIndex: 0,
+      randomUseAllGames: false
+    }, () => {
+      this.syncFiltered()
+      openModal(this, { randomVisible: true })
+    })
   },
 
   onFabTouchStart(event: any) {
@@ -307,7 +359,7 @@ Page({
   },
 
   reroll() {
-    const candidates = this.data.filteredGames.length ? this.data.filteredGames : this.data.games
+    const candidates = this.getRandomCandidates()
     if (candidates.length <= 1 || this.data.drawnCount >= candidates.length) {
       toast('已无更多卡片')
       return
@@ -333,11 +385,47 @@ Page({
 
   applyFilter() {
     closeModal(this, { filterVisible: false })
-    toast(`已筛选出 ${this.getFilteredGames().length} 个游戏`)
+    const count = this.getFilteredGames().length
+    toast(count ? `已筛选出 ${count} 个游戏` : '当前条件下没有匹配游戏')
+  },
+
+  clearFilters() {
+    this.setData({
+      query: '',
+      tag: 'all',
+      people: 'all',
+      duration: 'all',
+      goal: 'all',
+      status: 'all',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllGames: false
+    }, () => this.syncFiltered())
+  },
+
+  clearFiltersForRandom() {
+    this.clearFilters()
+    toast('已清空条件')
+  },
+
+  useAllGamesForRandom() {
+    this.setData({
+      randomUseAllGames: true,
+      randomIndex: 0,
+      drawnCount: 1
+    }, () => this.syncFiltered())
+  },
+
+  retryLoadGames() {
+    this.loadGames(true)
   },
 
   openAdd() {
-    openModal(this, { addVisible: true })
+    openModal(this, {
+      randomVisible: false,
+      filterVisible: false,
+      addVisible: true
+    })
   },
 
   closeSheet() {
@@ -350,14 +438,21 @@ Page({
       customCategoryInput: '',
       categorySuggestions: [],
       newGame: {},
+      randomUseAllGames: false,
       selectedCategoryTags: ['热身'],
-      showNewGameSteps: false,
-      stepsToggleText: '补充玩法步骤'
+      showMoreOptions: false,
+      moreOptionsToggleText: '补充玩法与提示'
     })
   },
 
+  handleGameFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
+    const { field, value } = event.detail || { field: '', value: '' }
+    if (!field) return
+    this.setData({ [`newGame.${field}`]: value })
+  },
+
   voiceFill(event: WechatMiniprogram.TouchEvent) {
-    const target = event.currentTarget.dataset.target
+    const target = (event as WechatMiniprogram.CustomEvent<{ target: string }>).detail?.target || event.currentTarget.dataset.target
     const patch: Record<string, string> = {}
     if (target === 'title') patch['newGame.title'] = '情绪接力'
     if (target === 'title') patch['newGame.people'] = '4-8 人'
@@ -372,13 +467,8 @@ Page({
     toast('已模拟语音输入')
   },
 
-  updateNewGame(event: WechatMiniprogram.Input) {
-    const field = event.currentTarget.dataset.field
-    this.setData({ [`newGame.${field}`]: event.detail.value })
-  },
-
   toggleNewGameCategory(event: WechatMiniprogram.TouchEvent) {
-    const category = String(event.currentTarget.dataset.category || '').trim()
+    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
     if (!category) return
     const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
       ? this.data.selectedCategoryTags.filter((item) => item !== category)
@@ -413,32 +503,32 @@ Page({
     }
   },
 
-  handleCustomCategoryBlur() {
-    if (this.data.customCategoryFocus) {
-      this.setData({ customCategoryFocus: false })
-    }
-  },
-
-  updateCustomCategory(event: WechatMiniprogram.Input) {
-    const customCategoryInput = event.detail.value
+  handleCustomCategoryBlur(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const customCategoryInput = String(event.detail?.value || '')
     this.setData({
+      customCategoryFocus: false,
       customCategoryInput,
       categorySuggestions: this.getCategorySuggestions(customCategoryInput)
     })
   },
 
   selectCategorySuggestion(event: WechatMiniprogram.TouchEvent) {
-    const category = String(event.currentTarget.dataset.category || '').trim()
+    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
     if (!category) return
     this.addCategoryTag(category)
   },
 
-  confirmCustomCategory() {
-    const category = String(this.data.customCategoryInput || '').trim()
+  confirmCustomCategory(event?: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const inputValue = event && event.detail ? event.detail.value : this.data.customCategoryInput
+    const category = String(inputValue || '').trim()
     if (!category) {
       toast('先输入分类')
       return
     }
+    this.setData({
+      customCategoryInput: category,
+      categorySuggestions: this.getCategorySuggestions(category)
+    })
     const existed = this.getCategoryPool().find((item) => item.toLowerCase() === category.toLowerCase())
     this.addCategoryTag(existed || category)
   },
@@ -474,17 +564,15 @@ Page({
     if (!tags.length) tags.push('自定义')
     const steps = typeof this.data.newGame.steps === 'string' && this.data.newGame.steps.trim()
       ? this.data.newGame.steps.split('\n').map((item) => item.trim()).filter(Boolean)
-      : ['先用一句话讲清核心规则，试玩后再补完整步骤。']
+      : []
     const game: Game = {
       id: `custom-${Date.now()}`,
       title,
-      desc: this.data.newGame.desc || '这是你添加的新游戏，可以稍后继续完善。',
+      desc: this.data.newGame.desc || '',
       tags,
-      meta: [this.data.newGame.people || '待补充', this.data.newGame.duration || '待补充', '自定义'],
-      fit: [],
-      lead: this.data.newGame.desc || '先试玩一轮，再补充带领提示。',
+      meta: buildGameMeta(this.data.newGame.people, this.data.newGame.duration),
       steps,
-      tips: this.data.newGame.tips || '第一次带领时先保持规则短。',
+      tips: this.data.newGame.tips || '',
       variant: this.data.newGame.variant || '',
       issue: this.data.newGame.issue || '',
       relatedGameId: '',

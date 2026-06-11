@@ -1,5 +1,5 @@
 const { listGameRecords } = require('../../services/game-record')
-const { getState } = require('../../store/index')
+const { getState , getThemeClass } = require('../../store/index')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
 
@@ -42,34 +42,49 @@ function buildRecordViewModels(records = []) {
 
 Page({
   data: {
+    themeClass: 'theme-default',
     records: [],
     layoutStyle: '',
     loading: false,
     errorText: '',
+    showSummaryCard: false,
     detailVisible: false,
     modalOpen: false,
-    selectedRecord: null
+    selectedRecord: null,
+    selectedNotes: []
+  },
+  onLoad() {
+    this.setData({
+      themeClass: getThemeClass(),
+      layoutStyle: getLayoutStyle()
+    })
   },
   async onShow() {
+    this.setData({ themeClass: getThemeClass() })
     const state = getState()
     this.setData({
       records: buildRecordViewModels(state.gameRecordsHistory || []),
       layoutStyle: getLayoutStyle(),
       loading: true,
-      errorText: ''
+      errorText: '',
+      showSummaryCard: false
     })
     try {
       const records = await listGameRecords()
+      const normalizedRecords = buildRecordViewModels(records)
       this.setData({
-        records: buildRecordViewModels(records),
+        records: normalizedRecords,
         loading: false,
-        errorText: ''
+        errorText: '',
+        showSummaryCard: normalizedRecords.length > 0
       })
     } catch (error) {
+      const fallbackRecords = buildRecordViewModels(state.gameRecordsHistory || [])
       this.setData({
-        records: buildRecordViewModels(state.gameRecordsHistory || []),
+        records: fallbackRecords,
         loading: false,
-        errorText: '云端暂时不可用，已显示本地记录。'
+        errorText: '云端暂时不可用，当前只显示本次会话里的游戏记录。',
+        showSummaryCard: fallbackRecords.length > 0
       })
     }
   },
@@ -77,18 +92,32 @@ Page({
     wx.navigateBack()
   },
   openRecord(event) {
-    const id = event.currentTarget.dataset.id
+    const id = event.detail && event.detail.id
+      ? event.detail.id
+      : event.currentTarget.dataset.id
     const selectedRecord = (this.data.records || []).find((item) => item.id === id)
     if (!selectedRecord) return
+    const selectedNotes = []
+    if (selectedRecord.keep) selectedNotes.push(`Keep：${selectedRecord.keep}`)
+    if (selectedRecord.try) selectedNotes.push(`Try：${selectedRecord.try}`)
+    if (selectedRecord.reminder) selectedNotes.push(`提醒：${selectedRecord.reminder}`)
     openModal(this, {
       detailVisible: true,
-      selectedRecord
+      selectedRecord,
+      selectedNotes
     })
   },
   closeSheet() {
     closeModal(this, {
       detailVisible: false,
-      selectedRecord: null
+      selectedRecord: null,
+      selectedNotes: []
     })
+  },
+  goDiscover() {
+    wx.switchTab({ url: '/pages/discover/index' })
+  },
+  goRecord() {
+    wx.switchTab({ url: '/pages/record/index' })
   }
 })

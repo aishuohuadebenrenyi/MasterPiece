@@ -1,30 +1,13 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page rehearsal {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
-  <view class="subpage-header safe-right">
-    <view class="back" aria-label="返回" bindtap="back">←</view>
-    <text class="kicker">排练记录</text>
-    <view class="page-title">{{title}}</view>
-  </view>
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page rehearsal {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}">
+  <subpage-header kicker="排练记录" title="{{title}}" bind:back="back" />
 
-  <view class="card record-form-card">
-    <view class="card-head">
-      <view>
-        <text class="mini-title">本次排练</text>
-        <view class="section-title">今晚排练 · {{duration}} 分钟</view>
-        <text class="muted">目标：{{desc}}</text>
-      </view>
-      <button class="small-btn" bindtap="openPlan">编辑</button>
-    </view>
-    <view class="meta"><text>{{metaText}}</text></view>
-  </view>
+  <form-card title="今晚排练 · {{duration}} 分钟" kicker="本次排练" actionText="编辑" bind:action="openPlan">
+    <text class="muted">目标：{{desc}}</text>
+    <view class="meta-row"><text class="meta-pill">{{metaText}}</text></view>
+  </form-card>
 
-  <view class="card record-form-card">
-    <view class="card-head">
-      <view>
-        <text class="mini-title">游戏计划</text>
-        <view class="section-title">游戏计划与反馈</view>
-      </view>
-      <button class="small-btn" bindtap="openAdd">加游戏</button>
-    </view>
+  <form-card title="游戏计划与反馈" kicker="游戏计划" actionText="加游戏" bind:action="openAdd">
+    <empty-state-panel wx:if="{{!planGames.length}}" customClass="plan-empty-card" title="先加几个这次想练的游戏" desc="没有计划时，不需要先把页面填满。先加入 1-3 个游戏，排练会更容易开始。" primaryText="加游戏" bind:primary="openAdd" />
     <view wx:for="{{planGames}}" wx:key="id" class="card rehearsal-game">
       <view class="plan-item">
         <view class="index">{{index + 1}}</view>
@@ -39,11 +22,15 @@
         <text class="pill orange">Keep / Try</text>
       </view>
       <view class="quick-feedback">
-        <label class="field">Keep<input placeholder="有效的瞬间" value="{{item.keepValue}}" data-id="{{item.id}}" data-field="keep" bindblur="updatePlanField" /></label>
-        <label class="field">Try<input placeholder="下次调整" value="{{item.tryValue}}" data-id="{{item.id}}" data-field="try" bindblur="updatePlanField" /></label>
+        <form-field label="Keep">
+          <input class="app-input" placeholder="有效的瞬间" value="{{item.keepValue}}" data-id="{{item.id}}" data-field="keep" bindblur="updatePlanField" />
+        </form-field>
+        <form-field label="Try">
+          <input class="app-input" placeholder="下次调整" value="{{item.tryValue}}" data-id="{{item.id}}" data-field="try" bindblur="updatePlanField" />
+        </form-field>
       </view>
     </view>
-  </view>
+  </form-card>
 
   <view class="section" wx:if="{{linkedInspirations.length > 0}}">
     <view class="section-title">
@@ -53,7 +40,7 @@
       <view wx:for="{{linkedInspirations}}" wx:key="id" class="card inspiration-card">
         <view class="card-title">{{item.title}}</view>
         <text class="muted">{{item.desc}}</text>
-        <view class="meta"><text wx:for="{{item.meta}}" wx:key="*this">{{item}}</text></view>
+        <view class="meta-row"><text wx:for="{{item.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
       </view>
     </view>
   </view>
@@ -66,15 +53,20 @@
   </root-portal>
 
   <bottom-sheet visible="{{addVisible}}" title="添加到排练" bind:close="closeSheet">
-    <view class="search-bar">
-      <text>⌕</text>
-      <input value="{{query}}" bindblur="searchGame" bindconfirm="searchGame" placeholder="搜索游戏、标签或目标" />
-    </view>
-    <view wx:for="{{filteredGames}}" wx:key="id" class="card option-card" data-id="{{item.id}}" bindtap="addGame">
-      <view class="game-title">{{item.title}}</view>
-      <text class="muted">{{item.desc}}</text>
-      <view class="meta"><text wx:for="{{item.meta}}" wx:key="*this">{{item}}</text></view>
-    </view>
+    <search-bar value="{{query}}" placeholder="搜索游戏、标签或目标" showClear="{{true}}" bind:blur="searchGame" bind:confirm="searchGame" bind:clear="clearAddSearch" />
+    <empty-state-panel wx:if="{{!filteredGames.length}}" customClass="add-empty-card" title="{{addEmptyTitle}}" desc="{{addEmptyDesc}}" primaryText="{{query ? '' : '去发现页添加'}}" secondaryText="{{query ? '清空搜索' : ''}}" bind:primary="goDiscover" bind:secondary="clearAddSearch" />
+    <selection-card
+      wx:for="{{filteredGames}}"
+      wx:key="id"
+      itemId="{{item.id}}"
+      customClass="option-card"
+      title="{{item.title}}"
+      desc="{{item.desc}}"
+      meta="{{item.meta}}"
+      actionText="加入"
+      bind:tapcard="addGame"
+      bind:action="addGame"
+    />
   </bottom-sheet>
 
   <bottom-sheet visible="{{planVisible}}" title="调整排练计划" bind:close="closeSheet">
@@ -83,19 +75,21 @@
       <view class="section-title">{{title}} · {{duration}} 分钟</view>
       <text class="muted">{{desc}}</text>
     </view>
-    <view wx:for="{{planGames}}" wx:key="id" class="card option-card">
-      <view class="card-head">
-        <view>
-          <view class="game-title">{{index + 1}}. {{item.title}}</view>
-          <text class="muted">{{item.status}} · {{item.metaText}} · {{item.tagText}}</text>
-        </view>
-        <button class="small-btn" data-id="{{item.id}}" bindtap="toggleStatus">切换状态</button>
-      </view>
-    </view>
+    <empty-state-panel wx:if="{{!planGames.length}}" customClass="add-empty-card" title="当前还没有排练计划" desc="先去添加游戏，回来后再调整顺序和状态。" primaryText="加游戏" bind:primary="openAdd" />
+    <selection-card
+      wx:for="{{planGames}}"
+      wx:key="id"
+      itemId="{{item.id}}"
+      customClass="option-card"
+      title="{{index + 1}}. {{item.title}}"
+      desc="{{item.status}} · {{item.metaText}} · {{item.tagText}}"
+      actionText="切换状态"
+      bind:action="toggleStatus"
+    />
     <button class="primary-btn plan-submit" bindtap="savePlan">保存计划</button>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
-    <view class="app-toast app-toast-{{appToastTone}}"><text>{{appToastTitle}}</text></view>
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>

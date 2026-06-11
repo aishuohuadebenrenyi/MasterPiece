@@ -1,6 +1,6 @@
 import type { InspirationItem, RehearsalRecord } from '../types/domain'
 import { callImprovAction } from './cloud'
-import { getState, setState } from '../store/index'
+import { getState, setRecommendGameId, setState } from '../store/index'
 
 export interface TodaySummary {
   inspirations: InspirationItem[]
@@ -15,12 +15,13 @@ export async function fetchTodaySummary() {
       todayInspirations: (response.data.inspirations || []) as InspirationItem[],
       todayRehearsals: (response.data.rehearsals || []) as RehearsalRecord[]
     })
+    setRecommendGameId(response.data.recommendGameId || '')
     return response.data
   }
   const state = getState()
   return {
     inspirations: state.todayInspirations,
     rehearsals: state.todayRehearsals,
-    recommendGameId: state.games[0]?.id || ''
+    recommendGameId: state.recommendGameId || state.games[0]?.id || ''
   }
 }

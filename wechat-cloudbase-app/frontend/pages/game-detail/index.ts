@@ -1,9 +1,8 @@
 import type { Game } from '../../types/domain'
 import { findLocalGame, listGames, updateGameState, updateGame, deleteGame } from '../../services/game'
-import { getState, markPlayed, unmarkPlayed, setGames, toggleSaved, setVoiceDraft, startGameSession, subscribe, updateGameSession, clearGameSession } from '../../store/index'
+import { getState, markPlayed, unmarkPlayed, setGames, toggleSaved, startGameSession, subscribe, updateGameSession, clearGameSession , getThemeClass } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
-import { openModal, closeModal } from '../../utils/modal'
 
 const defaultCategoryOptions = ['热身', '关系', '专注', '叙事']
 
@@ -13,25 +12,38 @@ type EditGameDraft = Partial<Game> & {
   steps?: string
 }
 
+type HistoryCard = {
+  id: string
+  title: string
+  desc: string
+  meta: string[]
+  date: string
+}
+
+function buildGameMeta(people = '', duration = '') {
+  if (!people && !duration) return []
+  return [people || '', duration || '']
+}
+
 Page({
   data: {
+    themeClass: 'theme-default',
     game: null as Game | null,
     related: null as Game | null,
     saved: false,
     played: false,
-    saveIcon: '☆',
-    savedText: '☆ 收藏',
+    saveIcon: '♡',
+    savedText: '♡ 收藏',
     playedText: '○ 玩过',
     tagText: '',
-    verdictText: '',
-    avoidText: '',
+    displayMeta: [] as string[],
     layoutStyle: '',
     isCustomGame: false,
     isEditMode: false,
     editGame: {} as EditGameDraft,
     timer: null as number | null,
     currentGameSession: null as any,
-    historyCards: [] as any[],
+    historyCards: [] as HistoryCard[],
     categoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     customCategoryVisible: false,
     customCategoryInput: '',
@@ -44,8 +56,8 @@ Page({
 
   syncStatusText() {
     this.setData({
-      saveIcon: this.data.saved ? '★' : '☆',
-      savedText: this.data.saved ? '★ 已收藏' : '☆ 收藏',
+      saveIcon: this.data.saved ? '♥︎' : '♡',
+      savedText: this.data.saved ? '♥︎ 已收藏' : '♡ 收藏',
       playedText: this.data.played ? '✓ 已玩过' : '○ 玩过'
     })
   },
@@ -53,7 +65,10 @@ Page({
   unsubscribeStore: null as null | (() => void),
 
   async onLoad(options: Record<string, string>) {
-    this.setData({ layoutStyle: getLayoutStyle() })
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
     const id = getRouteParam(options, 'id', '')
     
     // 1. 先尝试从本地 store 渲染，避免白屏等待
@@ -94,6 +109,10 @@ Page({
     }
   },
 
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
+  },
+
   onUnload() {
     if (this.data.timer) clearInterval(this.data.timer)
     if (this.unsubscribeStore) this.unsubscribeStore()
@@ -104,13 +123,13 @@ Page({
     const related = allGames.find((item) => item.id === game.relatedGameId) || findLocalGame(game.relatedGameId)
     const state = getState()
     const isCustomGame = game.tags.includes('自定义') || game.id.startsWith('custom-')
+    const displayMeta = (game.meta || []).filter((item) => typeof item === 'string' && item.trim())
     this.setData({
       game,
       related,
       isCustomGame,
       tagText: game.tags.join(' · '),
-      verdictText: game.verdict || game.lead,
-      avoidText: game.avoid || game.issue,
+      displayMeta,
       saved: state.savedGameIds.includes(game.id),
       played: state.playedGameIds.includes(game.id)
     }, () => this.syncStatusText())
@@ -242,14 +261,14 @@ Page({
     const keyword = String(input || '').trim().toLowerCase()
     if (!keyword) return []
     return this.getCategoryPool()
-      .filter((item) => item.toLowerCase().includes(keyword))
+      .filter((item: string) => item.toLowerCase().includes(keyword))
       .slice(0, 5)
-      .map((value) => ({ value, label: value }))
+      .map((value: string) => ({ value, label: value }))
   },
 
   syncCategoryOptions() {
     this.setData({
-      categoryOptions: this.getCategoryPool().map((value) => ({
+      categoryOptions: this.getCategoryPool().map((value: string) => ({
         value,
         label: value,
         activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
@@ -263,11 +282,17 @@ Page({
     this.setData({ [`editGame.${field}`]: event.detail.value })
   },
 
+  handleGameFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
+    const { field, value } = event.detail || { field: '', value: '' }
+    if (!field) return
+    this.setData({ [`editGame.${field}`]: value })
+  },
+
   toggleEditGameCategory(event: WechatMiniprogram.TouchEvent) {
-    const category = String(event.currentTarget.dataset.category || '').trim()
+    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
     if (!category) return
     const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
-      ? this.data.selectedCategoryTags.filter((item) => item !== category)
+      ? this.data.selectedCategoryTags.filter((item: string) => item !== category)
       : this.data.selectedCategoryTags.concat(category)
     this.setData({ selectedCategoryTags }, () => this.syncCategoryOptions())
   },
@@ -314,18 +339,22 @@ Page({
   },
 
   selectCategorySuggestion(event: WechatMiniprogram.TouchEvent) {
-    const category = String(event.currentTarget.dataset.category || '').trim()
+    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
     if (!category) return
     this.addCategoryTag(category)
   },
 
   confirmCustomCategory() {
-    const category = String(this.data.customCategoryInput || '').trim()
+    const maybeEvent = arguments[0] as WechatMiniprogram.CustomEvent<{ value?: string }> | undefined
+    const nextValue = maybeEvent && maybeEvent.detail && typeof maybeEvent.detail.value === 'string'
+      ? maybeEvent.detail.value
+      : this.data.customCategoryInput
+    const category = String(nextValue || '').trim()
     if (!category) {
       toast('先输入分类')
       return
     }
-    const existed = this.getCategoryPool().find((item) => item.toLowerCase() === category.toLowerCase())
+    const existed = this.getCategoryPool().find((item: string) => item.toLowerCase() === category.toLowerCase())
     this.addCategoryTag(existed || category)
   },
 
@@ -351,7 +380,7 @@ Page({
   },
 
   voiceFill(event: WechatMiniprogram.TouchEvent) {
-    const target = event.currentTarget.dataset.target
+    const target = (event as WechatMiniprogram.CustomEvent<{ target: string }>).detail?.target || event.currentTarget.dataset.target
     const patch: Record<string, string> = {}
     if (target === 'title') patch['editGame.title'] = '情绪接力'
     if (target === 'title') patch['editGame.people'] = '4-8 人'
@@ -372,19 +401,24 @@ Page({
       toast('先写游戏名称')
       return
     }
-    const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
+    const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
     if (!tags.length) tags.push('自定义')
     const steps = typeof this.data.editGame.steps === 'string' && this.data.editGame.steps.trim()
-      ? this.data.editGame.steps.split('\n').map((item) => item.trim()).filter(Boolean)
+      ? this.data.editGame.steps.split('\n').map((item: string) => item.trim()).filter(Boolean)
       : []
-    
+
+    const currentGame = { ...(this.data.game as Game & { fit?: string[]; lead?: string; avoid?: string; verdict?: string }) }
+    delete currentGame.fit
+    delete currentGame.lead
+    delete currentGame.avoid
+    delete currentGame.verdict
+
     const updatedGame: Game = {
-      ...(this.data.game as Game),
+      ...currentGame,
       title,
       desc: this.data.editGame.desc || '',
       tags,
-      meta: [this.data.editGame.people || '待补充', this.data.editGame.duration || '待补充', '自定义'],
-      lead: this.data.editGame.desc || '',
+      meta: buildGameMeta(this.data.editGame.people, this.data.editGame.duration),
       steps,
       tips: this.data.editGame.tips || '',
       variant: this.data.editGame.variant || '',
@@ -392,7 +426,7 @@ Page({
     }
 
     const allGames = getState().games
-    const index = allGames.findIndex(g => g.id === updatedGame.id)
+    const index = allGames.findIndex((gameItem: Game) => gameItem.id === updatedGame.id)
     if (index > -1) {
       allGames[index] = updatedGame
       setGames([...allGames])
@@ -414,7 +448,7 @@ Page({
           if (!gameId) return
           
           const allGames = getState().games
-          setGames(allGames.filter(g => g.id !== gameId))
+          setGames(allGames.filter((gameItem: Game) => gameItem.id !== gameId))
           
           wx.navigateBack()
           setTimeout(() => {

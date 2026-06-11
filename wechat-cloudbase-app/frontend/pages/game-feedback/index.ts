@@ -3,15 +3,27 @@ import { findLocalGame } from '../../services/game'
 import { createGameRecord } from '../../services/game-record'
 import { createMethodCard as createMethodCardRecord } from '../../services/method-card'
 import { createRehearsal, updateGameStatus } from '../../services/rehearsal'
-import { addMethodCard, addGameRecord, getState, markPlayed, setVoiceDraft, startRehearsal, updateCurrentRehearsalPlan, upsertRehearsalHistory } from '../../store/index'
+import {
+  addMethodCard,
+  addGameRecord,
+  getState,
+  getTaskMutexError,
+  markPlayed,
+  setCurrentRehearsal,
+  setVoiceDraft,
+  startRehearsal,
+  updateCurrentRehearsalPlan,
+  upsertRehearsalHistory,
+  getThemeClass
+} from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
 import { closeModal, openModal } from '../../utils/modal'
 
 Page({
   data: {
+    themeClass: 'theme-default',
     game: null as Game | null,
-    linkVisible: false,
     insightVisible: false,
     recordType: '游戏实践',
     linkedRehearsal: '',
@@ -23,23 +35,20 @@ Page({
     reminderValue: '',
     moreVisible: false,
     modalOpen: false,
-    linkOptions: [] as Array<{ value: string; title: string; desc: string }>,
     contextOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     effectOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     layoutStyle: '',
     duration: 0,
     durationText: '',
-    feedbackText: '',
-    rehearsalHistoryList: [] as any[],
-    selectedRehearsalId: '',
-    selectedRehearsalName: ''
+    feedbackText: ''
   },
 
   syncOptions() {
+    const currentRehearsal = getState().currentRehearsal
     this.setData({
       contextOptions: [
         { value: 'single', label: '单独记录' },
-        { value: 'current', label: '加入当前排练' },
+        ...(currentRehearsal ? [{ value: 'current', label: '加入当前排练' }] : []),
         { value: 'new', label: '新建排练' }
       ].map((item) => Object.assign({}, item, {
         activeClass: this.data.contextType === item.value ? 'active' : ''
@@ -55,7 +64,10 @@ Page({
   },
 
   onLoad(options: Record<string, string>) {
-    this.setData({ layoutStyle: getLayoutStyle() })
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
     const id = getRouteParam(options, 'id', '')
     const duration = parseInt(getRouteParam(options, 'duration', '0'), 10)
 
@@ -75,17 +87,6 @@ Page({
 
     const draft = state.voiceDraft
     const currentRehearsal = state.currentRehearsal
-    const linkOptions = (state.rehearsalHistory || []).slice(0, 6).map((item) => ({
-      value: item.title,
-      title: item.title,
-      desc: item.desc
-    }))
-
-    const rehearsalHistoryList = (state.rehearsalHistory || []).map((r: any) => ({
-      ...r,
-      displayTitle: r.title || `${r.teamName} 的排练`
-    }))
-    
     let keepValue = ''
     if (draft && draft.linkedGameId === id) {
       keepValue = draft.summary
@@ -105,23 +106,14 @@ Page({
       keepValue,
       duration,
       durationText,
-      rehearsalHistoryList,
-      linkedRehearsal: currentRehearsal ? currentRehearsal.title : (linkOptions[0] ? linkOptions[0].title : ''),
+      linkedRehearsal: currentRehearsal ? currentRehearsal.title : '单独记录',
       contextType: currentRehearsal ? 'current' : 'single',
-      linkOptions
     })
     this.syncOptions()
   },
 
-  onRehearsalChange(e: any) {
-    const index = e.detail.value
-    const selected = this.data.rehearsalHistoryList[index]
-    if (selected) {
-      this.setData({
-        selectedRehearsalId: selected.id,
-        selectedRehearsalName: selected.displayTitle
-      })
-    }
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
   },
 
   back() {
@@ -142,27 +134,20 @@ Page({
   },
 
   closeSheet() {
-    closeModal(this, { linkVisible: false, insightVisible: false })
-  },
-
-  openLink() {
-    openModal(this, { linkVisible: true })
-  },
-
-  chooseLink(event: WechatMiniprogram.TouchEvent) {
-    closeModal(this, { linkedRehearsal: event.currentTarget.dataset.value, linkVisible: false })
+    closeModal(this, { insightVisible: false })
   },
 
   setContextType(event: WechatMiniprogram.TouchEvent) {
     const value = event.currentTarget.dataset.value as string
     const current = getState().currentRehearsal
+    const nextType = value === 'current' && !current ? 'single' : value
     this.setData({
-      contextType: value,
-      linkedRehearsal: value === 'single'
+      contextType: nextType,
+      linkedRehearsal: nextType === 'single'
         ? '单独记录'
-        : value === 'new'
+        : nextType === 'new'
           ? `${this.data.game ? this.data.game.title : '本次游戏'} · 新排练`
-          : (current ? current.title : this.data.linkedRehearsal)
+          : (current ? current.title : '当前排练')
     }, () => this.syncOptions())
   },
 
@@ -214,6 +199,11 @@ Page({
     let syncFailed = false
     let targetRehearsal = getState().currentRehearsal
     if (this.data.contextType === 'new') {
+      const mutexError = getTaskMutexError('rehearsal')
+      if (mutexError) {
+        toast(mutexError)
+        return
+      }
       const rehearsal = {
         id: `rehearsal-${Date.now()}`,
         type: '排练',
@@ -234,7 +224,7 @@ Page({
       try {
         await createRehearsal(rehearsal)
         const syncedRehearsal = Object.assign({}, rehearsal, { syncStatus: 'synced' as const })
-        startRehearsal(syncedRehearsal)
+        setCurrentRehearsal(syncedRehearsal)
         upsertRehearsalHistory(syncedRehearsal)
         targetRehearsal = syncedRehearsal
       } catch (error) {

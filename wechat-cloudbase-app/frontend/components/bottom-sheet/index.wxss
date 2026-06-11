@@ -173,8 +173,7 @@ text {
   padding: 34rpx 26rpx 28rpx;
   border-radius: 44rpx;
   max-height: 82vh;
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
+  background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
 }
 
 .sheet.add-sheet .sheet-scroll {
@@ -192,8 +191,7 @@ text {
 .sheet.add-sheet .sheet-actions {
   padding-top: 18rpx;
   padding-bottom: env(safe-area-inset-bottom);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), #ffffff 34%);
-  background: linear-gradient(180deg, var(--improv-sheet-action-start, rgba(255, 255, 255, 0.72)), var(--improv-card-strong, #ffffff) 34%);
+  background: var(--improv-sheet-action-gradient, linear-gradient(180deg, rgba(255, 255, 255, 0.72), #ffffff 34%));
 }
 
 .sheet.mine-list-sheet,

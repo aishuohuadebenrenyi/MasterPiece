@@ -9,11 +9,12 @@
   min-height: 196rpx;
   padding: 30rpx;
   border-radius: var(--improv-radius-card);
-  background: rgba(255, 255, 255, 0.94);
-  background: var(--improv-card, rgba(255, 255, 255, 0.94));
-  box-shadow: 0 18rpx 40rpx rgba(50, 68, 120, 0.08);
-  box-shadow: var(--improv-shadow-sm, 0 18rpx 40rpx rgba(50, 68, 120, 0.08));
+  background: #ffffff;
+  background: var(--improv-card-strong, #ffffff);
+  border: 2rpx solid var(--improv-line-subtle);
+  box-shadow: var(--improv-shadow-md);
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .game-card.large {
@@ -22,9 +23,6 @@
   height: 100%;
   min-height: 640rpx;
   padding: 44rpx 38rpx 34rpx;
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.74)),
-    linear-gradient(135deg, rgba(255, 122, 69, 0.14), rgba(79, 140, 255, 0.14));
   background:
     linear-gradient(160deg, var(--improv-card-translucent, rgba(255, 255, 255, 0.92)), var(--improv-card-muted, rgba(255, 255, 255, 0.74))),
     linear-gradient(135deg, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)), var(--improv-secondary-wash-soft, rgba(79, 140, 255, 0.14)));
@@ -37,6 +35,9 @@
 .large .game-main {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
 }
 
 .stripe,
@@ -46,17 +47,14 @@
   height: 124rpx;
   margin-top: 6rpx;
   border-radius: 999rpx;
-  background: linear-gradient(180deg, #ff7a45, #ffb569);
   background: linear-gradient(180deg, var(--improv-primary, #ff7a45), var(--improv-primary-glow, #ffb569));
 }
 
 .stripe.blue {
-  background: linear-gradient(180deg, #4f8cff, #7fb1ff);
   background: linear-gradient(180deg, var(--improv-secondary, #4f8cff), var(--improv-secondary-glow, #7fb1ff));
 }
 
 .stripe.mint {
-  background: linear-gradient(180deg, #35bfa6, #7ce0cf);
   background: linear-gradient(180deg, var(--improv-success, #35bfa6), var(--improv-success-soft, #7ce0cf));
 }
 
@@ -68,18 +66,29 @@
   justify-content: flex-start;
 }
 
-.game-main .row > view {
-  flex: 1;
-  min-width: 0;
-  padding-right: 18rpx;
-}
-
-.game-main .row {
+.game-head {
   width: 100%;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 16rpx;
+}
+
+.game-head-text {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8rpx;
+  white-space: normal;
+}
+
+.game-tag-pill {
+  align-self: flex-start;
+  width: auto;
+  max-width: 100%;
 }
 
 .game-title {
@@ -87,12 +96,34 @@
   font-size: 34rpx;
   font-weight: 900;
   line-height: 1.18;
+  white-space: normal;
   word-break: break-all;
 }
 
 .large .game-title {
-  margin-top: 12rpx;
-  font-size: 50rpx;
+  margin-top: 4rpx;
+  font-size: 52rpx;
+  line-height: 1.12;
+}
+
+.game-desc-block {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.game-desc {
+  color: var(--improv-text-soft, #5a6781);
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: 0.2rpx;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.large .game-desc {
+  font-size: 30rpx;
 }
 
 .save {
@@ -108,78 +139,45 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 37rpx;
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  color: #2f6ff2;
-  color: var(--improv-secondary-strong, #2f6ff2);
-  font-size: 34rpx;
+  background: transparent;
+  color: var(--improv-muted-strong, #7b88a2);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "PingFang SC", sans-serif;
+  font-size: 40rpx;
+  font-weight: 500;
   line-height: 1;
-  box-shadow: 0 14rpx 32rpx rgba(50, 68, 120, 0.08);
-  box-shadow: 0 14rpx 32rpx var(--improv-shadow-sm-color, rgba(50, 68, 120, 0.08));
+  border: 0;
+  box-shadow: none;
+}
+
+.save-idle {
+  color: var(--improv-favorite-idle, #b7c5e6);
+  opacity: 0.96;
+}
+
+.save-active {
+  color: var(--improv-favorite-active, #f2aea4);
+  opacity: 0.98;
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
-  margin: 14rpx 0 0;
+  gap: 10rpx;
   white-space: normal;
 }
 
 .meta text {
-  padding: 10rpx 18rpx;
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  padding: 6rpx 16rpx;
   background: var(--improv-bg-soft);
   color: var(--improv-muted);
-  font-size: 24rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 700;
+  border-radius: 999rpx;
 }
 
 .large .meta {
-  margin: 16rpx 0;
-}
-
-.fit-box {
-  flex: 1;
-  margin-top: 28rpx;
-  padding: 28rpx;
-  border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.5);
-  background: var(--improv-card-faint, rgba(255, 255, 255, 0.5));
-  overflow: hidden;
-}
-
-.actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 26rpx;
-}
-
-.actions button {
-  flex: 1;
-  min-width: 0;
-  min-height: 82rpx;
-  border-radius: 999rpx;
-  font-size: 28rpx;
-  font-weight: 900;
-}
-
-.actions .primary-btn {
-  background: linear-gradient(135deg, #ff7a45, #ff5b2e);
-  background: linear-gradient(135deg, var(--improv-primary, #ff7a45), var(--improv-primary-strong, #ff5b2e));
-  color: #ffffff;
-  color: var(--improv-on-brand, #ffffff);
-  box-shadow: 0 24rpx 48rpx rgba(255, 91, 46, 0.2);
-  box-shadow: 0 24rpx 48rpx var(--improv-shadow-action-color, rgba(255, 91, 46, 0.2));
-}
-
-.actions .ghost-btn {
-  background: #e8f0ff;
-  background: var(--improv-secondary-soft, #e8f0ff);
-  color: #2f6ff2;
-  color: var(--improv-secondary-strong, #2f6ff2);
-}
-
-.large .actions {
-  padding-right: 132rpx;
+  margin: 0;
 }
