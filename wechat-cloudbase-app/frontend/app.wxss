@@ -36,7 +36,7 @@ button {
   background: transparent;
   color: inherit;
   font: inherit;
-  line-height: 1;
+  line-height: 1.2;
   text-align: center;
   vertical-align: middle;
   overflow: visible;
@@ -140,6 +140,7 @@ button::after {
   justify-content: center;
   border-radius: 999rpx;
   font-weight: 900;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -254,9 +255,10 @@ button::after {
 }
 
 .chip-scroll {
-  width: auto;
+  width: 100%;
+  min-width: 0;
   height: 104rpx;
-  margin: 0 -32rpx;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   flex-shrink: 0;
@@ -268,7 +270,7 @@ button::after {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 2rpx 32rpx 14rpx;
+  padding: 2rpx 0 14rpx;
   gap: 14rpx;
   white-space: nowrap;
   height: 100%;
@@ -349,6 +351,14 @@ button::after {
   color: var(--improv-on-brand);
 }
 
+page {
+  --improv-form-gap-tight: 10rpx;
+  --improv-form-gap-field-body: 14rpx;
+  --improv-form-gap-inline: 16rpx;
+  --improv-form-gap-related: 28rpx;
+  --improv-form-gap-section: 48rpx;
+}
+
 .field {
   display: block;
   margin-top: 0;
@@ -387,7 +397,7 @@ button::after {
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: var(--improv-form-gap-tight, 8rpx);
 }
 
 form-field {
@@ -425,7 +435,7 @@ form-field {
 .choice-section {
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
+  gap: var(--improv-form-gap-tight, 8rpx);
 }
 
 .choice-section > .section-head,
@@ -440,7 +450,7 @@ form-field {
 }
 
 .section-stack > .choice-section + .choice-section {
-  margin-top: 36rpx;
+  margin-top: var(--improv-form-gap-section, 40rpx);
 }
 
 .row {
@@ -448,6 +458,23 @@ form-field {
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
+}
+
+.button-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.button-row-equal > button,
+.button-row-equal > view,
+.button-row-equal > .primary-btn,
+.button-row-equal > .ghost-btn,
+.button-row-equal > .small-btn {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .tag-row {

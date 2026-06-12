@@ -171,13 +171,13 @@
         <input class="app-input" type="text" value="{{profileDraftTroupeName}}" maxlength="12" placeholder="输入剧团名字（选填）" bindblur="updateProfileTroupeName" bindconfirm="updateProfileTroupeName" />
       </form-field>
 
-      <form-field label="个人标签" desc="如果没有设置剧团名字，默认显示「即兴主理人」。">
+      <form-field class="profile-tags-field" label="个人标签" desc="如果没有设置剧团名字，默认显示「即兴主理人」。">
         <view class="role-line profile-tag-line info-primary">
           <text wx:for="{{profileDraftTags}}" wx:key="*this" class="role-pill">{{item}}</text>
         </view>
       </form-field>
 
-      <form-field label="偏好设置" desc="点击切换主题，即时生效并保存在本机">
+      <form-field class="profile-preference-field" label="偏好设置" desc="点击切换主题，即时生效并保存在本机">
         <view class="profile-tag-line info-primary">
           <view class="role-pill" catchtap="toggleTheme" style="padding: 10rpx 32rpx; min-height: 64rpx; background: var(--improv-card); color: var(--improv-text); border: 2rpx solid var(--improv-line-soft);">当前主题：{{themeClass === 'theme-vivid' ? '沉浸模式' : '默认模式'}}</view>
         </view>

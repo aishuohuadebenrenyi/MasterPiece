@@ -43,7 +43,7 @@
 
     <view class="section-row">
       <text class="section-title">全部游戏</text>
-      <view class="actions-row">
+      <view class="actions-row button-row button-row-equal">
         <button class="primary-btn add-btn" bindtap="openAdd">+ 添加游戏</button>
         <button class="ghost-btn filter-btn" bindtap="openFilter">筛选</button>
       </view>
@@ -84,11 +84,15 @@
   </block>
 
   <bottom-sheet visible="{{filterVisible}}" title="筛选游戏" maskVariant="light" sheetClass="filter-sheet" bodyMode="fit" bind:close="closeSheet">
-    <view class="section-stack filter-section-stack">
-      <filter-section label="人数" options="{{peopleFilters}}" chipClass="discover-filter-chip" bind:select="filterPeople" />
-      <filter-section label="时长" options="{{durationFilters}}" chipClass="discover-filter-chip" bind:select="filterDuration" />
-      <filter-section label="目标" options="{{goalFilters}}" chipClass="discover-filter-chip" bind:select="filterGoal" />
-      <filter-section label="状态" options="{{statusFilters}}" chipClass="discover-filter-chip" bind:select="filterStatus" />
+    <view class="filter-group-stack">
+      <view class="filter-group">
+        <filter-section label="人数" options="{{peopleFilters}}" chipClass="discover-filter-chip" bind:select="filterPeople" />
+        <filter-section label="时长" options="{{durationFilters}}" chipClass="discover-filter-chip" bind:select="filterDuration" />
+      </view>
+      <view class="filter-group">
+        <filter-section label="目标" options="{{goalFilters}}" chipClass="discover-filter-chip" bind:select="filterGoal" />
+        <filter-section label="状态" options="{{statusFilters}}" chipClass="discover-filter-chip" bind:select="filterStatus" />
+      </view>
     </view>
     <button class="primary-btn sheet-submit" catchtap="applyFilter">查看结果（{{filteredGames.length}}）</button>
   </bottom-sheet>
@@ -137,7 +141,7 @@
     </block>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{addVisible}}" title="添加游戏" maskVariant="medium" sheetClass="add-sheet task-sheet" bind:close="closeSheet">
+  <bottom-sheet visible="{{addVisible}}" title="添加游戏" maskVariant="medium" sheetClass="add-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
     <game-form
       value="{{newGame}}"
       categoryOptions="{{categoryOptions}}"

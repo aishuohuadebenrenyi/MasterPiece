@@ -2,7 +2,6 @@
   "navigationBarTitleText": "游戏反馈",
   "disableScroll": true,
   "usingComponents": {
-    "bottom-sheet": "../../components/bottom-sheet/index",
     "form-card": "../../components/form-card/index",
     "form-field": "../../components/form-field/index",
     "subpage-header": "../../components/subpage-header/index"

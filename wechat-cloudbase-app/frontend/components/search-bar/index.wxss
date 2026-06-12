@@ -32,6 +32,7 @@
 
 .search-input {
   flex: 1 1 auto;
+  width: 0;
   min-width: 0;
   height: 84rpx;
   margin: 0;
@@ -55,14 +56,22 @@
 }
 
 .search-clear {
-  width: auto;
-  min-height: 52rpx;
+  flex: 0 0 auto;
+  width: 96rpx;
+  min-width: 96rpx;
+  max-width: 96rpx;
+  min-height: 56rpx;
   margin: 0;
-  padding: 0 16rpx;
+  padding: 0;
   border-radius: 999rpx;
   background: var(--improv-bg-soft);
+  border: 2rpx solid var(--improv-line-soft);
   color: var(--improv-muted);
   font-size: 22rpx;
   font-weight: 800;
-  line-height: 52rpx;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }

@@ -170,7 +170,7 @@ text {
   left: 24rpx;
   right: 24rpx;
   bottom: calc(14rpx + env(safe-area-inset-bottom));
-  padding: 34rpx 26rpx 28rpx;
+  padding: 34rpx 28rpx 28rpx;
   border-radius: 44rpx;
   max-height: 82vh;
   background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
@@ -199,7 +199,7 @@ text {
   left: 24rpx;
   right: 24rpx;
   bottom: calc(14rpx + env(safe-area-inset-bottom));
-  padding: 34rpx 26rpx 30rpx;
+  padding: 34rpx 28rpx 30rpx;
   border-radius: 44rpx;
   max-height: 72vh;
   background: var(--improv-bg-subtle, #f7f9fe);
@@ -265,4 +265,3 @@ text {
   font-size: 24rpx;
   font-weight: 900;
 }
-

@@ -46,11 +46,12 @@
 
 .action-btn {
   flex: 0 0 auto;
-  width: auto;
+  width: auto !important;
   min-width: 112rpx;
-  max-width: 176rpx;
-  min-height: 56rpx;
-  padding: 0 22rpx;
+  max-width: 184rpx;
+  min-height: 64rpx;
+  padding: 0 20rpx !important;
+  align-self: flex-start;
 }
 
 .card-body {

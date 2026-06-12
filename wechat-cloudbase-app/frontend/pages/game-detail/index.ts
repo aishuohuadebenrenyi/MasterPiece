@@ -387,6 +387,9 @@ Page({
     if (target === 'title') patch['editGame.duration'] = '10 分钟'
     if (target === 'desc') patch['editGame.desc'] = '用一个简单动作和一句台词传递情绪，适合让大家快速进入状态。'
     if (target === 'steps') patch['editGame.steps'] = '围成一圈，第一位做出一个动作并说一句台词。\n下一位接住情绪，再放大或反转。\n一圈结束后复盘哪一次情绪最清楚。'
+    if (target === 'tips') patch['editGame.tips'] = '先示范一轮节奏变化，再提醒大家不要急着抢台词，优先把情绪接清楚。'
+    if (target === 'variant') patch['editGame.variant'] = '可以改成双人接力，或者规定每次必须反转前一个人的情绪。'
+    if (target === 'issue') patch['editGame.issue'] = '最容易卡在情绪不够明确或节奏断掉，带领时要及时示范并收束轮次。'
     if (target === 'title') {
       this.setData(Object.assign(patch, { selectedCategoryTags: ['热身', '情绪'] }), () => this.syncCategoryOptions())
     } else {

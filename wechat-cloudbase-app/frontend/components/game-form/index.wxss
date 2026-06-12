@@ -3,29 +3,59 @@
 
 :host {
   display: block;
+  width: 100%;
 }
 
 .game-form {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  gap: var(--improv-form-gap-related, 28rpx);
 }
 
-.add-sheet-field {
+.game-form-group {
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
-  margin-top: 28rpx;
 }
 
-.add-sheet-section + .add-sheet-grid,
-.category-field + .add-sheet-grid {
-  margin-top: 30rpx;
+.primary-group {
+  gap: var(--improv-form-gap-related, 24rpx);
+}
+
+.advanced-group {
+  gap: var(--improv-form-gap-related, 24rpx);
+}
+
+.advanced-toggle-row {
+  display: flex;
+  align-items: center;
+  padding: 6rpx 0 4rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.form-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 18rpx;
 }
 
 .add-sheet-grid-item {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+}
+
+.category-field {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  gap: var(--improv-form-gap-field-body, 14rpx);
+}
+
+.add-sheet-grid-item .input-shell {
+  width: 100%;
 }
 
 .category-chip {
@@ -45,7 +75,7 @@
 }
 
 .custom-category-panel {
-  margin-top: 18rpx;
+  margin-top: var(--improv-form-gap-inline, 16rpx);
   padding: 18rpx;
   border-radius: 24rpx;
   background: var(--improv-bg-subtle-glass);
@@ -64,8 +94,8 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 10rpx;
-  margin-top: 12rpx;
+  gap: var(--improv-form-gap-inline, 16rpx);
+  margin-top: var(--improv-form-gap-inline, 16rpx);
 }
 
 .category-suggestion {
@@ -82,7 +112,7 @@
 .custom-category-confirm {
   width: 100%;
   min-height: 64rpx;
-  margin-top: 12rpx;
+  margin-top: var(--improv-form-gap-inline, 16rpx);
   padding: 0;
   font-size: 24rpx;
 }
@@ -90,8 +120,8 @@
 .steps-toggle {
   min-width: 240rpx;
   min-height: 70rpx;
-  margin: 36rpx 0 20rpx 0 !important;
-  align-self: flex-start !important;
+  margin: 0 !important;
+  align-self: flex-start;
   padding: 0 40rpx;
   border-radius: 24rpx;
   background: var(--improv-card-muted);
@@ -100,6 +130,8 @@
   font-size: 26rpx;
   font-weight: 900;
   justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .steps-textarea {

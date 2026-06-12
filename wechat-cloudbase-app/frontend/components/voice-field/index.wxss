@@ -8,7 +8,7 @@
 .textarea-voice-row {
   display: flex;
   align-items: center;
-  gap: 14rpx;
+  gap: var(--improv-form-gap-inline, 16rpx);
 }
 
 .textarea-voice-row {
@@ -27,6 +27,10 @@
   min-width: 86rpx;
   height: 86rpx;
   min-height: 86rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border-radius: 43rpx;
   background: var(--improv-card-soft);
   border: 1rpx solid var(--improv-overlay-line);
@@ -34,6 +38,9 @@
   color: var(--improv-muted);
   font-size: 24rpx;
   font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .voice-circle-btn-bottom {

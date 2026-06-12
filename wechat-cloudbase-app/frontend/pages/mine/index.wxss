@@ -390,6 +390,15 @@
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 }
 
+form-field.profile-tags-field,
+form-field.profile-preference-field {
+  display: block;
+}
+
+form-field.profile-preference-field {
+  margin-top: var(--improv-form-gap-related, 28rpx);
+}
+
 .profile-edit-avatar-container {
   display: flex;
   flex-direction: column;
@@ -438,6 +447,7 @@
 
 .profile-tag-line {
   margin-top: 0;
+  padding-top: var(--improv-form-gap-field-body, 14rpx);
 }
 
 .profile-tag-field .muted {
@@ -501,8 +511,14 @@
 
 .mine-filter-chip {
   flex: 0 0 auto;
-  width: auto;
-  min-width: 0;
+  width: auto !important;
+  min-width: 96rpx;
+  max-width: none;
+  padding: 0 24rpx !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .mine-filter-chip.active {

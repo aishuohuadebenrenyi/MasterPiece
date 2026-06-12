@@ -30,16 +30,6 @@
   gap: 28rpx;
 }
 
-.record-item .small-btn {
-  flex: 0 0 108rpx;
-  width: 108rpx;
-  height: 64rpx;
-  min-height: 64rpx;
-  padding: 0;
-  border-radius: 34rpx;
-  font-size: 24rpx;
-}
-
 .record-item .muted {
   display: block;
   margin-top: 16rpx;

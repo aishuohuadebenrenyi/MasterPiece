@@ -3,9 +3,6 @@ function getEventValue(event) {
 }
 
 Component({
-  options: {
-    addGlobalClass: true
-  },
   properties: {
     value: { type: Object, value: {} },
     categoryOptions: { type: Array, value: [] },

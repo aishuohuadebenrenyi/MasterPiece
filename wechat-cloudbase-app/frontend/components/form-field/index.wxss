@@ -9,6 +9,7 @@
   display: flex;
   width: 100%;
   box-sizing: border-box;
+  gap: var(--improv-form-gap-field-body, 14rpx);
 }
 
 .form-field-vertical {
@@ -24,11 +25,11 @@
 .field-label-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16rpx;
+  gap: var(--improv-form-gap-tight, 10rpx);
 }
 
 .form-field-horizontal .field-label-group {
-  margin-bottom: 0;
+  gap: var(--improv-form-gap-tight, 10rpx);
   margin-right: 20rpx;
   flex: 0 0 auto;
 }
@@ -44,7 +45,6 @@
   color: var(--improv-muted);
   font-size: 24rpx;
   line-height: 1.4;
-  margin-top: 6rpx;
 }
 
 .field-content {

@@ -41,6 +41,17 @@
   align-items: center;
   gap: 12rpx;
   flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.selection-card-actions .small-btn {
+  flex: 0 0 132rpx;
+  width: 132rpx;
+  min-width: 132rpx;
+  max-width: 132rpx;
+  min-height: 64rpx;
+  padding: 0;
+  border-radius: 34rpx;
 }
 
 .selection-card-desc {

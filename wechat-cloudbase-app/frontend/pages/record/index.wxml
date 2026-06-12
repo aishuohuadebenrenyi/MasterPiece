@@ -135,8 +135,8 @@
           </form-field>
         </view>
       </filter-section>
-      <filter-section label="添加游戏" options="{{sourceOptions}}" customClass="start-rehearsal-section" rowClass="start-rehearsal-chips" bind:select="setSource" />
-      <text wx:if="{{rehearsalSourceHint}}" class="muted">{{rehearsalSourceHint}}</text>
+      <filter-section label="添加游戏" options="{{sourceOptions}}" customClass="start-rehearsal-section start-rehearsal-section-last" rowClass="start-rehearsal-chips" bind:select="setSource" />
+      <text wx:if="{{rehearsalSourceHint}}" class="muted start-rehearsal-hint">{{rehearsalSourceHint}}</text>
       <button class="primary-btn start-btn start-rehearsal-submit {{savedSourceUnavailable ? 'disabled-btn' : ''}}" bindtap="startRehearsal" disabled="{{savedSourceUnavailable}}">开始排练</button>
     </view>
   </bottom-sheet>

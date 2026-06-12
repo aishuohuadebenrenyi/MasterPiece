@@ -18,29 +18,75 @@ import {
 } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
-import { closeModal, openModal } from '../../utils/modal'
 
 Page({
   data: {
     themeClass: 'theme-default',
     game: null as Game | null,
-    insightVisible: false,
-    recordType: '游戏实践',
     linkedRehearsal: '',
     contextType: 'single',
+    contextSummaryTitle: '',
+    contextSummaryDesc: '',
     attendanceText: '',
     effectValue: '一般',
     keepValue: '',
     tryValue: '',
     reminderValue: '',
     moreVisible: false,
-    modalOpen: false,
+    savingMode: '' as '' | 'record' | 'method',
     contextOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     effectOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    voiceHintTitle: '',
+    voiceHintDesc: '',
     layoutStyle: '',
     duration: 0,
-    durationText: '',
-    feedbackText: ''
+    durationText: ''
+  },
+
+  syncContextSummary() {
+    const linkedRehearsal = this.data.linkedRehearsal || '单独记录'
+    const summaryMap: Record<string, { title: string; desc: string }> = {
+      single: {
+        title: '单独记录',
+        desc: '只保存这条反馈，不写入排练。'
+      },
+      current: {
+        title: '加入当前排练',
+        desc: `保存时会回写到「${linkedRehearsal}」的计划里。`
+      },
+      new: {
+        title: '新建排练后保存',
+        desc: `会先创建「${linkedRehearsal}」，再挂入这次反馈。`
+      }
+    }
+    const nextSummary = summaryMap[this.data.contextType] || summaryMap.single
+    this.setData({
+      contextSummaryTitle: nextSummary.title,
+      contextSummaryDesc: nextSummary.desc
+    })
+  },
+
+  syncVoiceHint() {
+    const draft = getState().voiceDraft
+    const gameId = this.data.game ? this.data.game.id : ''
+    if (!draft) {
+      this.setData({
+        voiceHintTitle: '暂无可导入语音',
+        voiceHintDesc: '先去记录页生成一条语音摘要，再带回这里。'
+      })
+      return
+    }
+    if (draft.linkedGameId && draft.linkedGameId === gameId) {
+      this.setData({
+        voiceHintTitle: '可直接导入到 Keep',
+        voiceHintDesc: '这是当前游戏最近的一条语音摘要。'
+      })
+      return
+    }
+    this.setData({
+      voiceHintTitle: '有一条最近语音摘要',
+      voiceHintDesc: '可以带入 Keep，保存前请确认内容是否属于当前游戏。'
+    })
   },
 
   syncOptions() {
@@ -108,12 +154,27 @@ Page({
       durationText,
       linkedRehearsal: currentRehearsal ? currentRehearsal.title : '单独记录',
       contextType: currentRehearsal ? 'current' : 'single',
+    }, () => {
+      this.syncContextSummary()
+      this.syncVoiceHint()
     })
     this.syncOptions()
   },
 
   onShow() {
-    this.setData({ themeClass: getThemeClass() })
+    const currentRehearsal = getState().currentRehearsal
+    this.setData({
+      themeClass: getThemeClass(),
+      linkedRehearsal: this.data.contextType === 'single'
+        ? '单独记录'
+        : this.data.contextType === 'new'
+          ? `${this.data.game ? this.data.game.title : '本次游戏'} · 新排练`
+          : (currentRehearsal ? currentRehearsal.title : '当前排练')
+    }, () => {
+      this.syncOptions()
+      this.syncContextSummary()
+      this.syncVoiceHint()
+    })
   },
 
   back() {
@@ -123,18 +184,29 @@ Page({
   openVoice() {
     const draft = getState().voiceDraft
     if (!draft) {
-      toast('已打开语音速记')
+      toast('暂无可带入的语音草稿')
       return
     }
     this.setData({
-      keepValue: draft.summary,
-      tryValue: this.data.tryValue
+      keepValue: draft.summary
     })
+    setVoiceDraft(null)
+    this.syncVoiceHint()
     toast('已带入最近一条语音草稿')
   },
 
-  closeSheet() {
-    closeModal(this, { insightVisible: false })
+  buildFeedbackSummary() {
+    return `Keep: ${this.data.keepValue || '无'}\nTry: ${this.data.tryValue || '无'}${this.data.reminderValue ? '\n提醒: ' + this.data.reminderValue : ''}`
+  },
+
+  buildMethodCardItem(): TodayItem | null {
+    if (!this.data.game) return null
+    return {
+      id: `method-${Date.now()}`,
+      type: '游戏实践',
+      title: `${this.data.game.title}的反馈`,
+      desc: this.buildFeedbackSummary()
+    }
   },
 
   setContextType(event: WechatMiniprogram.TouchEvent) {
@@ -148,7 +220,10 @@ Page({
         : nextType === 'new'
           ? `${this.data.game ? this.data.game.title : '本次游戏'} · 新排练`
           : (current ? current.title : '当前排练')
-    }, () => this.syncOptions())
+    }, () => {
+      this.syncOptions()
+      this.syncContextSummary()
+    })
   },
 
   setEffect(event: WechatMiniprogram.TouchEvent) {
@@ -164,131 +239,149 @@ Page({
     this.setData({ [field]: event.detail.value })
   },
 
-  openInsight() {
-    this.setData({ insightVisible: true })
-  },
-
-  async saveMethodCard() {
-    if (!this.data.game) return
-    const item: TodayItem = {
-      id: `method-${Date.now()}`,
-      type: '游戏实践',
-      title: `${this.data.game.title}的反馈`,
-      desc: `Keep: ${this.data.keepValue || '无'}\nTry: ${this.data.tryValue || '无'}${this.data.reminderValue ? '\n提醒: ' + this.data.reminderValue : ''}`
-    }
-    try {
-      await createMethodCardRecord({
-        sourceType: 'gameRecord',
-        type: '游戏实践',
-        title: item.title,
-        desc: item.desc,
-        meta: ['游戏实践', this.data.game.title, this.data.effectValue]
-      })
-      addMethodCard(item)
-      toast('已沉淀为方法卡')
-    } catch (error) {
-      addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
-      toast('已本地保存，待同步')
-    }
-    this.closeSheet()
-  },
-
-  async saveRecord() {
-    if (!this.data.game) return
-    this.closeSheet()
-    let syncFailed = false
-    let targetRehearsal = getState().currentRehearsal
+  async persistFeedbackRecord(options: { createMethodCard: boolean }) {
+    if (!this.data.game || this.data.savingMode) return
     if (this.data.contextType === 'new') {
       const mutexError = getTaskMutexError('rehearsal')
       if (mutexError) {
         toast(mutexError)
         return
       }
-      const rehearsal = {
-        id: `rehearsal-${Date.now()}`,
-        type: '排练',
-        title: this.data.linkedRehearsal,
-        desc: `${this.data.game.title} · ${this.data.effectValue}`,
-        teamName: this.data.linkedRehearsal.replace(' · 新排练', '') || this.data.game.title,
-        duration: '60',
-        goals: ['游戏反馈'],
-        source: 'feedback',
-        status: '进行中' as const,
-        syncStatus: 'pending' as const,
-        plan: [{ gameId: this.data.game.id, status: '已完成' as const, keep: this.data.keepValue, try: this.data.tryValue }],
-        meta: [this.data.attendanceText, '从反馈创建']
-      }
-      startRehearsal(rehearsal)
-      upsertRehearsalHistory(rehearsal)
-      targetRehearsal = rehearsal
-      try {
-        await createRehearsal(rehearsal)
-        const syncedRehearsal = Object.assign({}, rehearsal, { syncStatus: 'synced' as const })
-        setCurrentRehearsal(syncedRehearsal)
-        upsertRehearsalHistory(syncedRehearsal)
-        targetRehearsal = syncedRehearsal
-      } catch (error) {
-        syncFailed = true
-      }
-    }
-    
-    // 生成游戏记录
-    const gameRecord: GameRecord = {
-      id: `gameRecord-${Date.now()}`,
-      title: this.data.game.title,
-      desc: `${this.data.keepValue || this.data.tryValue || this.data.reminderValue || '无反馈'}`,
-      gameId: this.data.game.id,
-      rehearsalId: targetRehearsal ? targetRehearsal.id : '',
-      effect: this.data.effectValue,
-      keep: this.data.keepValue,
-      try: this.data.tryValue,
-      reminder: this.data.reminderValue,
-      duration: this.data.duration,
-      meta: [this.data.effectValue, this.data.attendanceText].filter(Boolean),
-      syncStatus: 'pending' as const,
-      createdAt: Date.now()
-    }
-    addGameRecord(gameRecord)
-    
-    try {
-      await createGameRecord({
-        gameId: gameRecord.gameId,
-        rehearsalId: gameRecord.rehearsalId,
-        title: gameRecord.title,
-        effect: gameRecord.effect,
-        keep: gameRecord.keep,
-        try: gameRecord.try,
-        reminder: gameRecord.reminder,
-        duration: gameRecord.duration,
-        meta: gameRecord.meta
-      })
-      // Success, we can ignore the local status update for now as a full refresh will fetch it
-    } catch (error) {
-      syncFailed = true
     }
 
-    if (targetRehearsal && this.data.contextType !== 'single') {
-      updateCurrentRehearsalPlan(this.data.game.id, {
-        status: '已完成',
+    this.setData({ savingMode: options.createMethodCard ? 'method' : 'record' })
+    let syncFailed = false
+    const game = this.data.game
+    let targetRehearsal = getState().currentRehearsal
+
+    try {
+      if (this.data.contextType === 'new') {
+        const rehearsal: RehearsalRecord = {
+          id: `rehearsal-${Date.now()}`,
+          type: '排练',
+          title: this.data.linkedRehearsal,
+          desc: `${game.title} · ${this.data.effectValue}`,
+          teamName: this.data.linkedRehearsal.replace(' · 新排练', '') || game.title,
+          duration: '60',
+          goals: ['游戏反馈'],
+          source: 'feedback',
+          status: '进行中',
+          syncStatus: 'pending',
+          plan: [{
+            gameId: game.id,
+            status: '已完成',
+            keep: this.data.keepValue,
+            try: this.data.tryValue
+          }],
+          meta: [this.data.attendanceText, '从反馈创建'].filter(Boolean)
+        }
+        startRehearsal(rehearsal)
+        upsertRehearsalHistory(rehearsal)
+        targetRehearsal = rehearsal
+        try {
+          await createRehearsal(rehearsal)
+          const syncedRehearsal = Object.assign({}, rehearsal, { syncStatus: 'synced' as const })
+          setCurrentRehearsal(syncedRehearsal)
+          upsertRehearsalHistory(syncedRehearsal)
+          targetRehearsal = syncedRehearsal
+        } catch (error) {
+          syncFailed = true
+        }
+      }
+
+      const gameRecord: GameRecord = {
+        id: `gameRecord-${Date.now()}`,
+        title: game.title,
+        desc: `${this.data.keepValue || this.data.tryValue || this.data.reminderValue || '无反馈'}`,
+        gameId: game.id,
+        rehearsalId: targetRehearsal ? targetRehearsal.id : '',
+        effect: this.data.effectValue,
         keep: this.data.keepValue,
-        try: this.data.tryValue
-      })
+        try: this.data.tryValue,
+        reminder: this.data.reminderValue,
+        duration: this.data.duration,
+        meta: [this.data.effectValue, this.data.attendanceText].filter(Boolean),
+        syncStatus: 'pending',
+        createdAt: Date.now()
+      }
+      addGameRecord(gameRecord)
+
       try {
-        await updateGameStatus({
-          rehearsalId: targetRehearsal.id,
-          gameId: this.data.game.id,
-          status: '已完成',
-          keep: this.data.keepValue,
-          try: this.data.tryValue
+        await createGameRecord({
+          gameId: gameRecord.gameId,
+          rehearsalId: gameRecord.rehearsalId,
+          title: gameRecord.title,
+          effect: gameRecord.effect,
+          keep: gameRecord.keep,
+          try: gameRecord.try,
+          reminder: gameRecord.reminder,
+          duration: gameRecord.duration,
+          meta: gameRecord.meta
         })
       } catch (error) {
         syncFailed = true
       }
+
+      if (targetRehearsal && this.data.contextType !== 'single') {
+        updateCurrentRehearsalPlan(game.id, {
+          status: '已完成',
+          keep: this.data.keepValue,
+          try: this.data.tryValue
+        })
+        try {
+          await updateGameStatus({
+            rehearsalId: targetRehearsal.id,
+            gameId: game.id,
+            status: '已完成',
+            keep: this.data.keepValue,
+            try: this.data.tryValue
+          })
+        } catch (error) {
+          syncFailed = true
+        }
+      }
+
+      markPlayed(game.id)
+
+      if (options.createMethodCard) {
+        const item = this.buildMethodCardItem()
+        if (item) {
+          try {
+            await createMethodCardRecord({
+              sourceType: 'gameRecord',
+              type: '游戏实践',
+              title: item.title,
+              desc: item.desc,
+              meta: ['游戏实践', game.title, this.data.effectValue]
+            })
+            addMethodCard(item)
+          } catch (error) {
+            syncFailed = true
+            addMethodCard(Object.assign({}, item, { syncStatus: 'pending' as const }))
+          }
+        }
+      }
+
+      toast(
+        syncFailed
+          ? '已本地保存，待同步'
+          : options.createMethodCard
+            ? '已保存并沉淀为方法卡'
+            : '已保存游戏记录'
+      )
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/discover/index' })
+      }, 1500)
+    } finally {
+      this.setData({ savingMode: '' })
     }
-    markPlayed(this.data.game.id)
-    toast(syncFailed ? '已本地保存，待同步' : '已保存游戏记录')
-    setTimeout(() => {
-      wx.switchTab({ url: '/pages/discover/index' })
-    }, 1500)
+  },
+
+  async saveRecord() {
+    await this.persistFeedbackRecord({ createMethodCard: false })
+  },
+
+  async saveMethodCard() {
+    await this.persistFeedbackRecord({ createMethodCard: true })
   }
 })

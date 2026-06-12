@@ -10,7 +10,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: var(--improv-form-gap-field-body, 14rpx);
 }
 
 .filter-label {
@@ -19,17 +19,26 @@
   font-weight: 900;
 }
 
+.chip-scroll {
+  height: 84rpx;
+}
+
+.chip-row {
+  padding: 0 0 8rpx;
+}
+
 .filter-chip-track {
+  display: inline-flex;
   width: auto;
-  min-width: auto;
-  padding: 10rpx 0;
+  min-width: 100%;
+  padding: 4rpx 0 2rpx;
   white-space: nowrap;
 }
 
 .filter-chip-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 14rpx;
+  gap: var(--improv-form-gap-inline, 16rpx);
 }
 
 .filter-chip {

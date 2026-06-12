@@ -1,26 +1,36 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}" wx:if="{{game}}">
+<scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{themeClass}}" style="{{layoutStyle}}" wx:if="{{game}}">
   <subpage-header kicker="{{duration > 0 ? '本次游戏时长：' + durationText : '游戏实践反馈'}}" title="{{game.title}}" bind:back="back" />
 
-  <form-card title="{{game.title}}" kicker="本次记录对象" actionText="语音" bind:action="openVoice">
-    <text class="muted">{{game.desc}}</text>
-    <view class="meta-row"><text wx:for="{{game.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
-  </form-card>
-
-  <form-card title="这次在哪玩？" kicker="归属场景" class="compact-card">
-    <view class="choice-section">
-      <view class="form-chip-row">
-        <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
-      </view>
+  <form-card title="本次记录对象" actionText="导入语音" bind:action="openVoice">
+    <view class="feedback-object-summary">
+      <view class="feedback-object-title">{{game.title}}</view>
+      <text class="muted feedback-object-desc">{{game.desc}}</text>
+    </view>
+    <view class="meta-row feedback-object-meta"><text wx:for="{{game.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
+    <view class="feedback-status-card voice-status-card">
+      <text class="feedback-status-title">{{voiceHintTitle}}</text>
+      <text class="feedback-helper">{{voiceHintDesc}}</text>
     </view>
   </form-card>
 
-  <form-card title="记录本次 Keep / Try" kicker="效果反馈">
-    <view class="choice-section">
-      <view class="form-chip-row">
+  <form-card title="记录本次反馈">
+    <view class="feedback-section context-inline-section">
+      <text class="feedback-section-title">归属场景</text>
+      <view class="form-chip-row context-chip-row">
+        <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
+      </view>
+      <view class="feedback-status-card context-status-card">
+        <text class="feedback-status-title">{{contextSummaryTitle}}</text>
+        <text class="feedback-helper">{{contextSummaryDesc}}</text>
+      </view>
+    </view>
+    <view class="feedback-section effect-inline-section">
+      <text class="feedback-section-title">效果反馈</text>
+      <view class="form-chip-row effect-chip-row">
         <button wx:for="{{effectOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setEffect">{{item.label}}</button>
       </view>
     </view>
-    <view class="form-field-stack">
+    <view class="form-field-stack feedback-field-stack">
       <form-field label="Keep">
         <textarea class="app-textarea" value="{{keepValue}}" data-field="keepValue" bindblur="updateField" />
       </form-field>
@@ -31,7 +41,7 @@
     <view class="more-toggle" bindtap="toggleMore">
       <view>
         <text class="mini-title">更多信息</text>
-        <text class="muted">人数、关联排练和下次提醒可以稍后补。</text>
+        <text class="muted">人数和下次提醒按需展开填写。</text>
       </view>
       <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
     </view>
@@ -40,9 +50,6 @@
         <form-field label="人数">
           <input class="app-input" value="{{attendanceText}}" data-field="attendanceText" bindblur="updateField" />
         </form-field>
-        <form-field label="当前归属场景">
-          <view class="field-static">{{linkedRehearsal}}</view>
-        </form-field>
         <form-field label="下次提醒">
           <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" />
         </form-field>
@@ -50,21 +57,15 @@
     </view>
   </form-card>
 
-  <root-portal wx:if="{{!modalOpen}}">
+  <root-portal>
+    <view class="action-stack">
+      <text class="action-note">点击“保存并沉淀”会同时保存这次记录。</text>
     <view class="form-actions">
-      <button class="ghost-btn" bindtap="openInsight">沉淀为方法卡</button>
-      <button class="primary-btn" bindtap="saveRecord">保存记录</button>
+        <button class="ghost-btn" loading="{{savingMode === 'method'}}" disabled="{{!!savingMode}}" bindtap="saveMethodCard">保存并沉淀</button>
+        <button class="primary-btn" loading="{{savingMode === 'record'}}" disabled="{{!!savingMode}}" bindtap="saveRecord">保存记录</button>
+      </view>
     </view>
   </root-portal>
-
-  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" bind:close="closeSheet">
-    <view class="card insight-card">
-      <text class="pill orange">游戏实践</text>
-      <view class="section-title insight-title">{{game.title}}的反馈</view>
-      <text class="muted">Keep: {{keepValue || '无'}}\nTry: {{tryValue || '无'}}{{reminderValue ? '\n提醒: ' + reminderValue : ''}}</text>
-    </view>
-    <button class="primary-btn sheet-submit" bindtap="saveMethodCard">保存为方法卡</button>
-  </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
     <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>

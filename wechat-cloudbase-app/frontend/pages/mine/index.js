@@ -99,6 +99,15 @@ function filterSediments(sediments = [], methodFilter = 'all') {
   return sediments.filter((item) => normalizeMethodSourceType(item.sourceType) === methodFilter)
 }
 
+function normalizeDetailIndex(index, items = []) {
+  if (!Array.isArray(items) || !items.length) return 0
+  const numericIndex = Number(index)
+  if (!Number.isFinite(numericIndex)) return 0
+  if (numericIndex < 0) return 0
+  if (numericIndex >= items.length) return items.length - 1
+  return numericIndex
+}
+
 function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', discardedPendingKeys = [] } = {}) {
   const mappedSediments = sediments.map(item => Object.assign({}, item, {
     sourceType: normalizeMethodSourceType(item.sourceType),
@@ -349,11 +358,12 @@ Page({
     const targetId = event.detail && event.detail.id
       ? event.detail.id
       : ''
-    const index = targetId
+    const rawIndex = targetId
       ? items.findIndex((item) => item.id === targetId)
       : Number(event.currentTarget.dataset.index)
+    const currentIndex = normalizeDetailIndex(rawIndex, items)
     openModal(this, {
-      currentIndex: index < 0 ? 0 : index,
+      currentIndex,
       listVisible: false,
       detailVisible: true
     }, () => {
@@ -367,11 +377,21 @@ Page({
       : this.data.currentKind === 'pending'
         ? this.data.pendingItems
         : this.data.inspirations
-    const detailItem = items[this.data.currentIndex] || items[0]
+    if (!items.length) {
+      this.setData({
+        detailItem: null,
+        detailCount: '0 / 0',
+        detailCanSediment: false
+      })
+      return
+    }
+    const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
+    const detailItem = items[currentIndex] || items[0]
     this.setData({
+      currentIndex,
       detailItem,
       detailTitle: this.data.currentKind === 'sediments' ? '沉淀详情' : (this.data.currentKind === 'pending' ? '待整理详情' : '灵感详情'),
-      detailCount: `${this.data.currentIndex + 1} / ${items.length}`,
+      detailCount: `${currentIndex + 1} / ${items.length}`,
       detailCanSediment: this.data.currentKind === 'pending'
     })
   },
@@ -383,7 +403,9 @@ Page({
       : this.data.currentKind === 'pending'
         ? this.data.pendingItems
         : this.data.inspirations
-    const next = (this.data.currentIndex + step + items.length) % items.length
+    if (!items.length) return
+    const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
+    const next = (currentIndex + step + items.length) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
   },
 
@@ -393,7 +415,9 @@ Page({
       : this.data.currentKind === 'pending'
         ? this.data.pendingItems
         : this.data.inspirations
-    const next = (this.data.currentIndex - 1 + items.length) % items.length
+    if (!items.length) return
+    const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
+    const next = (currentIndex - 1 + items.length) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
   },
 
@@ -403,7 +427,9 @@ Page({
       : this.data.currentKind === 'pending'
         ? this.data.pendingItems
         : this.data.inspirations
-    const next = (this.data.currentIndex + 1) % items.length
+    if (!items.length) return
+    const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
+    const next = (currentIndex + 1) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
   },
 

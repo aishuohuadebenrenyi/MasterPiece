@@ -289,11 +289,11 @@
 
 .start-rehearsal-section {
   margin-top: 0;
-  margin-bottom: 34rpx;
+  margin-bottom: var(--improv-form-gap-section, 48rpx);
 }
 
-.start-rehearsal-section:last-of-type {
-  margin-bottom: 22rpx;
+.start-rehearsal-section-last {
+  margin-bottom: var(--improv-form-gap-tight, 10rpx);
 }
 
 .start-rehearsal-section.field {
@@ -315,12 +315,16 @@
   font-size: 23rpx;
 }
 
+.start-rehearsal-section .field-label-group {
+  margin-bottom: var(--improv-form-gap-field-body, 14rpx);
+}
+
 .start-rehearsal-section .filter-label {
   font-size: 23rpx;
 }
 
 .start-rehearsal-chips {
-  gap: 14rpx;
+  gap: var(--improv-form-gap-inline, 16rpx);
   margin-top: 0;
 }
 
@@ -330,12 +334,12 @@
 }
 
 .start-goal-section .chip-scroll {
-  height: 92rpx;
-  margin: 0 -18rpx;
+  height: 84rpx;
+  margin: 0;
 }
 
 .start-rehearsal-goal-row {
-  padding: 10rpx 18rpx;
+  padding: 2rpx 0 8rpx;
 }
 
 .start-rehearsal-goal-chip {
@@ -349,7 +353,13 @@
 }
 
 .custom-goal-panel {
-  margin-top: 12rpx;
+  margin-top: var(--improv-form-gap-inline, 16rpx);
+}
+
+.start-rehearsal-hint {
+  display: block;
+  margin-bottom: 12rpx;
+  line-height: 1.55;
 }
 
 .custom-goal-field {
@@ -371,7 +381,7 @@
   width: 280rpx;
   max-width: 64%;
   min-height: 68rpx;
-  margin-top: 14rpx;
+  margin-top: 0;
   padding: 0 24rpx;
   font-size: 28rpx;
 }
