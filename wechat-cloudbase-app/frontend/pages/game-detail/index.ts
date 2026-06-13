@@ -38,6 +38,9 @@ Page({
     tagText: '',
     displayMeta: [] as string[],
     layoutStyle: '',
+    detailLoading: true,
+    detailErrorTitle: '',
+    detailErrorDesc: '',
     isCustomGame: false,
     isEditMode: false,
     editGame: {} as EditGameDraft,
@@ -70,6 +73,14 @@ Page({
       themeClass: getThemeClass()
     })
     const id = getRouteParam(options, 'id', '')
+    if (!id) {
+      this.setData({
+        detailLoading: false,
+        detailErrorTitle: '没有找到这个游戏',
+        detailErrorDesc: '返回上一页，重新选择一个游戏。'
+      })
+      return
+    }
     
     // 1. 先尝试从本地 store 渲染，避免白屏等待
     let allGames = getState().games
@@ -98,7 +109,14 @@ Page({
       const serverGames = await listGames()
       setGames(serverGames)
     } catch (error) {
-      // ignore
+      if (!this.data.game) {
+        this.setData({
+          detailLoading: false,
+          detailErrorTitle: '游戏详情加载失败',
+          detailErrorDesc: '云开发暂时没有返回游戏数据，可以回到记录页或稍后重试。'
+        })
+      }
+      return
     }
 
     // 3. 更新为最新数据
@@ -106,6 +124,12 @@ Page({
     game = allGames.find((item) => item.id === id) || findLocalGame(id)
     if (game) {
       this.renderGame(game)
+    } else {
+      this.setData({
+        detailLoading: false,
+        detailErrorTitle: '没有找到这个游戏',
+        detailErrorDesc: '这张推荐卡可能已不在当前游戏库中，返回记录页重新选择。'
+      })
     }
   },
 
@@ -131,8 +155,28 @@ Page({
       tagText: game.tags.join(' · '),
       displayMeta,
       saved: state.savedGameIds.includes(game.id),
-      played: state.playedGameIds.includes(game.id)
+      played: state.playedGameIds.includes(game.id),
+      detailLoading: false,
+      detailErrorTitle: '',
+      detailErrorDesc: ''
     }, () => this.syncStatusText())
+  },
+
+  retryLoad() {
+    if (!this.data.game) {
+      this.setData({
+        detailLoading: true,
+        detailErrorTitle: '',
+        detailErrorDesc: ''
+      })
+      const pages = getCurrentPages()
+      const current = pages[pages.length - 1] as { options?: Record<string, string> }
+      if (this.unsubscribeStore) {
+        this.unsubscribeStore()
+        this.unsubscribeStore = null
+      }
+      this.onLoad(current.options || {})
+    }
   },
 
   back() {

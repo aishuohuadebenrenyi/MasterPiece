@@ -81,3 +81,24 @@
     </view>
   </root-portal>
 </scroll-view>
+
+<view wx:else class="page subpage-page detail detail-state-page {{themeClass}}" style="{{layoutStyle}}">
+  <subpage-header customClass="detail-header-row" bind:back="back" />
+  <view wx:if="{{detailLoading}}" class="state-note-card detail-state-card">
+    <view class="section-title">正在加载游戏详情</view>
+    <text class="muted">如果云开发响应较慢，请稍等一下。</text>
+  </view>
+  <empty-state-panel
+    wx:else
+    customClass="detail-state-card"
+    title="{{detailErrorTitle}}"
+    desc="{{detailErrorDesc}}"
+    primaryText="重新加载"
+    secondaryText="返回"
+    bind:primary="retryLoad"
+    bind:secondary="back"
+  />
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</view>

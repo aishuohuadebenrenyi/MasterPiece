@@ -187,3 +187,11 @@
   flex-direction: column;
   gap: 12rpx;
 }
+
+.detail-state-page {
+  min-height: 100vh;
+}
+
+.detail-state-card {
+  margin-top: 28rpx;
+}

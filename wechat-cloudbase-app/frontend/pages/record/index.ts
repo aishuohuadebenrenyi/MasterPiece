@@ -48,6 +48,7 @@ Page({
     recommendVisible: false,
     recommendDismissed: false,
     recommendClickable: false,
+    recommendGameId: '',
     recommendTitle: '',
     recommendDesc: '',
     todayVisible: false,
@@ -110,6 +111,7 @@ Page({
     const currentRehearsal = state.currentRehearsal || state.pausedRehearsal
     const recommendedGame = state.games.find((game: Game) => game.id === state.recommendGameId) || state.games[0] || null
     const recommendClickable = !!recommendedGame
+    const recommendGameId = recommendedGame ? recommendedGame.id : ''
     const inspirationCount = state.todayInspirations.length
     const rehearsalCount = state.todayRehearsals.length
     const savedGamesCount = state.games.filter((game: Game) => state.savedGameIds.includes(game.id)).length
@@ -166,6 +168,7 @@ Page({
       rehearsalCard,
       recommendVisible: !this.data.recommendDismissed,
       recommendClickable,
+      recommendGameId,
       recommendTitle,
       recommendDesc,
       inspirationCount,
@@ -207,6 +210,7 @@ Page({
     })
     this.unsubscribeStore = subscribe(() => this.syncLocalState())
     await fetchTodaySummary()
+    await this.refreshGames()
   },
 
   onShow() {
@@ -222,6 +226,15 @@ Page({
   onUnload() {
     if (this.data.timer) clearInterval(this.data.timer)
     if (this.unsubscribeStore) this.unsubscribeStore()
+  },
+
+  async refreshGames() {
+    try {
+      const games = await listGames()
+      setGames(games)
+    } catch (error) {
+      // Keep the current-session game list when CloudBase is unavailable.
+    }
   },
 
   resumeGameCard() {
@@ -701,8 +714,7 @@ Page({
 
   openRecommend() {
     if (!this.data.recommendClickable) return
-    const state = getState()
-    const recommendGameId = state.recommendGameId || (state.games[0] ? state.games[0].id : '')
+    const recommendGameId = this.data.recommendGameId
     if (!recommendGameId) {
       toast('当前还没有可推荐的游戏')
       return
