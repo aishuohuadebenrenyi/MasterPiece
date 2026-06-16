@@ -1,17 +1,17 @@
 <view class="card card-surface-content record-card {{customClass}}" bindtap="onCardTap">
-  <view class="card-head">
-    <view class="record-card-main">
-      <text wx:if="{{miniTitle}}" class="mini-title">{{miniTitle}}</text>
-      <view class="section-title">{{title}}</view>
-    </view>
-    <view class="record-card-actions">
-      <text wx:if="{{badgeText}}" class="pill {{badgeTone}}">{{badgeText}}</text>
-      <text wx:if="{{pending}}" class="sync-pill">本地暂存</text>
-      <button wx:if="{{actionText}}" class="small-btn" catchtap="onActionTap">{{actionText}}</button>
-    </view>
+  <view class="record-card-top-tags" wx:if="{{badgeText || pending}}">
+    <text wx:if="{{badgeText}}" class="pill {{badgeTone}}">{{badgeText}}</text>
+    <text wx:if="{{pending}}" class="sync-pill">本地暂存</text>
   </view>
-  <text class="muted">{{desc}}</text>
-  <view wx:if="{{meta.length}}" class="meta-row">
-    <text wx:for="{{meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+  <view class="record-card-middle">
+    <text wx:if="{{miniTitle}}" class="mini-title">{{miniTitle}}</text>
+    <view class="section-title">{{title}}</view>
+    <text class="muted">{{desc}}</text>
+  </view>
+  <view class="record-card-bottom-tags" wx:if="{{meta.length || actionText}}">
+    <view class="meta-row" wx:if="{{meta.length}}">
+      <text wx:for="{{meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+    </view>
+    <button wx:if="{{actionText}}" class="small-btn" catchtap="onActionTap">{{actionText}}</button>
   </view>
 </view>

@@ -144,7 +144,7 @@ page,
   --improv-card-counter-bg: rgba(79, 140, 255, 0.08);
   --improv-card-counter-text: #2f6ff2;
   --improv-card-padding-sm: 28rpx;
-  --improv-card-padding-md: 36rpx;
+  --improv-card-padding-md: 40rpx;
   --improv-card-gap-sm: 12rpx;
   --improv-card-gap-md: 18rpx;
 }

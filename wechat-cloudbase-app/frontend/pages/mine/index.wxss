@@ -38,7 +38,7 @@
 .mine-host-card {
   position: relative;
   width: 100%;
-  padding: 42rpx 36rpx 42rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   margin-bottom: 34rpx;
   background:
     linear-gradient(160deg, var(--improv-card), var(--improv-card-wash)),
@@ -55,14 +55,20 @@
   height: 124rpx;
   min-width: 124rpx;
   max-width: 124rpx;
-  border-radius: 62rpx;
+  min-height: 124rpx;
+  max-height: 124rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   background: var(--improv-action-gradient);
   color: var(--improv-on-brand);
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 900;
-  line-height: 124rpx;
+  line-height: 1;
   text-align: center;
   overflow: hidden;
+  box-shadow: 0 12rpx 28rpx var(--improv-shadow-secondary-color);
 }
 
 .avatar-image {
@@ -70,6 +76,14 @@
   height: 100%;
   display: block;
   border-radius: inherit;
+}
+
+.avatar-fallback-text {
+  display: block;
+  padding: 0 10rpx;
+  letter-spacing: -1rpx;
+  line-height: 1;
+  transform: translateY(-1rpx);
 }
 
 .grow,
@@ -233,7 +247,7 @@
   width: 100%;
   display: block;
   min-height: 178rpx;
-  padding: 42rpx 36rpx 40rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 40rpx;
   background: var(--improv-card);
   text-align: left;
@@ -252,7 +266,7 @@
   width: 100%;
   display: block;
   min-height: 178rpx;
-  padding: 42rpx 36rpx 40rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 40rpx;
   background: var(--improv-surface-gradient);
   text-align: left;
@@ -303,19 +317,6 @@
 
 .mine-guide-card .tags {
   padding-right: 0;
-}
-
-.mine-lite-guide-card {
-  padding-bottom: 34rpx;
-}
-
-.mine-lite-guide-card .muted {
-  max-width: 100%;
-}
-
-.mine-lite-guide-actions {
-  margin-top: 28rpx;
-  justify-content: center;
 }
 
 .intro-fill-card {
@@ -415,13 +416,22 @@ form-field.profile-preference-field {
   height: 140rpx;
   min-width: 140rpx;
   max-width: 140rpx;
-  border-radius: 70rpx;
-  font-size: 48rpx;
-  line-height: 140rpx;
+  min-height: 140rpx;
+  max-height: 140rpx;
+  border-radius: 50% !important;
+  font-size: 44rpx;
+  line-height: 1;
   margin: 0 auto;
   padding: 0;
   border: 0;
   background: var(--improv-action-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-editor-avatar text {
+  display: block;
 }
 
 .profile-avatar-tip {
@@ -479,12 +489,11 @@ form-field.profile-preference-field {
 }
 
 .detail-title {
-  margin: 0 0 60rpx;
+  margin: 0;
   font-size: 46rpx;
   color: var(--improv-text);
-  align-self: center;
-  text-align: center;
   width: 100%;
+  text-align: left;
 }
 
 .list-stack {
@@ -553,75 +562,3 @@ form-field.profile-preference-field {
   margin-top: 18rpx;
 }
 
-.detail-panel {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.detail-content-wrapper {
-  flex: 0 0 auto;
-  min-height: 520rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  padding: 80rpx 30rpx;
-  background: var(--improv-surface-gradient);
-  border-radius: 40rpx;
-  border: 2rpx solid var(--improv-line-soft);
-  box-shadow: var(--improv-shadow-xs);
-}
-
-.detail-desc {
-  font-size: 30rpx;
-  line-height: 1.8;
-  color: var(--improv-muted-strong);
-  margin-bottom: 80rpx;
-}
-
-.detail-content-wrapper .list-item-head {
-  justify-content: flex-start;
-  width: 100%;
-  margin-bottom: 50rpx;
-}
-
-.detail-content-wrapper .detail-tags {
-  justify-content: flex-start;
-  gap: 16rpx;
-}
-
-.detail-action-row {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 18rpx;
-  margin: 28rpx auto 0;
-}
-
-.detail-action-row button {
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: 84rpx;
-  padding: 0;
-  font-size: 28rpx;
-}
-
-.detail-discard-btn {
-  max-width: 240rpx;
-}
-
-.detail-action-btn {
-  max-width: 360rpx;
-}
-
-.detail-action-note {
-  display: block;
-  margin-top: 16rpx;
-  color: var(--improv-muted);
-  font-size: 24rpx;
-  font-weight: 700;
-  text-align: center;
-}

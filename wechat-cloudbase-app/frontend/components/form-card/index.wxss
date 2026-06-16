@@ -7,7 +7,7 @@
 }
 
 .form-card {
-  padding: 40rpx 34rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   margin-bottom: 32rpx;
   display: flex;
   flex-direction: column;

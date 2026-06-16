@@ -2,11 +2,16 @@
 @import "../../styles/theme.wxss";
 
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .detail-card {
-  padding: 34rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 32rpx;
   background: var(--improv-card-light);
 }
@@ -20,6 +25,7 @@
 }
 
 .detail-section {
+  flex: 1 1 auto;
   margin-top: 24rpx;
 }
 

@@ -8,7 +8,7 @@
   align-items: flex-start;
   gap: 24rpx;
   min-height: 196rpx;
-  padding: var(--improv-card-padding-md, 36rpx);
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: var(--improv-radius-card);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -19,7 +19,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 640rpx;
-  padding: 44rpx 38rpx 34rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   background:
     linear-gradient(160deg, var(--improv-card-translucent, rgba(255, 255, 255, 0.92)), var(--improv-card-muted, rgba(255, 255, 255, 0.74))),
     linear-gradient(135deg, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)), var(--improv-secondary-wash-soft, rgba(79, 140, 255, 0.14)));

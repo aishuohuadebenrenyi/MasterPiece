@@ -63,7 +63,7 @@ text {
   flex-direction: column;
   max-height: 78vh;
   overflow: hidden;
-  padding: 36rpx 30rpx 40rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 40rpx;
   background: rgba(255, 255, 255, 0.96);
   background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
@@ -89,6 +89,8 @@ text {
   height: calc(78vh - 160rpx);
   box-sizing: border-box;
   padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
 }
 
 .sheet-scroll-static {
@@ -162,7 +164,7 @@ text {
   left: 26rpx;
   right: 26rpx;
   bottom: calc(16rpx + env(safe-area-inset-bottom));
-  padding: 34rpx 28rpx 36rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 42rpx;
   background: #ffffff;
   background: var(--improv-card-strong, #ffffff);
@@ -189,7 +191,7 @@ text {
   left: 24rpx;
   right: 24rpx;
   bottom: calc(14rpx + env(safe-area-inset-bottom));
-  padding: 34rpx 28rpx 28rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 44rpx;
   max-height: 82vh;
   background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
@@ -218,14 +220,14 @@ text {
   left: 24rpx;
   right: 24rpx;
   bottom: calc(14rpx + env(safe-area-inset-bottom));
-  padding: 34rpx 28rpx 30rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 44rpx;
   max-height: 72vh;
   background: var(--improv-bg-subtle, #f7f9fe);
 }
 
 .sheet.mine-detail-sheet {
-  padding-bottom: 34rpx;
+  padding-bottom: var(--improv-card-padding-md, 40rpx);
 }
 
 .sheet.mine-list-sheet .sheet-scroll,

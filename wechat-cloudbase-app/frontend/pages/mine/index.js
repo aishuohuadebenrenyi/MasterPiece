@@ -136,9 +136,7 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
   const showInspirationsCard = mappedInspirations.length > 0
   const showGameRecordsCard = gameRecordsCount > 0
   const showRehearsalCard = rehearsalCount > 0
-  const visibleAssetCardCount = [showSedimentsCard, showInspirationsCard, showGameRecordsCard, showRehearsalCard].filter(Boolean).length
   const showStatsCard = !showIntroState && (totalRecords > 1 || playedCount > 0 || methodCount > 0)
-  const showLiteGuideCard = !showIntroState && visibleAssetCardCount <= 1
   const nextProfile = normalizeProfile(profile || DEFAULT_PROFILE)
   return {
     sediments: mappedSediments,
@@ -159,7 +157,6 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
     showGameRecordsCard,
     showRehearsalCard,
     showStatsCard,
-    showLiteGuideCard,
     layoutStyle,
     profileName: nextProfile.displayName,
     profileAvatar: nextProfile.avatarUrl,
@@ -220,8 +217,7 @@ Page({
     showInspirationsCard: false,
     showGameRecordsCard: false,
     showRehearsalCard: false,
-    showStatsCard: false,
-    showLiteGuideCard: false
+    showStatsCard: false
   },
 
   onLoad() {

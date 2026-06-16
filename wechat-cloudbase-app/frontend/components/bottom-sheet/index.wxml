@@ -14,7 +14,7 @@
           </view>
         </block>
         <block wx:else>
-          <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="sheet-scroll">
+          <scroll-view scroll-y enable-flex enhanced show-scrollbar="{{false}}" class="sheet-scroll">
             <slot></slot>
           </scroll-view>
         </block>

@@ -1,18 +1,24 @@
 <view class="detail-panel">
   <view class="detail-content-wrapper">
-    <view class="list-item-head">
+    <view class="detail-top-tags" wx:if="{{badgeText || pending}}">
       <text wx:if="{{badgeText}}" class="pill {{badgeTone}}">{{badgeText}}</text>
       <text wx:if="{{pending}}" class="sync-pill">本地暂存</text>
     </view>
-    <view class="detail-title">{{title}}</view>
-    <text class="muted detail-desc">{{desc}}</text>
-    <view wx:if="{{meta.length}}" class="meta-row detail-tags">
-      <text wx:for="{{meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+    <view class="detail-middle">
+      <view class="detail-title">{{title}}</view>
+      <text class="muted detail-desc">{{desc}}</text>
+    </view>
+    <view class="detail-bottom-tags" wx:if="{{meta.length}}">
+      <view class="meta-row detail-tags">
+        <text wx:for="{{meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+      </view>
     </view>
   </view>
-  <view wx:if="{{canSediment}}" class="detail-action-row">
-    <button class="ghost-btn detail-discard-btn" bindtap="onDiscard">不再整理</button>
-    <button class="primary-btn detail-action-btn" loading="{{loading}}" bindtap="onSediment">沉淀为方法卡</button>
+  <view wx:if="{{canSediment}}" class="detail-action-block">
+    <view class="detail-action-row">
+      <button class="ghost-btn detail-discard-btn" bindtap="onDiscard">不再整理</button>
+      <button class="primary-btn detail-action-btn" loading="{{loading}}" bindtap="onSediment">沉淀为方法卡</button>
+    </view>
+    <text class="detail-action-note">整理后会生成方法卡，原记录仍保留。</text>
   </view>
-  <text wx:if="{{canSediment}}" class="detail-action-note">整理后会生成方法卡，原记录仍保留。</text>
 </view>

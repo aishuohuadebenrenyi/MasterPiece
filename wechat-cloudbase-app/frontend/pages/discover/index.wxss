@@ -1,14 +1,23 @@
 .discover {
+  width: 100%;
   height: 100vh;
   min-height: 0;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.discover-content {
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: var(--content-safe-top) 32rpx var(--page-bottom);
+  padding: var(--content-safe-top) var(--page-side) var(--page-bottom);
 }
 
-.discover.empty-mode {
+.discover.empty-mode .discover-content {
   height: 100vh;
+  min-height: 100vh;
 }
 
 .view-tools {
@@ -25,7 +34,7 @@
   border: 2rpx solid var(--improv-line-subtle);
 }
 
-.compact-switch button {
+.compact-switch view {
   min-height: 54rpx;
   font-size: 24rpx;
 }
@@ -42,10 +51,13 @@
   box-shadow: 0 16rpx 30rpx var(--improv-shadow-sm-color, rgba(50, 68, 120, 0.08));
 }
 
-.switch button {
+.switch view {
   flex: 1;
   min-width: 0;
   min-height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border-radius: 999rpx;
   color: #667289;
@@ -89,7 +101,7 @@
 .discover-tags {
   width: auto;
   height: 104rpx;
-  margin: 0 -32rpx 14rpx;
+  margin: 0 calc(var(--page-side) * -1) 14rpx;
   white-space: nowrap;
   overflow: hidden;
   position: relative;
@@ -103,7 +115,7 @@
   gap: 14rpx;
   width: auto;
   min-width: auto;
-  padding: 12rpx 32rpx;
+  padding: 12rpx var(--page-side);
   white-space: nowrap;
 }
 
@@ -133,24 +145,25 @@
   margin-bottom: 20rpx;
 }
 
-.category-title-row {
-  flex: 1 1 auto;
-  min-width: 0;
+.category-toolbar {
+  width: 100%;
+  min-height: 64rpx;
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  justify-content: space-between;
+  margin: 2rpx 0 20rpx;
 }
 
 .category-back {
-  flex: 0 0 54rpx;
-  width: 54rpx;
-  min-width: 54rpx;
-  max-width: 54rpx;
-  min-height: 54rpx;
-  height: 54rpx;
+  flex: 0 0 64rpx;
+  width: 64rpx;
+  min-width: 64rpx;
+  max-width: 64rpx;
+  min-height: 64rpx;
+  height: 64rpx;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   margin: 0;
   padding: 0;
   background: transparent;
@@ -159,6 +172,12 @@
   font-size: 36rpx;
   font-weight: 900;
   line-height: 1;
+}
+
+.category-toolbar .filter-btn {
+  min-width: 112rpx;
+  min-height: 58rpx;
+  padding: 0 24rpx;
 }
 
 .section-title {
@@ -218,7 +237,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 56rpx 40rpx 40rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 40rpx;
   background:
     linear-gradient(135deg, rgba(79, 140, 255, 0.18), rgba(255, 122, 69, 0.14)),
@@ -624,7 +643,7 @@
 .recommend {
   position: relative;
   margin-top: 24rpx;
-  padding: 32rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   background:
     linear-gradient(135deg, rgba(255, 150, 106, 0.16), rgba(79, 140, 255, 0.1)),
     rgba(255, 255, 255, 0.94);

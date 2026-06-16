@@ -40,9 +40,12 @@ text {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 48rpx 36rpx 38rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 52rpx;
   transform: translateY(-50%);
+  background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
+  box-shadow: var(--improv-shadow-floating);
+  backdrop-filter: blur(20rpx);
 }
 
 .float-head {
@@ -111,4 +114,12 @@ text {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.float-scroll-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
 }

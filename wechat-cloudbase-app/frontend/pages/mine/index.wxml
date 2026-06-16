@@ -7,7 +7,7 @@
             <view class="profile-card-head">
               <view class="avatar profile-avatar">
                 <image wx:if="{{profileAvatar}}" class="avatar-image" src="{{profileAvatar}}" mode="aspectFill"></image>
-                <text wx:else>{{profileAvatarText}}</text>
+                <text wx:else class="avatar-fallback-text">{{profileAvatarText}}</text>
               </view>
               <view class="profile-card-main">
             <view class="profile-name">{{profileName}}</view>
@@ -55,7 +55,7 @@
         <view class="profile-card-head">
           <view class="avatar profile-avatar">
             <image wx:if="{{profileAvatar}}" class="avatar-image" src="{{profileAvatar}}" mode="aspectFill"></image>
-            <text wx:else>{{profileAvatarText}}</text>
+            <text wx:else class="avatar-fallback-text">{{profileAvatarText}}</text>
           </view>
           <view class="profile-card-main">
             <view class="profile-name">{{profileName}}</view>
@@ -79,7 +79,6 @@
           <view class="mine-entry-main">
             <text class="kicker">待整理</text>
             <view class="mine-entry-title">{{pendingCount}} 条可沉淀记录</view>
-            <text class="muted">把灵感、素材练习和排练复盘整理成方法卡。</text>
           </view>
           <view class="mine-entry-action">整理</view>
           <view class="tags"><text>灵感</text><text>素材练习</text><text>排练复盘</text></view>
@@ -89,7 +88,6 @@
           <view class="mine-entry-main">
             <text class="kicker">个人沉淀</text>
             <view class="mine-entry-title">{{sediments.length}} 张方法卡</view>
-            <text class="muted">带领提醒、素材变体、复盘方法。</text>
           </view>
           <view class="mine-entry-action">查看</view>
           <view class="tags"><text>带领提醒</text><text>素材改造</text><text>排练复盘</text></view>
@@ -99,7 +97,6 @@
           <view class="mine-entry-main">
             <text class="kicker">灵感记录</text>
             <view class="mine-entry-title">{{inspirations.length}} 条灵感</view>
-            <text class="muted">还没完全整理，但值得回看。</text>
           </view>
           <view class="mine-entry-action">查看</view>
         </view>
@@ -108,7 +105,6 @@
           <view class="mine-entry-main">
             <text class="kicker">练习记录</text>
             <view class="mine-entry-title">{{gameRecordsCount}} 次素材练习</view>
-            <text class="muted">看看在练习里的 Keep & Try。</text>
           </view>
           <view class="mine-entry-action">查看</view>
         </view>
@@ -117,21 +113,8 @@
           <view class="mine-entry-main">
             <text class="kicker">排练记录</text>
             <view class="mine-entry-title">{{rehearsalCount}} 次排练</view>
-            <text class="muted">最近更新于今天。</text>
           </view>
           <view class="mine-entry-action">查看</view>
-        </view>
-
-        <view wx:if="{{showLiteGuideCard}}" class="card mine-entry-card mine-guide-card mine-lite-guide-card">
-          <view class="mine-entry-main no-action">
-            <text class="kicker">继续积累</text>
-            <view class="mine-entry-title">这里只保留已经发生的沉淀</view>
-            <text class="muted">还没有更多资产时，不需要把所有入口都摆出来。去记录一次，内容会慢慢长出来。</text>
-          </view>
-          <view class="intro-actions mine-lite-guide-actions">
-            <button class="ghost-btn intro-link-btn" bindtap="goDiscover">去发现</button>
-            <button class="primary-btn intro-primary-btn" bindtap="goRecord">去记录</button>
-          </view>
         </view>
       </view>
     </block>
@@ -158,7 +141,7 @@
       <view class="profile-edit-avatar-container" bindtap="chooseProfileAvatar">
         <view class="avatar profile-editor-avatar">
           <image wx:if="{{profileDraftAvatar}}" class="avatar-image" src="{{profileDraftAvatar}}" mode="aspectFill"></image>
-          <text wx:else>{{profileDraftAvatarText}}</text>
+          <text wx:else class="avatar-fallback-text">{{profileDraftAvatarText}}</text>
         </view>
         <text class="profile-avatar-tip">点击更换头像</text>
       </view>

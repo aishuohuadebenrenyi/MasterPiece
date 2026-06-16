@@ -17,7 +17,7 @@
 
 .record-form-card,
 .record-item {
-  padding: 36rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
 }
 
 .summary-card {
