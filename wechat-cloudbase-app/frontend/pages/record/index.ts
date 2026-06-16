@@ -1,13 +1,11 @@
-import type { Game, InspirationItem, RehearsalRecord, TodayItem, VoiceTarget, GameSession } from '../../types/domain'
+import type { Material, InspirationItem, RehearsalRecord, TodayItem, MaterialSession } from '../../types/domain'
 import {
   addInspiration,
-  clearVoiceDraft,
   getState,
   getTaskMutexError,
   setCurrentRehearsal,
-  setGames,
-  setVoiceDraft,
-  startGameSession,
+  setMaterials,
+  startMaterialSession,
   startRehearsal as startRehearsalStore,
   subscribe,
   upsertInspiration,
@@ -16,8 +14,7 @@ import {
 } from '../../store/index'
 import { fetchTodaySummary } from '../../services/today'
 import { createRehearsal } from '../../services/rehearsal'
-import { listGames } from '../../services/game'
-import { createVoiceDraft } from '../../services/voice-draft'
+import { listMaterials } from '../../services/material'
 import { createInspiration } from '../../services/inspiration'
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
@@ -27,17 +24,10 @@ import { getLayoutStyle } from '../../utils/layout'
 Page({
   data: {
     themeClass: 'theme-default',
-    voiceVisible: false,
-    elapsed: 0,
-    timeText: '00:00',
-    voiceSummary: '',
-    recordingText: '录音中',
-    timer: null as number | null,
-    voiceTarget: 'inspiration' as VoiceTarget,
-    activeContextName: '',
+    inspirationText: '',
     pausedRehearsal: null,
     currentRehearsal: null as RehearsalRecord | null,
-    currentGameSession: null as GameSession | null,
+    currentGameSession: null as MaterialSession | null,
     gameCard: null as any,
     rehearsalCard: null as null | {
       label: string
@@ -56,10 +46,10 @@ Page({
     startGameVisible: false,
     startGameSelectedId: '',
     gameSearchQuery: '',
-    filteredGamesList: [] as Game[],
-    gamesList: [] as Game[],
-    startGameEmptyTitle: '还没有可开始的游戏',
-    startGameEmptyDesc: '先去发现页添加几个常用游戏，再回来快速开始。',
+    filteredGamesList: [] as Material[],
+    gamesList: [] as Material[],
+    startGameEmptyTitle: '还没有可开始的素材',
+    startGameEmptyDesc: '先去发现页添加几个常用素材，再回来快速开始。',
     modalOpen: false,
     todayTitle: '',
     todayItems: [] as TodayItem[],
@@ -74,7 +64,6 @@ Page({
     customGoalVisible: false,
     customGoalInput: '',
     rehearsalSource: 'recommended',
-    voiceTargets: [] as Array<{ value: VoiceTarget; label: string; activeClass: string }>,
     durationOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     goalOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     sourceOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
@@ -84,12 +73,6 @@ Page({
   },
 
   unsubscribeStore: null as null | (() => void),
-
-  formatTime(seconds: number) {
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0')
-    const s = String(seconds % 60).padStart(2, '0')
-    return `${m}:${s}`
-  },
 
   getMergedRehearsalGoals() {
     const customGoal = String(this.data.customGoalInput || '').trim()
@@ -103,48 +86,39 @@ Page({
 
   syncLocalState() {
     const state = getState()
-    const targetOptions = [
-      { value: 'inspiration' as VoiceTarget, label: '记录到：灵感' },
-      { value: 'game_feedback' as VoiceTarget, label: '当前游戏' },
-      { value: 'rehearsal' as VoiceTarget, label: '当前排练' }
-    ]
     const currentRehearsal = state.currentRehearsal || state.pausedRehearsal
-    const recommendedGame = state.games.find((game: Game) => game.id === state.recommendGameId) || state.games[0] || null
+    const recommendedGame = state.materials.find((material: Material) => material.id === state.recommendMaterialId) || state.materials.find((material: Material) => !material.referenceOnly) || null
     const recommendClickable = !!recommendedGame
     const recommendGameId = recommendedGame ? recommendedGame.id : ''
     const inspirationCount = state.todayInspirations.length
     const rehearsalCount = state.todayRehearsals.length
-    const savedGamesCount = state.games.filter((game: Game) => state.savedGameIds.includes(game.id)).length
+    const savedGamesCount = state.materials.filter((material: Material) => state.savedMaterialIds.includes(material.id) && !material.referenceOnly).length
     const savedSourceUnavailable = this.data.rehearsalSource === 'saved' && savedGamesCount === 0
     const rehearsalSourceHint = savedSourceUnavailable
-      ? '还没有收藏游戏，先去发现页点亮几个爱心，再回来随机开启。'
+      ? '还没有收藏可训练素材，先去发现页点亮几个爱心，再回来随机开启。'
       : ''
 
     const recommendTitle = recommendClickable
       ? recommendedGame.title
       : '慢下来，记录今天有触动的瞬间'
     const recommendDesc = recommendClickable
-      ? (recommendedGame.desc || '当前有一张推荐游戏卡')
-      : '今天如果没有想玩的游戏，也可以先想想发生过的一个瞬间，把感受记下来。'
-    const buildPlanText = (gameId: string, status: string) => {
-      const game = state.games.find((item: Game) => item.id === gameId)
-      return `${game ? game.title : '未命名游戏'} · ${status}`
+      ? (recommendedGame.desc || '当前有一张推荐素材卡')
+      : '今天如果没有想练的素材，也可以先想想发生过的一个瞬间，把感受记下来。'
+    const buildPlanText = (materialId: string, status: string) => {
+      const material = state.materials.find((item: Material) => item.id === materialId)
+      return `${material ? material.title : '未命名素材'} · ${status}`
     }
     let gameCard: any = null
-    const currentGameSession = state.currentGame || null
-    let activeContextName = ''
+    const currentGameSession = state.currentMaterial || null
     if (currentGameSession) {
       const d = currentGameSession.duration || 0
       const m = Math.floor(d / 60)
       const s = d % 60
-      activeContextName = `当前正在玩：${currentGameSession.title || '当前游戏'}`
       gameCard = {
         label: currentGameSession.status || '进行中',
-        title: currentGameSession.title || '当前游戏',
+        title: currentGameSession.title || '当前素材',
         durationText: `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
       }
-    } else if (currentRehearsal) {
-      activeContextName = currentRehearsal.title || (currentRehearsal as RehearsalRecord).teamName + ' 的排练'
     }
 
     const pausedSource = currentRehearsal && (currentRehearsal as RehearsalRecord).status === '暂停中' ? currentRehearsal as RehearsalRecord : null
@@ -155,7 +129,7 @@ Page({
           desc: pausedSource.desc,
           items: (pausedSource.plan || []).slice(0, 3).map((item: any, index: number) => ({
             indexLabel: String(index + 1),
-            text: buildPlanText(item.gameId, item.status)
+            text: buildPlanText(item.materialId || item.gameId, item.status)
           }))
         }
       : null
@@ -164,7 +138,6 @@ Page({
       currentRehearsal,
       currentGameSession,
       gameCard,
-      activeContextName,
       rehearsalCard,
       recommendVisible: !this.data.recommendDismissed,
       recommendClickable,
@@ -174,7 +147,6 @@ Page({
       inspirationCount,
       rehearsalCount,
       showTodaySummary: inspirationCount > 0 || rehearsalCount > 0,
-      timeText: this.data.elapsed ? this.formatTime(this.data.elapsed) : '00:00',
       durationOptions: [
         { value: '60', label: '60 分钟' },
         { value: '90', label: '90 分钟' },
@@ -224,14 +196,13 @@ Page({
   },
 
   onUnload() {
-    if (this.data.timer) clearInterval(this.data.timer)
     if (this.unsubscribeStore) this.unsubscribeStore()
   },
 
   async refreshGames() {
     try {
-      const games = await listGames()
-      setGames(games)
+      const games = await listMaterials()
+      setMaterials(games)
     } catch (error) {
       // Keep the current-session game list when CloudBase is unavailable.
     }
@@ -240,69 +211,22 @@ Page({
   resumeGameCard() {
     const session = this.data.currentGameSession as any
     if (session) {
-      wx.navigateTo({ url: `/pages/game-detail/index?id=${session.gameId || session.id}` })
+      wx.navigateTo({ url: `/pages/game-detail/index?id=${session.materialId || session.id}` })
     }
   },
 
-  openVoice() {
-    const { currentRehearsal, currentGameSession } = this.data as any
-    let activeContextName = ''
-    if (currentGameSession) {
-      activeContextName = `当前正在玩：${currentGameSession.title || '当前游戏'}`
-    } else if (currentRehearsal) {
-      activeContextName = `当前排练：${currentRehearsal.teamName}`
-    }
-
-    openModal(this, { voiceVisible: true, elapsed: 0, timeText: '00:00', recordingText: '录音中', voiceTarget: 'inspiration', activeContextName }, () => {
-      this.syncLocalState()
-    })
-    this.startTimer()
-  },
-
-  startTimer() {
-    if (this.data.timer) return
-    const timer = setInterval(() => {
-      const elapsed = this.data.elapsed + 1
-      this.setData({ elapsed, timeText: this.formatTime(elapsed), recordingText: '录音中' })
-    }, 1000) as unknown as number
-    this.setData({ timer })
-  },
-
-  pauseVoice() {
-    if (this.data.timer) clearInterval(this.data.timer)
-    this.setData({ timer: null, recordingText: '继续录音' })
-  },
-
-  finishVoice() {
-    if (this.data.timer) clearInterval(this.data.timer)
-    const elapsed = this.data.elapsed || 36
-    const draft = createVoiceDraft({
-      durationSeconds: elapsed,
-      target: this.data.voiceTarget,
-      linkedRehearsalId: getState().currentRehearsal ? getState().currentRehearsal!.id : undefined
-    })
-    setVoiceDraft(draft)
-    this.setData({
-      timer: null,
-      elapsed,
-      timeText: this.formatTime(elapsed),
-      recordingText: '重新录音',
-      voiceSummary: draft.summary
-    })
-    toast('语音已生成摘要')
+  updateInspirationText(event: WechatMiniprogram.Input) {
+    this.setData({ inspirationText: String(event.detail.value || '') })
   },
 
   closeSheet() {
-    if (this.data.timer) clearInterval(this.data.timer)
     closeModal(this, {
-      voiceVisible: false,
       todayVisible: false,
       startRehearsalVisible: false,
       startGameVisible: false,
       startGameSelectedId: '',
       gameSearchQuery: '',
       filteredGamesList: [],
-      timer: null,
       teamName: '',
       rehearsalDuration: '90',
       rehearsalGoals: [],
@@ -312,106 +236,21 @@ Page({
     })
   },
 
-  openArchiveOptions() {
-    wx.showActionSheet({
-      itemList: ['归档到游戏', '归档到排练'],
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          this.archiveToGame()
-        } else if (res.tapIndex === 1) {
-          this.archiveToRehearsal()
-        }
-      }
-    })
-  },
-
-  archiveToGame() {
-    const state = getState()
-    const games = state.games
-    if (!games || games.length === 0) {
-      toast('暂无游戏数据')
+  async saveInspirationDraft() {
+    const text = String(this.data.inspirationText || '').trim()
+    if (!text) {
+      toast('先写下一点灵感')
       return
     }
-    const itemList = games.slice(0, 6).map(g => g.title)
-    wx.showActionSheet({
-      itemList,
-      success: (res) => {
-        const selectedGame = games[res.tapIndex]
-        const draft = getState().voiceDraft
-        if (draft && selectedGame) {
-          draft.linkedGameId = selectedGame.id
-          setVoiceDraft(draft)
-          this.closeSheet()
-          wx.navigateTo({ url: `/pages/game-feedback/index?id=${selectedGame.id}` })
-        }
-      }
-    })
-  },
-
-  archiveToRehearsal() {
-    const state = getState()
-    const history = state.rehearsalHistory
-    if (!history || history.length === 0) {
-      toast('暂无排练记录')
-      return
-    }
-    const itemList = history.slice(0, 6).map(h => h.title || h.teamName + ' 的排练')
-    wx.showActionSheet({
-      itemList,
-      success: (res) => {
-        const selectedRehearsal = history[res.tapIndex]
-        const draft = getState().voiceDraft
-        if (draft && selectedRehearsal) {
-          draft.linkedRehearsalId = selectedRehearsal.id
-          setVoiceDraft(draft)
-          this.closeSheet()
-          wx.navigateTo({ url: '/pages/rehearsal-record/index' })
-        }
-      }
-    })
-  },
-
-  archiveToCurrentContext() {
-    const state = getState()
-    const currentRehearsal = state.currentRehearsal || state.pausedRehearsal
-    const currentGameSession = state.currentGame || null
-    const draft = getState().voiceDraft
-
-    if (draft) {
-      if (currentGameSession) {
-        draft.linkedGameId = currentGameSession.gameId || currentGameSession.id
-        setVoiceDraft(draft)
-        this.closeSheet()
-        wx.navigateTo({ url: `/pages/game-feedback/index?id=${currentGameSession.gameId || currentGameSession.id}` })
-      } else if (currentRehearsal) {
-        draft.linkedRehearsalId = currentRehearsal.id
-        setVoiceDraft(draft)
-        this.closeSheet()
-        wx.navigateTo({ url: '/pages/rehearsal-record/index' })
-      }
-    }
-  },
-
-  async saveVoiceAsInspiration() {
-    let draft = getState().voiceDraft
-    if (!draft) {
-      const elapsed = this.data.elapsed || 36
-      draft = createVoiceDraft({
-        durationSeconds: elapsed,
-        target: 'inspiration',
-        linkedRehearsalId: getState().currentRehearsal ? getState().currentRehearsal!.id : undefined
-      })
-      setVoiceDraft(draft)
-    }
+    const firstLine = text.split(/\n/).map((line) => line.trim()).find(Boolean) || text
+    const title = firstLine.length > 18 ? `${firstLine.slice(0, 18)}...` : firstLine
     const item: InspirationItem = {
       id: `inspiration-${Date.now()}`,
       type: '灵感',
-      title: draft.title,
-      desc: draft.desc,
+      title,
+      desc: text,
       syncStatus: 'pending',
-      meta: ['语音速记', '待整理'],
-      linkedGameId: draft.linkedGameId,
-      linkedRehearsalId: draft.linkedRehearsalId
+      meta: ['快速记录', '待整理']
     }
     addInspiration(item)
     let synced = false
@@ -419,23 +258,15 @@ Page({
       await createInspiration({
         title: item.title,
         desc: item.desc,
-        meta: item.meta,
-        linkedGameId: item.linkedGameId,
-        linkedRehearsalId: item.linkedRehearsalId,
-        sourceType: 'voice'
+        meta: item.meta
       })
       synced = true
       upsertInspiration(Object.assign({}, item, { syncStatus: 'synced' as const }))
     } catch (error) {
       upsertInspiration(item)
     }
-    clearVoiceDraft()
-    this.closeSheet()
-    toast(synced ? '已保存为灵感草稿' : '已保存到本地，待同步')
-  },
-
-  saveVoiceContext() {
-    // Legacy function, replaced by archive methods
+    this.setData({ inspirationText: '' })
+    toast(synced ? '已保存灵感' : '已保存到本地，待同步')
   },
 
   openStartRehearsal() {
@@ -450,13 +281,13 @@ Page({
   },
 
   async openStartGame() {
-    const mutexError = getTaskMutexError('game')
+    const mutexError = getTaskMutexError('material')
     if (mutexError) {
       toast(mutexError)
       return
     }
     
-    let gamesList = getState().games || []
+    let gamesList = (getState().materials || []).filter((material: Material) => !material.referenceOnly)
     const startGameEmptyState = this.getStartGameEmptyState('', gamesList, gamesList)
     openModal(this, {
       startGameVisible: true,
@@ -469,12 +300,12 @@ Page({
 
     if (gamesList.length === 0) {
       try {
-        const games = await listGames()
-        setGames(games)
+        const games = (await listMaterials()).filter((material: Material) => !material.referenceOnly)
+        setMaterials(games)
         const query = this.data.gameSearchQuery || ''
         const lowerQuery = query.trim().toLowerCase()
-        const filteredGamesList = games.filter((game: Game) => {
-          const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+        const filteredGamesList = games.filter((game: Material) => {
+          const text = `${game.title} ${game.desc} ${game.type} ${game.tags.join(' ')} ${(game.abilities || []).join(' ')} ${game.meta.join(' ')}`.toLowerCase()
           return !lowerQuery || text.includes(lowerQuery)
         })
         this.setData({
@@ -483,36 +314,36 @@ Page({
           ...this.getStartGameEmptyState(query, games, filteredGamesList)
         })
       } catch (e) {
-        toast('加载游戏失败')
+        toast('加载素材失败')
       }
     }
   },
 
   filterStartGames(query: string) {
     const lowerQuery = query.trim().toLowerCase()
-    return this.data.gamesList.filter((game: Game) => {
-      const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+    return this.data.gamesList.filter((game: Material) => {
+      const text = `${game.title} ${game.desc} ${game.type} ${game.tags.join(' ')} ${(game.abilities || []).join(' ')} ${game.meta.join(' ')}`.toLowerCase()
       return !lowerQuery || text.includes(lowerQuery)
     })
   },
 
-  getStartGameEmptyState(query: string, gamesList: Game[], filteredGamesList: Game[]) {
+  getStartGameEmptyState(query: string, gamesList: Material[], filteredGamesList: Material[]) {
     if (filteredGamesList.length > 0) return { startGameEmptyTitle: '', startGameEmptyDesc: '' }
     if (!gamesList.length) {
       return {
-        startGameEmptyTitle: '还没有可开始的游戏',
-        startGameEmptyDesc: '先去发现页添加几个常用游戏，再回来快速开始。'
+        startGameEmptyTitle: '还没有可开始的素材',
+        startGameEmptyDesc: '先去发现页添加几个常用素材，再回来快速开始。'
       }
     }
     if (query.trim()) {
       return {
-        startGameEmptyTitle: '没有找到匹配的游戏',
-        startGameEmptyDesc: '换个关键词试试，或清空搜索继续浏览当前游戏库。'
+        startGameEmptyTitle: '没有找到匹配的素材',
+        startGameEmptyDesc: '换个关键词试试，或清空搜索继续浏览当前素材库。'
       }
     }
     return {
-      startGameEmptyTitle: '当前没有可显示的游戏',
-      startGameEmptyDesc: '先清空筛选或回到发现页补充游戏库，再回来开始。'
+      startGameEmptyTitle: '当前没有可显示的素材',
+      startGameEmptyDesc: '先清空筛选或回到发现页补充素材库，再回来开始。'
     }
   },
 
@@ -532,7 +363,7 @@ Page({
     this.setData({
       gameSearchQuery: query,
       filteredGamesList: filtered,
-      startGameSelectedId: filtered.some((game: Game) => game.id === this.data.startGameSelectedId) ? this.data.startGameSelectedId : '',
+      startGameSelectedId: filtered.some((game: Material) => game.id === this.data.startGameSelectedId) ? this.data.startGameSelectedId : '',
       ...this.getStartGameEmptyState(query, this.data.gamesList, filtered)
     })
   },
@@ -549,7 +380,7 @@ Page({
 
   selectGameToStart(e: any) {
     const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
-    const game = this.data.gamesList.find((g: Game) => g.id === id)
+    const game = this.data.gamesList.find((g: Material) => g.id === id)
     this.setData({ 
       startGameSelectedId: id,
       gameSearchQuery: game ? game.title : this.data.gameSearchQuery
@@ -559,16 +390,16 @@ Page({
   startGameFromRecord() {
     const id = this.data.startGameSelectedId
     if (!id) {
-      toast('请先选择一个游戏')
+      toast('请先选择一条素材')
       return
     }
-    const game = this.data.gamesList.find((g: Game) => g.id === id)
+    const game = this.data.gamesList.find((g: Material) => g.id === id)
     if (!game) return
 
     try {
-      startGameSession({
+      startMaterialSession({
         id: `session-${Date.now()}`,
-        gameId: game.id,
+        materialId: game.id,
         title: game.title,
         startTime: Date.now(),
         duration: 0,
@@ -632,10 +463,11 @@ Page({
       }
       return arr
     }
-    const recommendedPlan = shuffle(state.games).slice(0, 3).map((game) => game.id)
-    const savedGames = state.games.filter((game) => state.savedGameIds.includes(game.id))
+    const trainableMaterials = state.materials.filter((material: Material) => !material.referenceOnly)
+    const recommendedPlan = shuffle(trainableMaterials).slice(0, 3).map((material) => material.id)
+    const savedGames = trainableMaterials.filter((material) => state.savedMaterialIds.includes(material.id))
     if (this.data.rehearsalSource === 'saved' && savedGames.length === 0) {
-      toast('还没有收藏游戏，先去发现页收藏几个再开始')
+      toast('还没有收藏可训练素材，先去发现页收藏几个再开始')
       return
     }
     const savedPlan = shuffle(savedGames).slice(0, 3).map((game) => game.id)
@@ -673,8 +505,8 @@ Page({
       source: this.data.rehearsalSource,
       status: '进行中' as const,
       syncStatus: 'pending' as const,
-      plan: selectedPlan.map((gameId) => ({ gameId, status: '未开始' as const, keep: '', try: '' })),
-      meta: [`${selectedPlan.length || 0} 个游戏`, sourceLabel]
+      plan: selectedPlan.map((materialId) => ({ materialId, status: '未开始' as const, keep: '', try: '' })),
+      meta: [`${selectedPlan.length || 0} 条素材`, sourceLabel]
     }
     startRehearsalStore(rehearsal)
     let synced = false
@@ -702,7 +534,7 @@ Page({
       todayItems: items,
       todayEmptyTitle: kind === 'inspirations' ? '今天还没有灵感记录' : '今天还没有排练记录',
       todayEmptyDesc: kind === 'inspirations'
-        ? '先按一下中间的录音按钮，把刚刚闪过的想法留下来。'
+        ? '先在记录页写下一句刚刚闪过的想法。'
         : '需要时可以先快速开启一场排练，再回来查看今天的过程记录。'
     })
   },
@@ -716,7 +548,7 @@ Page({
     if (!this.data.recommendClickable) return
     const recommendGameId = this.data.recommendGameId
     if (!recommendGameId) {
-      toast('当前还没有可推荐的游戏')
+      toast('当前还没有可推荐的素材')
       return
     }
     wx.navigateTo({ url: `/pages/game-detail/index?id=${recommendGameId}` })

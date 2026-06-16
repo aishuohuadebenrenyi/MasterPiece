@@ -1,4 +1,4 @@
-<view class="card selection-card {{selected ? 'selection-card-selected' : ''}} {{customClass}}" bindtap="onCardTap">
+<view class="card card-surface-container selection-card {{selected ? 'selection-card-selected' : ''}} {{customClass}}" bindtap="onCardTap">
   <view class="selection-card-head">
     <view class="selection-card-main">
       <text wx:if="{{kicker}}" class="mini-title">{{kicker}}</text>

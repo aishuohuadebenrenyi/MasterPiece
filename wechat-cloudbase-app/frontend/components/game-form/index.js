@@ -5,7 +5,9 @@ function getEventValue(event) {
 Component({
   properties: {
     value: { type: Object, value: {} },
-    categoryOptions: { type: Array, value: [] },
+    typeOptions: { type: Array, value: [] },
+    abilityOptions: { type: Array, value: [] },
+    sceneOptions: { type: Array, value: [] },
     customCategoryVisible: { type: Boolean, value: false },
     customCategoryInput: { type: String, value: '' },
     customCategoryFocus: { type: Boolean, value: false },
@@ -18,11 +20,14 @@ Component({
       const field = event.currentTarget.dataset.field
       this.triggerEvent('fieldchange', { field, value: getEventValue(event) })
     },
-    emitVoice(event) {
-      this.triggerEvent('voice', event.detail)
+    selectType(event) {
+      this.triggerEvent('selecttype', { value: event.detail.value })
     },
-    toggleCategory(event) {
-      this.triggerEvent('togglecategory', { category: event.currentTarget.dataset.category })
+    selectAbility(event) {
+      this.triggerEvent('selectability', { value: event.detail.value })
+    },
+    selectScene(event) {
+      this.triggerEvent('selectscene', { value: event.detail.value })
     },
     toggleCustomCategory() {
       this.triggerEvent('togglecustomcategory')

@@ -1,12 +1,15 @@
-import type { Game } from '../../types/domain'
-import { findLocalGame, listGames, updateGameState, updateGame, deleteGame } from '../../services/game'
-import { getState, markPlayed, unmarkPlayed, setGames, toggleSaved, startGameSession, subscribe, updateGameSession, clearGameSession , getThemeClass } from '../../store/index'
+import type { Material, MaterialType } from '../../types/domain'
+import { findLocalMaterial, listMaterials, updateMaterialState, updateMaterial, deleteMaterial } from '../../services/material'
+import { getState, markPlayed, unmarkPlayed, setMaterials, toggleSaved, startMaterialSession, subscribe, updateMaterialSession, clearMaterialSession , getThemeClass } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
 
-const defaultCategoryOptions = ['热身', '关系', '专注', '叙事']
+const materialTypes: MaterialType[] = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
+const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
+const abilityOptions = ['自发性', 'Yes And', '积极聆听', '角色塑造', '情绪表达', '身体空间', '叙事构建', '失败复原', '主持', '团队协作']
+const sceneOptions = ['临场速查', '备课', '排练', '演出']
 
-type EditGameDraft = Partial<Game> & {
+type EditGameDraft = Partial<Material> & {
   people?: string
   duration?: string
   steps?: string
@@ -28,13 +31,13 @@ function buildGameMeta(people = '', duration = '') {
 Page({
   data: {
     themeClass: 'theme-default',
-    game: null as Game | null,
-    related: null as Game | null,
+    game: null as Material | null,
+    related: null as Material | null,
     saved: false,
     played: false,
     saveIcon: '♡',
     savedText: '♡ 收藏',
-    playedText: '○ 玩过',
+    playedText: '○ 练过',
     tagText: '',
     displayMeta: [] as string[],
     layoutStyle: '',
@@ -47,7 +50,9 @@ Page({
     timer: null as number | null,
     currentGameSession: null as any,
     historyCards: [] as HistoryCard[],
-    categoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     customCategoryVisible: false,
     customCategoryInput: '',
     categorySuggestions: [] as Array<{ value: string; label: string }>,
@@ -61,7 +66,7 @@ Page({
     this.setData({
       saveIcon: this.data.saved ? '♥︎' : '♡',
       savedText: this.data.saved ? '♥︎ 已收藏' : '♡ 收藏',
-      playedText: this.data.played ? '✓ 已玩过' : '○ 玩过'
+      playedText: this.data.played ? '✓ 已练过' : '○ 练过'
     })
   },
 
@@ -76,21 +81,21 @@ Page({
     if (!id) {
       this.setData({
         detailLoading: false,
-        detailErrorTitle: '没有找到这个游戏',
-        detailErrorDesc: '返回上一页，重新选择一个游戏。'
+        detailErrorTitle: '没有找到这条素材',
+        detailErrorDesc: '返回上一页，重新选择一条素材。'
       })
       return
     }
     
     // 1. 先尝试从本地 store 渲染，避免白屏等待
-    let allGames = getState().games
-    let game = allGames.find((item) => item.id === id) || findLocalGame(id)
+    let allGames = getState().materials
+    let game = allGames.find((item) => item.id === id) || findLocalMaterial(id)
     if (game) {
       this.renderGame(game)
     }
 
     this.unsubscribeStore = subscribe((state) => {
-      const currentGameSession = state.currentGame && state.currentGame.gameId === id ? state.currentGame : null
+      const currentGameSession = state.currentMaterial && state.currentMaterial.materialId === id ? state.currentMaterial : null
       const historyCards = state.methodCards
         .filter((card) => game && card.title === game.title)
         .map((card) => ({
@@ -106,29 +111,29 @@ Page({
 
     // 2. 后台拉取最新数据，确保云端状态同步
     try {
-      const serverGames = await listGames()
-      setGames(serverGames)
+      const serverGames = await listMaterials()
+      setMaterials(serverGames)
     } catch (error) {
       if (!this.data.game) {
         this.setData({
           detailLoading: false,
-          detailErrorTitle: '游戏详情加载失败',
-          detailErrorDesc: '云开发暂时没有返回游戏数据，可以回到记录页或稍后重试。'
+          detailErrorTitle: '素材详情加载失败',
+          detailErrorDesc: '云开发暂时没有返回素材数据，可以回到记录页或稍后重试。'
         })
       }
       return
     }
 
     // 3. 更新为最新数据
-    allGames = getState().games
-    game = allGames.find((item) => item.id === id) || findLocalGame(id)
+    allGames = getState().materials
+    game = allGames.find((item) => item.id === id) || findLocalMaterial(id)
     if (game) {
       this.renderGame(game)
     } else {
       this.setData({
         detailLoading: false,
-        detailErrorTitle: '没有找到这个游戏',
-        detailErrorDesc: '这张推荐卡可能已不在当前游戏库中，返回记录页重新选择。'
+        detailErrorTitle: '没有找到这条素材',
+        detailErrorDesc: '这张推荐卡可能已不在当前素材库中，返回记录页重新选择。'
       })
     }
   },
@@ -142,9 +147,9 @@ Page({
     if (this.unsubscribeStore) this.unsubscribeStore()
   },
 
-  renderGame(game: Game) {
-    const allGames = getState().games
-    const related = allGames.find((item) => item.id === game.relatedGameId) || findLocalGame(game.relatedGameId)
+  renderGame(game: Material) {
+    const allGames = getState().materials
+    const related = allGames.find((item) => item.id === game.relatedMaterialId) || findLocalMaterial(game.relatedMaterialId)
     const state = getState()
     const isCustomGame = game.tags.includes('自定义') || game.id.startsWith('custom-')
     const displayMeta = (game.meta || []).filter((item) => typeof item === 'string' && item.trim())
@@ -152,10 +157,10 @@ Page({
       game,
       related,
       isCustomGame,
-      tagText: game.tags.join(' · '),
+      tagText: [game.type, ...(game.abilities || []), ...(game.tags || [])].filter(Boolean).join(' · '),
       displayMeta,
-      saved: state.savedGameIds.includes(game.id),
-      played: state.playedGameIds.includes(game.id),
+      saved: state.savedMaterialIds.includes(game.id),
+      played: state.playedMaterialIds.includes(game.id),
       detailLoading: false,
       detailErrorTitle: '',
       detailErrorDesc: ''
@@ -187,7 +192,7 @@ Page({
     if (!this.data.game) return
     const saved = toggleSaved(this.data.game.id)
     this.setData({ saved }, () => this.syncStatusText())
-    await updateGameState(this.data.game.id, { saved })
+    await updateMaterialState(this.data.game.id, { saved })
   },
 
   async togglePlayed() {
@@ -196,12 +201,12 @@ Page({
     if (isPlayed) {
       unmarkPlayed(this.data.game.id)
       this.setData({ played: false }, () => this.syncStatusText())
-      await updateGameState(this.data.game.id, { played: false })
+      await updateMaterialState(this.data.game.id, { played: false })
     } else {
       markPlayed(this.data.game.id)
       this.setData({ played: true }, () => this.syncStatusText())
-      await updateGameState(this.data.game.id, { played: true })
-      toast('已标记玩过')
+      await updateMaterialState(this.data.game.id, { played: true })
+      toast('已标记练过')
     }
   },
 
@@ -209,9 +214,13 @@ Page({
     try {
       const { game } = this.data
       if (!game) return
-      startGameSession({
+      if (game.referenceOnly) {
+        toast('路径素材只支持查看')
+        return
+      }
+      startMaterialSession({
         id: `session-${Date.now()}`,
-        gameId: game.id,
+        materialId: game.id,
         title: game.title,
         startTime: Date.now(),
         duration: 0,
@@ -226,11 +235,11 @@ Page({
   pauseGame() {
     if (this.data.timer) clearInterval(this.data.timer)
     this.setData({ timer: null })
-    updateGameSession({ status: '暂停中' })
+    updateMaterialSession({ status: '暂停中' })
   },
 
   resumeGame() {
-    updateGameSession({ status: '进行中' })
+    updateMaterialSession({ status: '进行中' })
     this.startTimer()
   },
 
@@ -238,8 +247,8 @@ Page({
     if (this.data.timer) clearInterval(this.data.timer)
     const session = this.data.currentGameSession
     if (!session) return
-    clearGameSession()
-    wx.navigateTo({ url: `/pages/game-feedback/index?id=${session.gameId}&duration=${session.duration}` })
+    clearMaterialSession()
+    wx.navigateTo({ url: `/pages/game-feedback/index?id=${session.materialId}&duration=${session.duration}` })
   },
 
   startTimer() {
@@ -247,7 +256,7 @@ Page({
     const timer = setInterval(() => {
       const session = this.data.currentGameSession
       if (session) {
-        updateGameSession({ duration: session.duration + 1 })
+        updateMaterialSession({ duration: session.duration + 1 })
       }
     }, 1000) as unknown as number
     this.setData({ timer })
@@ -268,9 +277,9 @@ Page({
     
     this.setData({
       editGame,
-      selectedCategoryTags: game.tags || [],
+      selectedCategoryTags: Array.from(new Set([game.type].concat(game.abilities || [], game.scenes || [], game.tags || []).filter(Boolean))),
       showMoreOptions: false,
-      moreOptionsToggleText: '补充玩法与提示',
+      moreOptionsToggleText: '补充训练方法',
       isEditMode: true
     })
     this.syncCategoryOptions()
@@ -286,14 +295,14 @@ Page({
       customCategoryInput: '',
       categorySuggestions: [],
       showMoreOptions: false,
-      moreOptionsToggleText: '补充玩法与提示'
+      moreOptionsToggleText: '补充训练方法'
     })
   },
 
   getCategoryPool() {
     const categories: string[] = []
     defaultCategoryOptions.forEach((item) => categories.push(item))
-    getState().games.forEach((game: Game) => {
+    getState().materials.forEach((game: Material) => {
       if (Array.isArray(game.tags)) {
         game.tags.forEach((tag) => categories.push(tag))
       }
@@ -312,7 +321,17 @@ Page({
 
   syncCategoryOptions() {
     this.setData({
-      categoryOptions: this.getCategoryPool().map((value: string) => ({
+      typeCategoryOptions: materialTypes.map((value: string) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      abilityCategoryOptions: abilityOptions.map((value: string) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      sceneCategoryOptions: sceneOptions.map((value: string) => ({
         value,
         label: value,
         activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
@@ -332,8 +351,24 @@ Page({
     this.setData({ [`editGame.${field}`]: value })
   },
 
-  toggleEditGameCategory(event: WechatMiniprogram.TouchEvent) {
-    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
+  setEditMaterialType(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    const value = String(event.detail?.value || '').trim()
+    if (!value) return
+    const selectedCategoryTags = this.data.selectedCategoryTags
+      .filter((item: string) => !materialTypes.includes(item as MaterialType))
+      .concat(value)
+    this.setData({ selectedCategoryTags }, () => this.syncCategoryOptions())
+  },
+
+  toggleEditMaterialAbility(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleEditMaterialScene(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleEditMaterialCategory(category: string) {
     if (!category) return
     const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
       ? this.data.selectedCategoryTags.filter((item: string) => item !== category)
@@ -419,69 +454,59 @@ Page({
     const nextVisible = !this.data.showMoreOptions
     this.setData({
       showMoreOptions: nextVisible,
-      moreOptionsToggleText: nextVisible ? '收起玩法与提示' : '补充玩法与提示'
+      moreOptionsToggleText: nextVisible ? '收起训练方法' : '补充训练方法'
     })
-  },
-
-  voiceFill(event: WechatMiniprogram.TouchEvent) {
-    const target = (event as WechatMiniprogram.CustomEvent<{ target: string }>).detail?.target || event.currentTarget.dataset.target
-    const patch: Record<string, string> = {}
-    if (target === 'title') patch['editGame.title'] = '情绪接力'
-    if (target === 'title') patch['editGame.people'] = '4-8 人'
-    if (target === 'title') patch['editGame.duration'] = '10 分钟'
-    if (target === 'desc') patch['editGame.desc'] = '用一个简单动作和一句台词传递情绪，适合让大家快速进入状态。'
-    if (target === 'steps') patch['editGame.steps'] = '围成一圈，第一位做出一个动作并说一句台词。\n下一位接住情绪，再放大或反转。\n一圈结束后复盘哪一次情绪最清楚。'
-    if (target === 'tips') patch['editGame.tips'] = '先示范一轮节奏变化，再提醒大家不要急着抢台词，优先把情绪接清楚。'
-    if (target === 'variant') patch['editGame.variant'] = '可以改成双人接力，或者规定每次必须反转前一个人的情绪。'
-    if (target === 'issue') patch['editGame.issue'] = '最容易卡在情绪不够明确或节奏断掉，带领时要及时示范并收束轮次。'
-    if (target === 'title') {
-      this.setData(Object.assign(patch, { selectedCategoryTags: ['热身', '情绪'] }), () => this.syncCategoryOptions())
-    } else {
-      this.setData(patch)
-    }
-    toast('已模拟语音输入')
   },
 
   async saveGame() {
     const title = this.data.editGame.title
     if (!title) {
-      toast('先写游戏名称')
+      toast('先写素材名称')
       return
     }
     const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
     if (!tags.length) tags.push('自定义')
-    const steps = typeof this.data.editGame.steps === 'string' && this.data.editGame.steps.trim()
-      ? this.data.editGame.steps.split('\n').map((item: string) => item.trim()).filter(Boolean)
-      : []
 
-    const currentGame = { ...(this.data.game as Game & { fit?: string[]; lead?: string; avoid?: string; verdict?: string }) }
+    const currentGame = { ...(this.data.game as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string }) }
     delete currentGame.fit
     delete currentGame.lead
     delete currentGame.avoid
     delete currentGame.verdict
 
-    const updatedGame: Game = {
+    const materialType = (materialTypes.find((item) => tags.includes(item)) || currentGame.type || '游戏') as MaterialType
+    const abilities = abilityOptions.filter((item) => tags.includes(item))
+    const scenes = sceneOptions.filter((item) => tags.includes(item))
+    const steps = typeof this.data.editGame.steps === 'string' && this.data.editGame.steps.trim()
+      ? this.data.editGame.steps.split('\n').map((item: string) => item.trim()).filter(Boolean)
+      : []
+
+    const updatedGame: Material = {
       ...currentGame,
       title,
       desc: this.data.editGame.desc || '',
       tags,
+      type: materialType,
+      abilities,
+      scenes,
       meta: buildGameMeta(this.data.editGame.people, this.data.editGame.duration),
       steps,
       tips: this.data.editGame.tips || '',
       variant: this.data.editGame.variant || '',
-      issue: this.data.editGame.issue || ''
+      issue: this.data.editGame.issue || '',
+      relatedMaterialId: currentGame.relatedMaterialId || '',
+      referenceOnly: currentGame.referenceOnly || false
     }
 
-    const allGames = getState().games
-    const index = allGames.findIndex((gameItem: Game) => gameItem.id === updatedGame.id)
+    const allGames = getState().materials
+    const index = allGames.findIndex((gameItem: Material) => gameItem.id === updatedGame.id)
     if (index > -1) {
       allGames[index] = updatedGame
-      setGames([...allGames])
+      setMaterials([...allGames])
     }
 
     this.renderGame(updatedGame)
     this.cancelEdit()
-    await updateGame(updatedGame)
+    await updateMaterial(updatedGame)
     toast('已保存修改')
   },
 
@@ -491,17 +516,17 @@ Page({
       content: '删除后无法恢复，是否继续？',
       success: async (res) => {
         if (res.confirm) {
-          const gameId = this.data.game?.id
-          if (!gameId) return
+          const materialId = this.data.game?.id
+          if (!materialId) return
           
-          const allGames = getState().games
-          setGames(allGames.filter((gameItem: Game) => gameItem.id !== gameId))
+          const allGames = getState().materials
+          setMaterials(allGames.filter((gameItem: Material) => gameItem.id !== materialId))
           
           wx.navigateBack()
           setTimeout(() => {
             toast('已删除')
           }, 300)
-          await deleteGame(gameId)
+          await deleteMaterial(materialId)
         }
       }
     })

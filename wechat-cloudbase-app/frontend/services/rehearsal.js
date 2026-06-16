@@ -16,7 +16,7 @@ function normalizeRehearsal(raw = {}) {
   }, raw)
 }
 
-function nextGameStatus(status) {
+function nextMaterialStatus(status) {
   const index = GAME_STATUS.indexOf(status)
   return GAME_STATUS[(index + 1) % GAME_STATUS.length]
 }
@@ -35,15 +35,17 @@ async function updateRehearsal(id, patch) {
   return callImprovAction('rehearsal.update', { id, patch })
 }
 
-async function updateGameStatus(payload) {
-  return callImprovAction('rehearsal.updateGameStatus', payload)
+async function updateMaterialStatus(payload) {
+  return callImprovAction('rehearsal.updateMaterialStatus', payload)
 }
 
 module.exports = {
   normalizeRehearsal,
-  nextGameStatus,
+  nextGameStatus: nextMaterialStatus,
+  nextMaterialStatus,
   listRehearsals,
   createRehearsal,
   updateRehearsal,
-  updateGameStatus
+  updateGameStatus: updateMaterialStatus,
+  updateMaterialStatus
 }

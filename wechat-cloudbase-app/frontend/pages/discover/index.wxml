@@ -1,4 +1,4 @@
-<view class="page discover {{modalOpen ? 'modal-open' : ''}} {{showEmptyState ? 'empty-mode' : ''}} {{themeClass}}" style="{{layoutStyle}}">
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page discover {{modalOpen ? 'modal-open' : ''}} {{filterVisible ? 'filter-open' : ''}} {{showEmptyState ? 'empty-mode' : ''}} {{themeClass}}" style="{{layoutStyle}}">
   <block wx:if="{{showLoadErrorState}}">
     <view class="empty-state-shell">
       <empty-state-panel
@@ -6,7 +6,7 @@
         title="同步失败"
         desc="{{loadErrorText}}"
         primaryText="重新同步"
-        secondaryText="先添加游戏"
+        secondaryText="先添加素材"
         bind:primary="retryLoadGames"
         bind:secondary="openAdd"
       />
@@ -17,60 +17,122 @@
     <view class="empty-state-shell">
       <empty-state-panel
         customClass="discover-hero-empty"
-        title="添加游戏"
-        desc="马上开玩"
-        primaryText="添加游戏"
+        title="添加素材"
+        desc="先收几张常用素材，之后练习和排练会更快。"
+        primaryText="添加素材"
         bind:primary="openAdd"
       />
     </view>
   </block>
 
   <block wx:else>
-    <view class="view-tools safe-right">
-      <view class="switch">
-        <button class="{{listActiveClass}}" data-view="list" bindtap="switchView">列表</button>
-        <button class="{{cardActiveClass}}" data-view="card" bindtap="switchView">卡片</button>
+    <view class="view-tools">
+      <view class="switch compact-switch">
+        <button class="{{allActiveClass}}" data-view="all" bindtap="switchView">全部</button>
+        <button class="{{categoryActiveClass}}" data-view="category" bindtap="switchView">分类</button>
       </view>
     </view>
 
-    <search-bar customClass="search card" value="{{query}}" placeholder="搜索游戏、标签或目标" hint="试试“破冰”" showClear="{{true}}" bind:blur="search" bind:confirm="search" bind:clear="clearSearchQuery" />
+    <search-bar wx:if="{{view === 'all' || isCategoryDetail}}" customClass="search card" value="{{query}}" placeholder="{{searchPlaceholder}}" hint="{{isCategoryDetail ? activeCategory : '角色 / 主理'}}" showClear="{{true}}" bind:blur="search" bind:confirm="search" bind:clear="clearSearchQuery" />
 
-    <scroll-view scroll-x enable-flex="true" enhanced show-scrollbar="{{false}}" class="tag-row discover-tags">
-      <view class="chip-track">
-        <button wx:for="{{tagChips}}" wx:key="value" class="chip main-filter-chip scene-chip {{item.activeClass}}" data-tag="{{item.value}}" bindtap="filterTag">{{item.label}}</button>
+    <view class="section-row result-section-row">
+      <view wx:if="{{isCategoryDetail}}" class="category-title-row">
+        <button class="category-back" aria-label="返回分类" bindtap="backToCategoryGrid">←</button>
       </view>
-    </scroll-view>
-
-    <view class="section-row">
-      <text class="section-title">全部游戏</text>
-      <view class="actions-row button-row button-row-equal">
-        <button class="primary-btn add-btn" bindtap="openAdd">+ 添加游戏</button>
-        <button class="ghost-btn filter-btn" bindtap="openFilter">筛选</button>
+      <text wx:else class="section-title">{{view === 'category' ? '素材类别' : discoverTitle}}</text>
+      <view class="actions-row">
+        <button wx:if="{{view === 'all'}}" class="mini-action-btn add-btn" bindtap="openAdd">新建</button>
+        <button wx:if="{{view === 'all' || isCategoryDetail}}" class="mini-action-btn filter-btn" bindtap="openFilter">筛选</button>
       </view>
     </view>
 
     <view wx:if="{{loadErrorText}}" class="notice-note-card">{{loadErrorText}}</view>
 
+    <view wx:if="{{view === 'category' && !isCategoryDetail}}" class="category-overview">
+      <view class="category-primary-block">
+        <view class="category-block-head" wx:if="{{false}}">
+          <text class="category-block-kicker">分类导航</text>
+          <text class="category-block-desc">先选素材类型，再进入对应类别继续浏览。</text>
+        </view>
+        <view class="category-grid">
+          <view wx:for="{{categoryRows}}" wx:key="id" class="category-row">
+            <button wx:for="{{item.items}}" wx:for-item="category" wx:key="type" class="category-card card-surface-nav" data-type="{{category.type}}" bindtap="openCategoryDetail">
+              <view class="category-card-accent category-card-accent-{{category.tone}}"></view>
+              <view class="category-card-main">
+                <text class="category-card-title">{{category.type}}</text>
+                <text class="category-card-count card-counter-pill">{{category.count}}</text>
+              </view>
+              <text class="category-card-hint">{{category.hint}}</text>
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view class="category-reference-block card card-surface-reference">
+        <view class="reference-block-head">
+          <text class="reference-block-title">学习地图与训练路径</text>
+        </view>
+
+        <view class="path-card-stack">
+          <view class="path-card">
+            <view class="path-card-head" bindtap="toggleLearningMap" hover-class="none">
+              <view class="path-card-content">
+                <text class="path-card-title">学习地图</text>
+                <text class="path-card-desc">从基础反应到格式主理，按能力层层展开。</text>
+                <view wx:if="{{!learningMapExpanded}}" class="path-summary-row">
+                  <text wx:for="{{learningMapPreview}}" wx:key="*this" class="path-summary-pill">{{item}}</text>
+                </view>
+              </view>
+              <text class="path-card-toggle">{{learningMapExpanded ? '收起' : '展开'}}</text>
+            </view>
+            <view wx:if="{{learningMapExpanded}}" class="path-card-body">
+              <view wx:for="{{learningMapItems}}" wx:for-item="stage" wx:key="title" class="path-step">
+                <text class="path-step-index">{{index + 1}}</text>
+                <view class="path-step-main">
+                  <text class="path-step-title">{{stage.title}}</text>
+                  <text class="path-step-desc">{{stage.desc}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="path-card">
+            <view class="path-card-head" bindtap="toggleTrainingPath" hover-class="none">
+              <view class="path-card-content">
+                <text class="path-card-title">训练路径</text>
+                <text class="path-card-desc">从个人启动到演后复盘，形成一条可执行路线。</text>
+                <view wx:if="{{!trainingPathExpanded}}" class="path-summary-row">
+                  <text wx:for="{{trainingPathPreview}}" wx:key="*this" class="path-summary-pill">{{item}}</text>
+                </view>
+              </view>
+              <text class="path-card-toggle">{{trainingPathExpanded ? '收起' : '展开'}}</text>
+            </view>
+            <view wx:if="{{trainingPathExpanded}}" class="path-card-body">
+              <view wx:for="{{trainingPathItems}}" wx:for-item="stage" wx:key="title" class="path-step">
+                <text class="path-step-index">{{index + 1}}</text>
+                <view class="path-step-main">
+                  <text class="path-step-title">{{stage.title}}</text>
+                  <text class="path-step-desc">{{stage.desc}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <empty-state-panel
-      wx:if="{{showFilterNoMatchState}}"
+      wx:elif="{{showFilterNoMatchState}}"
       customClass="matchless-card"
-      title="当前条件下没有匹配游戏"
-      desc="可以放宽筛选条件，或者先从全部游戏里继续浏览。"
+      title="当前条件下没有匹配素材"
+      desc="可以放宽筛选条件，或者先从全部素材里继续浏览。"
       secondaryText="清空条件"
       bind:secondary="clearFilters"
     />
 
-    <view wx:elif="{{isListView}}" class="game-list">
-      <game-card wx:for="{{filteredGames}}" wx:key="id" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:save="toggleSave" />
+    <view wx:else class="game-list">
+      <game-card wx:for="{{filteredMaterials}}" wx:key="id" game="{{item}}" saved="{{item.saved}}" bind:open="openMaterial" bind:save="toggleSave" />
     </view>
-
-    <scroll-view wx:else scroll-x enhanced paging-enabled scroll-with-animation show-scrollbar="{{false}}" class="card-carousel">
-      <view class="card-track">
-        <view wx:for="{{filteredGames}}" wx:key="id" class="card-page">
-          <game-card mode="card" game="{{item}}" saved="{{item.saved}}" bind:open="openGame" bind:save="toggleSave" />
-        </view>
-      </view>
-    </scroll-view>
 
     <button
       wx:if="{{fabReady}}"
@@ -80,59 +142,56 @@
       bindtouchstart="onFabTouchStart"
       catchtouchmove="onFabTouchMove"
       bindtouchend="onFabTouchEnd"
-    >🎲</button>
+    >抽</button>
   </block>
 
-  <bottom-sheet visible="{{filterVisible}}" title="筛选游戏" maskVariant="light" sheetClass="filter-sheet" bodyMode="fit" bind:close="closeSheet">
+  <bottom-sheet visible="{{filterVisible}}" title="筛选素材" maskVariant="medium" sheetClass="filter-sheet discover-filter-sheet" bodyMode="fit" bind:close="closeSheet">
     <view class="filter-group-stack">
-      <view class="filter-group">
-        <filter-section label="人数" options="{{peopleFilters}}" chipClass="discover-filter-chip" bind:select="filterPeople" />
-        <filter-section label="时长" options="{{durationFilters}}" chipClass="discover-filter-chip" bind:select="filterDuration" />
-      </view>
-      <view class="filter-group">
-        <filter-section label="目标" options="{{goalFilters}}" chipClass="discover-filter-chip" bind:select="filterGoal" />
-        <filter-section label="状态" options="{{statusFilters}}" chipClass="discover-filter-chip" bind:select="filterStatus" />
-      </view>
+      <filter-section wx:if="{{!isCategoryDetail}}" customClass="discover-filter-section" label="素材类型" options="{{typeFilters}}" chipClass="discover-filter-chip" bind:select="filterType" />
+      <filter-section customClass="discover-filter-section" label="训练能力" options="{{abilityFilters}}" chipClass="discover-filter-chip" bind:select="filterAbility" />
+      <filter-section customClass="discover-filter-section" label="使用场景" options="{{sceneFilters}}" chipClass="discover-filter-chip" bind:select="filterScene" />
+      <filter-section customClass="discover-filter-section" label="状态" options="{{statusFilters}}" chipClass="discover-filter-chip" bind:select="filterStatus" />
     </view>
-    <button class="primary-btn sheet-submit" catchtap="applyFilter">查看结果（{{filteredGames.length}}）</button>
+    <button class="primary-btn sheet-submit" catchtap="applyFilter">查看结果（{{filteredMaterials.length}}）</button>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{randomVisible}}" title="条件抽卡" maskVariant="light" sheetClass="tab-sheet" bodyMode="fit" bind:close="closeSheet">
-    <block wx:if="{{!games.length}}">
+  <bottom-sheet visible="{{randomVisible}}" title="抽一张素材" maskVariant="light" sheetClass="tab-sheet" bodyMode="fit" bind:close="closeSheet">
+    <block wx:if="{{!materials.length}}">
       <empty-state-panel
         customClass="random-state-card"
         kicker="抽卡"
         kickerTone="blue"
-        title="还没有可抽的游戏"
-        desc="先添加几个常用游戏，再来条件抽卡。"
-        primaryText="添加游戏"
+        title="还没有可抽的素材"
+        desc="先添加几个常用素材，再来随机抽一张。"
+        primaryText="添加素材"
         bind:primary="openAdd"
       />
     </block>
-    <block wx:elif="{{!currentRandomGame}}">
+    <block wx:elif="{{!currentRandomMaterial}}">
       <empty-state-panel
         customClass="random-state-card"
         kicker="抽卡"
         kickerTone="blue"
-        title="当前条件下没有匹配游戏"
-        desc="放宽条件，或者先从全部游戏里抽一张。"
-        primaryText="从全部游戏抽"
+        title="当前条件下没有可训练素材"
+        desc="路径类素材不进入抽卡训练池，可以放宽条件或从全部素材抽。"
+        primaryText="从全部素材抽"
         secondaryText="清空条件"
-        bind:primary="useAllGamesForRandom"
+        bind:primary="useAllMaterialsForRandom"
         bind:secondary="clearFiltersForRandom"
       />
     </block>
     <block wx:else>
       <scroll-view class="chip-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}" style="margin-bottom: 8rpx;">
         <view class="chip-row">
-          <button wx:for="{{currentRandomGame.tags}}" wx:key="*this" class="chip active">{{item}}</button>
-          <button wx:for="{{currentRandomGame.meta}}" wx:key="*this" class="chip active">{{item}}</button>
+          <button class="chip active">{{currentRandomMaterial.type}}</button>
+          <button wx:for="{{currentRandomMaterial.abilities}}" wx:key="*this" class="chip active">{{item}}</button>
+          <button wx:for="{{currentRandomMaterial.tags}}" wx:key="*this" class="chip active">{{item}}</button>
         </view>
       </scroll-view>
       <view class="recommend card">
-        <text class="pill blue">{{randomUseAllGames ? '全部游戏' : '抽到'}}</text>
-        <view class="recommend-title">{{currentRandomGame.title}}</view>
-        <text class="muted">{{currentRandomGame.desc}}</text>
+        <text class="pill blue">{{randomUseAllMaterials ? '全部素材' : '抽到'}}</text>
+        <view class="recommend-title">{{currentRandomMaterial.title}}</view>
+        <text class="muted">{{currentRandomMaterial.desc}}</text>
         <view class="random-actions">
           <button class="ghost-btn" catchtap="reroll">再抽一张</button>
           <button class="primary-btn" catchtap="openRandomDetail">查看详情</button>
@@ -141,10 +200,12 @@
     </block>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{addVisible}}" title="添加游戏" maskVariant="medium" sheetClass="add-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{addVisible}}" title="添加素材" maskVariant="medium" sheetClass="add-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
     <game-form
-      value="{{newGame}}"
-      categoryOptions="{{categoryOptions}}"
+      value="{{newMaterial}}"
+      typeOptions="{{typeCategoryOptions}}"
+      abilityOptions="{{abilityCategoryOptions}}"
+      sceneOptions="{{sceneCategoryOptions}}"
       customCategoryVisible="{{customCategoryVisible}}"
       customCategoryInput="{{customCategoryInput}}"
       customCategoryFocus="{{customCategoryFocus}}"
@@ -152,8 +213,9 @@
       showMoreOptions="{{showMoreOptions}}"
       moreOptionsToggleText="{{moreOptionsToggleText}}"
       bind:fieldchange="handleGameFormFieldChange"
-      bind:voice="voiceFill"
-      bind:togglecategory="toggleNewGameCategory"
+      bind:selecttype="setNewMaterialType"
+      bind:selectability="toggleNewMaterialAbility"
+      bind:selectscene="toggleNewMaterialScene"
       bind:togglecustomcategory="toggleCustomCategory"
       bind:customcategoryfocus="handleCustomCategoryFocus"
       bind:customcategoryblur="handleCustomCategoryBlur"
@@ -163,11 +225,11 @@
     />
     <view class="add-sheet-spacer"></view>
     <view slot="actions" class="add-submit-wrap">
-      <button class="primary-btn add-submit-btn" bindtap="addGame">加入游戏库</button>
+      <button class="primary-btn add-submit-btn" bindtap="addGame">加入素材库</button>
     </view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">
     <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
-</view>
+</scroll-view>

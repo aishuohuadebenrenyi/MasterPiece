@@ -1,7 +1,7 @@
 const { listGames } = require('../../services/game')
-const { nextGameStatus, updateGameStatus, updateRehearsal } = require('../../services/rehearsal')
+const { nextMaterialStatus, updateMaterialStatus, updateRehearsal } = require('../../services/rehearsal')
 const {
-  addGameToCurrentRehearsal,
+  addMaterialToCurrentRehearsal,
   getState,
   getThemeClass,
   patchCurrentRehearsal,
@@ -43,12 +43,12 @@ Page({
   getPlanGames() {
     const rehearsal = getState().currentRehearsal
     const plan = rehearsal && rehearsal.plan && rehearsal.plan.length
-      ? rehearsal.plan.map((item) => item.gameId)
+      ? rehearsal.plan.map((item) => item.materialId || item.gameId)
       : []
     return plan.map((id) => {
       const game = this.data.games.find((item) => item.id === id)
       if (!game) return null
-      const planItem = rehearsal && rehearsal.plan ? rehearsal.plan.find((item) => item.gameId === id) : null
+      const planItem = rehearsal && rehearsal.plan ? rehearsal.plan.find((item) => (item.materialId || item.gameId) === id) : null
       return Object.assign({}, game, {
         status: planItem ? planItem.status : '未开始',
         metaText: game.meta[1],
@@ -61,10 +61,11 @@ Page({
 
   getFilteredGames() {
     const query = this.data.query.trim().toLowerCase()
-    const plannedIds = new Set(((getState().currentRehearsal && getState().currentRehearsal.plan) || []).map((item) => item.gameId))
+    const plannedIds = new Set(((getState().currentRehearsal && getState().currentRehearsal.plan) || []).map((item) => item.materialId || item.gameId))
     return this.data.games.filter((game) => {
       if (plannedIds.has(game.id)) return false
-      const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+      if (game.referenceOnly) return false
+      const text = `${game.title} ${game.desc} ${game.type || ''} ${game.tags.join(' ')} ${(game.abilities || []).join(' ')} ${game.meta.join(' ')}`.toLowerCase()
       return !query || text.includes(query)
     })
   },
@@ -86,19 +87,19 @@ Page({
       title: rehearsal ? rehearsal.teamName : '',
       duration: rehearsal ? rehearsal.duration : '',
       desc: rehearsal ? rehearsal.desc : '',
-      metaText: rehearsal ? `${rehearsal.plan.length} 个游戏 · ${rehearsal.status}` : '',
+      metaText: rehearsal ? `${rehearsal.plan.length} 条素材 · ${rehearsal.status}` : '',
       planGames,
       filteredGames,
       addEmptyTitle: availableGamesCount === 0
-        ? '可加入的游戏都已经在计划里了'
+        ? '可加入的素材都已经在计划里了'
         : hasGameLibrary
-        ? (hasQuery ? '没有找到匹配的游戏' : '暂时没有可加入的游戏')
-        : '还没有可加入的游戏',
+        ? (hasQuery ? '没有找到匹配的素材' : '暂时没有可加入的素材')
+        : '还没有可加入的素材',
       addEmptyDesc: availableGamesCount === 0
-        ? '如果还想加新内容，先去发现页补充几个游戏，再回来安排这次排练。'
+        ? '如果还想加新内容，先去发现页补充几个素材，再回来安排这次排练。'
         : hasGameLibrary
-        ? (hasQuery ? '换个关键词试试，或清空搜索继续浏览。' : '去发现页添加常用游戏后，再回来安排这次排练。')
-        : '先去发现页添加几个常用游戏，再来安排这次排练。',
+        ? (hasQuery ? '换个关键词试试，或清空搜索继续浏览。' : '去发现页添加常用素材后，再回来安排这次排练。')
+        : '先去发现页添加几个常用素材，再来安排这次排练。',
       linkedInspirations
     })
   },
@@ -160,10 +161,10 @@ Page({
   addGame(event) {
     const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
     if (this.data.planGames.some((item) => item.id === id)) {
-      toast('这个游戏已经在排练计划里')
+      toast('这条素材已经在排练计划里')
       return
     }
-    const next = addGameToCurrentRehearsal(id)
+    const next = addMaterialToCurrentRehearsal(id)
     if (!next) {
       toast('当前没有进行中的排练')
       return
@@ -185,24 +186,24 @@ Page({
   async toggleStatus(event) {
     const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
     const target = this.data.planGames.find((item) => item.id === id)
-    const next = nextGameStatus(target ? target.status : '未开始')
+    const next = nextMaterialStatus(target ? target.status : '未开始')
     updateCurrentRehearsalPlan(id, {
       status: next,
       keep: target ? target.keepValue : '',
       try: target ? target.tryValue : ''
     })
-    await updateGameStatus({
+    await updateMaterialStatus({
       rehearsalId: this.data.rehearsalId,
-      gameId: id,
+      materialId: id,
       status: next
     })
     toast(`已标记为${next}`)
   },
 
   updatePlanField(event) {
-    const gameId = event.currentTarget.dataset.id
+    const materialId = event.currentTarget.dataset.id
     const field = event.currentTarget.dataset.field
-    updateCurrentRehearsalPlan(gameId, {
+    updateCurrentRehearsalPlan(materialId, {
       [field]: event.detail.value
     })
   },

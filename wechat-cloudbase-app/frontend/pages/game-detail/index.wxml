@@ -13,7 +13,7 @@
 
   <block wx:if="{{!isEditMode}}">
     <view class="card block">
-      <view class="block-title">玩法步骤</view>
+      <view class="block-title">训练步骤</view>
       <view wx:for="{{game.steps}}" wx:key="*this" class="step">
         <text>{{index + 1}}</text>
         <text>{{item}}</text>
@@ -21,19 +21,19 @@
     </view>
 
     <view class="card block">
-      <view class="block-title">带领提示</view>
+      <view class="block-title">使用提示</view>
       <text class="muted">{{game.tips}}</text>
     </view>
 
     <view class="card block" wx:if="{{game.variant || game.issue}}">
-      <view class="block-title">变体与翻车点</view>
+      <view class="block-title">变体与注意点</view>
       <text class="muted" wx:if="{{game.variant}}">{{game.variant}}</text>
       <text class="muted issue" wx:if="{{game.issue}}">{{game.issue}}</text>
     </view>
 
     <view class="card block" wx:if="{{related}}">
       <view class="row">
-        <view class="block-title">相似游戏</view>
+        <view class="block-title">相关素材</view>
         <button class="small-btn" bindtap="openRelated">去看看</button>
       </view>
       <text class="muted">{{related.title}}：{{related.desc}}</text>
@@ -54,7 +54,7 @@
 
   <block wx:else>
       <view class="card block edit-form-block">
-        <game-form value="{{editGame}}" categoryOptions="{{categoryOptions}}" customCategoryVisible="{{customCategoryVisible}}" customCategoryInput="{{customCategoryInput}}" customCategoryFocus="{{customCategoryFocus}}" categorySuggestions="{{categorySuggestions}}" showMoreOptions="{{showMoreOptions}}" moreOptionsToggleText="{{moreOptionsToggleText}}" bind:fieldchange="handleGameFormFieldChange" bind:voice="voiceFill" bind:togglecategory="toggleEditGameCategory" bind:togglecustomcategory="toggleCustomCategory" bind:customcategoryfocus="handleCustomCategoryFocus" bind:customcategoryblur="updateCustomCategory" bind:customcategoryconfirm="confirmCustomCategory" bind:selectsuggestion="selectCategorySuggestion" bind:togglemore="toggleMoreOptions" />
+        <game-form value="{{editGame}}" typeOptions="{{typeCategoryOptions}}" abilityOptions="{{abilityCategoryOptions}}" sceneOptions="{{sceneCategoryOptions}}" customCategoryVisible="{{customCategoryVisible}}" customCategoryInput="{{customCategoryInput}}" customCategoryFocus="{{customCategoryFocus}}" categorySuggestions="{{categorySuggestions}}" showMoreOptions="{{showMoreOptions}}" moreOptionsToggleText="{{moreOptionsToggleText}}" bind:fieldchange="handleGameFormFieldChange" bind:selecttype="setEditMaterialType" bind:selectability="toggleEditMaterialAbility" bind:selectscene="toggleEditMaterialScene" bind:togglecustomcategory="toggleCustomCategory" bind:customcategoryfocus="handleCustomCategoryFocus" bind:customcategoryblur="updateCustomCategory" bind:customcategoryconfirm="confirmCustomCategory" bind:selectsuggestion="selectCategorySuggestion" bind:togglemore="toggleMoreOptions" />
       </view>
   </block>
 
@@ -69,9 +69,10 @@
     </view>
     <view class="fixed-actions" wx:else>
       <block wx:if="{{!currentGameSession}}">
-        <button class="small-btn" bindtap="togglePlayed">{{playedText}}</button>
+        <button wx:if="{{!game.referenceOnly}}" class="small-btn" bindtap="togglePlayed">{{playedText}}</button>
         <button class="small-btn save-toggle-btn {{saved ? 'save-toggle-active' : 'save-toggle-idle'}}" bindtap="toggleSaved">{{savedText}}</button>
-        <button class="primary-btn" bindtap="startGame">开始游戏</button>
+        <button wx:if="{{!game.referenceOnly}}" class="primary-btn" bindtap="startGame">开始训练</button>
+        <button wx:else class="ghost-btn" disabled>路径只查看</button>
       </block>
       <block wx:else>
         <button class="ghost-btn" bindtap="pauseGame" wx:if="{{currentGameSession.status === '进行中'}}">暂停</button>
@@ -85,7 +86,7 @@
 <view wx:else class="page subpage-page detail detail-state-page {{themeClass}}" style="{{layoutStyle}}">
   <subpage-header customClass="detail-header-row" bind:back="back" />
   <view wx:if="{{detailLoading}}" class="state-note-card detail-state-card">
-    <view class="section-title">正在加载游戏详情</view>
+    <view class="section-title">正在加载素材详情</view>
     <text class="muted">如果云开发响应较慢，请稍等一下。</text>
   </view>
   <empty-state-panel

@@ -6,14 +6,15 @@
 }
 
 .selection-card {
-  padding: 28rpx;
+  padding: var(--improv-card-padding-sm, 28rpx);
   margin-top: 20rpx;
-  border: 2rpx solid transparent;
+  border: 2rpx solid var(--improv-card-container-border, transparent);
 }
 
 .selection-card-selected {
   border-color: var(--improv-primary);
-  background: var(--improv-primary-tint);
+  background: linear-gradient(160deg, var(--improv-primary-tint), var(--improv-card-container-bg, rgba(255, 255, 255, 0.94)));
+  box-shadow: 0 22rpx 44rpx var(--improv-shadow-primary-soft-color, rgba(255, 91, 46, 0.22));
 }
 
 .selection-card-head {
@@ -26,6 +27,9 @@
 .selection-card-main {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
 .selection-card-title {
@@ -56,7 +60,7 @@
 
 .selection-card-desc {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 14rpx;
   line-height: 1.6;
 }
 

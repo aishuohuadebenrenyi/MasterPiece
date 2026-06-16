@@ -1,31 +1,35 @@
-export type ViewMode = 'list' | 'card'
+export type ViewMode = 'all' | 'category'
 export type ThemeMode = 'default' | 'vivid'
-export type VoiceTarget = 'inspiration' | 'game_feedback' | 'rehearsal'
 export type StripeTone = 'orange' | 'blue' | 'mint'
 export type RehearsalStatus = '未开始' | '进行中' | '已完成' | '暂停中'
-export type GameSessionStatus = '进行中' | '暂停中' | '已完成'
+export type MaterialSessionStatus = '进行中' | '暂停中' | '已完成'
+export type MaterialType = '游戏' | '角色' | '才艺' | '格式' | '主理' | '技巧' | '复盘' | '路径'
 
-export interface GameSession {
+export interface MaterialSession {
   id: string
-  gameId: string
+  materialId: string
   title: string
   startTime: number
   duration: number
-  status: GameSessionStatus
+  status: MaterialSessionStatus
 }
 
-export interface Game {
+export interface Material {
   _id?: string
   id: string
   title: string
   desc: string
+  type: MaterialType
   tags: string[]
+  abilities: string[]
+  scenes: string[]
   meta: string[]
   steps: string[]
   tips: string
   variant: string
   issue: string
-  relatedGameId: string
+  relatedMaterialId: string
+  referenceOnly?: boolean
   stripeTone: StripeTone
   sortOrder: number
   saved?: boolean
@@ -53,8 +57,8 @@ export interface PausedRehearsal {
 }
 
 export interface InspirationItem extends TodayItem {
-  linkedGameId?: string
-  linkedGameTitle?: string
+  linkedMaterialId?: string
+  linkedMaterialTitle?: string
   linkedRehearsalId?: string
   linkedRehearsalTitle?: string
 }
@@ -64,7 +68,7 @@ export interface MethodCardItem extends TodayItem {
 }
 
 export interface RehearsalPlanItem {
-  gameId: string
+  materialId: string
   status: RehearsalStatus
   keep: string
   try: string
@@ -79,8 +83,8 @@ export interface RehearsalRecord extends TodayItem {
   plan: RehearsalPlanItem[]
 }
 
-export interface GameRecord extends TodayItem {
-  gameId: string
+export interface PracticeRecord extends TodayItem {
+  materialId: string
   rehearsalId?: string
   effect?: string
   keep?: string
@@ -89,36 +93,35 @@ export interface GameRecord extends TodayItem {
   duration?: number
 }
 
-export interface VoiceDraft {
-  id: string
-  title: string
-  desc: string
-  summary: string
-  target: VoiceTarget
-  durationSeconds: number
-  linkedGameId?: string
-  linkedRehearsalId?: string
-}
-
 export interface AppState {
   themeMode: ThemeMode
   viewMode: ViewMode
-  games: Game[]
-  recommendGameId: string
-  savedGameIds: string[]
-  playedGameIds: string[]
+  materials: Material[]
+  recommendMaterialId: string
+  savedMaterialIds: string[]
+  playedMaterialIds: string[]
   todayInspirations: InspirationItem[]
   todayRehearsals: RehearsalRecord[]
   methodCards: MethodCardItem[]
   pausedRehearsal: PausedRehearsal | null
   currentRehearsal: RehearsalRecord | null
-  currentGame: GameSession | null
+  currentMaterial: MaterialSession | null
   rehearsalHistory: RehearsalRecord[]
-  gameRecordsHistory: GameRecord[]
+  practiceRecordsHistory: PracticeRecord[]
   dismissedPendingKeys: string[]
-  voiceDraft: VoiceDraft | null
   profile: { displayName: string; avatarUrl: string; troupeName?: string } | null
+  games?: Material[]
+  recommendGameId?: string
+  savedGameIds?: string[]
+  playedGameIds?: string[]
+  currentGame?: MaterialSession | null
+  gameRecordsHistory?: PracticeRecord[]
 }
+
+export type Game = Material
+export type GameSession = MaterialSession
+export type GameSessionStatus = MaterialSessionStatus
+export type GameRecord = PracticeRecord
 
 export interface CloudResponse<T> {
   code: number

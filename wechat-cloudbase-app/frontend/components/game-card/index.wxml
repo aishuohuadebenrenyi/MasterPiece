@@ -1,4 +1,4 @@
-<view class="game-card card {{modeClass}}" hover-class="card-hover" bindtap="open">
+<view class="game-card card card-surface-content {{modeClass}}" hover-class="card-hover" bindtap="open">
   <view class="stripe {{stripeClass}}"></view>
   <view class="game-main">
     <view class="row game-head">

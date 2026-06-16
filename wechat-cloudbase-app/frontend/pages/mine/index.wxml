@@ -17,14 +17,14 @@
           </view>
           <view class="profile-edit-btn" catchtap="openEditProfile">编辑</view>
         </view>
-        <text class="muted">游戏反馈、灵感和排练复盘，都会慢慢收进这里。</text>
+        <text class="muted">练习复盘、灵感和排练复盘，都会慢慢收进这里。</text>
           </view>
         </view>
 
         <view class="intro-stats-section">
           <view class="card mine-stats-card mine-stats-empty-card">
             <view><text>{{totalRecords}}</text><text>累计记录</text></view>
-            <view><text>{{playedCount}}</text><text>玩过游戏</text></view>
+            <view><text>{{playedCount}}</text><text>练过素材</text></view>
             <view><text>{{methodCount}}</text><text>方法卡</text></view>
           </view>
         </view>
@@ -70,7 +70,7 @@
 
       <view wx:if="{{showStatsCard}}" class="card mine-stats-card">
         <view><text>{{totalRecords}}</text><text>累计记录</text></view>
-        <view><text>{{playedCount}}</text><text>玩过游戏</text></view>
+        <view><text>{{playedCount}}</text><text>练过素材</text></view>
         <view><text>{{methodCount}}</text><text>方法卡</text></view>
       </view>
 
@@ -79,20 +79,20 @@
           <view class="mine-entry-main">
             <text class="kicker">待整理</text>
             <view class="mine-entry-title">{{pendingCount}} 条可沉淀记录</view>
-            <text class="muted">把灵感、游戏实践和排练复盘整理成方法卡。</text>
+            <text class="muted">把灵感、素材练习和排练复盘整理成方法卡。</text>
           </view>
           <view class="mine-entry-action">整理</view>
-          <view class="tags"><text>灵感</text><text>游戏实践</text><text>排练复盘</text></view>
+          <view class="tags"><text>灵感</text><text>素材练习</text><text>排练复盘</text></view>
         </view>
 
         <view wx:if="{{showSedimentsCard}}" class="card mine-entry-card" data-kind="sediments" bindtap="openList">
           <view class="mine-entry-main">
             <text class="kicker">个人沉淀</text>
             <view class="mine-entry-title">{{sediments.length}} 张方法卡</view>
-            <text class="muted">带领提醒、游戏变体、复盘方法。</text>
+            <text class="muted">带领提醒、素材变体、复盘方法。</text>
           </view>
           <view class="mine-entry-action">查看</view>
-          <view class="tags"><text>带领提醒</text><text>游戏改造</text><text>排练复盘</text></view>
+          <view class="tags"><text>带领提醒</text><text>素材改造</text><text>排练复盘</text></view>
         </view>
 
         <view wx:if="{{showInspirationsCard}}" class="card mine-entry-card" data-kind="inspirations" bindtap="openList">
@@ -106,9 +106,9 @@
 
         <view wx:if="{{showGameRecordsCard}}" class="card mine-entry-card" bindtap="openGameRecords">
           <view class="mine-entry-main">
-            <text class="kicker">游戏记录</text>
-            <view class="mine-entry-title">{{gameRecordsCount}} 次游戏实践</view>
-            <text class="muted">看看在游戏里的 Keep & Try。</text>
+            <text class="kicker">练习记录</text>
+            <view class="mine-entry-title">{{gameRecordsCount}} 次素材练习</view>
+            <text class="muted">看看在练习里的 Keep & Try。</text>
           </view>
           <view class="mine-entry-action">查看</view>
         </view>
@@ -145,12 +145,12 @@
         </view>
       </scroll-view>
       <empty-state-panel wx:if="{{!listItems.length}}" customClass="empty-list" title="暂无记录" desc="{{currentKind === 'sediments' ? '还没沉淀方法卡，去整理一条吧。' : (currentKind === 'pending' ? '当前没有待整理记录。' : '还没有灵感记录，随时记下闪念。')}}" />
-      <record-card wx:for="{{listItems}}" wx:key="title" itemId="{{item.id}}" badgeText="{{item.type}}" badgeTone="{{item.type === '游戏实践' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{item.syncStatus === 'pending'}}" title="{{item.title}}" desc="{{item.desc}}" meta="{{item.filteredMeta}}" bind:tapcard="openDetail" />
+      <record-card wx:for="{{listItems}}" wx:key="title" itemId="{{item.id}}" badgeText="{{item.type}}" badgeTone="{{item.type === '素材练习' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{item.syncStatus === 'pending'}}" title="{{item.title}}" desc="{{item.desc}}" meta="{{item.filteredMeta}}" bind:tapcard="openDetail" />
     </view>
   </bottom-sheet>
 
   <floating-card visible="{{detailVisible}}" title="{{detailTitle}}" count="{{detailCount}}" bind:close="closeDetail" bind:prev="prevDetail" bind:next="nextDetail">
-    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '游戏实践' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" loading="{{sedimentSaving}}" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" />
+    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '素材练习' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" loading="{{sedimentSaving}}" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" />
   </floating-card>
 
   <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" bind:close="closeSheet">

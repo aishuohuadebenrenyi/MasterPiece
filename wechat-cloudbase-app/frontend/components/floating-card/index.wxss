@@ -1,3 +1,4 @@
+@import "../../app.wxss";
 @import "../../styles/theme.wxss";
 
 view,
@@ -41,8 +42,6 @@ text {
   overflow: hidden;
   padding: 48rpx 36rpx 38rpx;
   border-radius: 52rpx;
-  background: var(--improv-bg-subtle, #f7f9fe);
-  box-shadow: 0 36rpx 80rpx var(--improv-shadow-floating-color, rgba(27, 45, 87, 0.24));
   transform: translateY(-50%);
 }
 
@@ -52,6 +51,7 @@ text {
   justify-content: flex-start;
   position: relative;
   min-height: 56rpx;
+  padding-bottom: 4rpx;
 }
 
 .float-head .icon-close-btn {
@@ -66,7 +66,7 @@ text {
   align-items: center;
   justify-content: space-between;
   gap: 18rpx;
-  margin-top: 24rpx;
+  margin-top: 28rpx;
   color: #96a1b4;
   color: var(--improv-light, #96a1b4);
   font-size: 28rpx;

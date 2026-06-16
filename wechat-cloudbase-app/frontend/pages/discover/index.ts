@@ -1,50 +1,109 @@
-import type { Game, ViewMode } from '../../types/domain'
-import { createGame, listGames, updateSaved } from '../../services/game'
-import { getState, setGames, setState, subscribe, toggleSaved , getThemeClass } from '../../store/index'
+import type { Material, MaterialType, ViewMode } from '../../types/domain'
+import { createMaterial, listMaterials, updateSaved } from '../../services/material'
+import { getState, setMaterials, setState, subscribe, toggleSaved, getThemeClass } from '../../store/index'
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
 import { getLayoutStyle } from '../../utils/layout'
 
-const tagOptions = [
-  { value: 'all', label: '全部' },
-  { value: '破冰', label: '快速破冰' },
-  { value: '热身', label: '5分钟热身' },
-  { value: '关系', label: '关系构建' },
-  { value: '专注', label: '专注力训练' },
-  { value: '身体', label: '肢体表达' },
-  { value: '叙事', label: '即兴叙事' }
-]
+const materialTypes: MaterialType[] = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
+const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
+const abilityOptions = ['自发性', 'Yes And', '积极聆听', '角色塑造', '情绪表达', '身体空间', '叙事构建', '失败复原', '主持', '团队协作']
+const sceneOptions = ['临场速查', '备课', '排练', '演出']
 
-const defaultCategoryOptions = ['热身', '关系', '专注', '叙事']
-
-type NewGameDraft = Partial<Game> & {
+type NewMaterialDraft = Partial<Material> & {
   people?: string
   duration?: string
   steps?: string
+}
+
+type CategoryCard = {
+  type: MaterialType
+  count: number
+  tone: string
+  hint: string
+}
+
+type CategoryCardRow = {
+  id: string
+  items: CategoryCard[]
+}
+
+type ExpandCardItem = {
+  title: string
+  desc: string
 }
 
 const fabSizeRpx = 116
 const fabRightRpx = 42
 const fabBottomRpx = 160
 const fabDragThreshold = 6
+const categoryHints: Record<MaterialType, string> = {
+  游戏: '热身、短篇和限制玩法',
+  角色: '身份、关系和状态素材',
+  才艺: '模仿、身体和声音技能',
+  格式: '短篇结构和长篇框架',
+  主理: '主持词、带练和控场话术',
+  技巧: 'Yes And、聆听和叙事能力',
+  复盘: 'Keep、Try 和失败案例',
+  路径: '训练地图和学习路线'
+}
+const learningMapItems: ExpandCardItem[] = [
+  { title: '入门基础', desc: 'Yes And、积极聆听、接住同伴。' },
+  { title: '身体与声音', desc: '空间、节奏、状态、情绪。' },
+  { title: '角色关系', desc: '身份、关系、目标、状态差。' },
+  { title: '叙事结构', desc: '平台、打破常规、升级、回收。' },
+  { title: '格式与主理', desc: '短篇玩法、长篇框架、控场话术、复盘。' }
+]
+const trainingPathItems: ExpandCardItem[] = [
+  { title: '个人热身', desc: '观察、联想、声音/身体启动。' },
+  { title: '双人场景', desc: '接话、关系、情绪推进。' },
+  { title: '小组排练', desc: '游戏组合、节奏控制、失败恢复。' },
+  { title: '演出准备', desc: '开场、格式选择、主理提示。' },
+  { title: '演后复盘', desc: 'Keep / Try、方法卡沉淀、下次提醒。' }
+]
+const learningMapPreview = ['反应', '身体', '角色', '叙事', '主理']
+const trainingPathPreview = ['热身', '双人', '小组', '演出', '复盘']
 
-function buildGameMeta(people = '', duration = '') {
-  if (!people && !duration) return []
-  return [people || '', duration || '']
+function buildMaterialMeta(people = '', duration = '') {
+  return [people || '', duration || ''].filter(Boolean)
+}
+
+function buildCategoryRows(cards: CategoryCard[]): CategoryCardRow[] {
+  const rows: CategoryCardRow[] = []
+  for (let index = 0; index < cards.length; index += 2) {
+    rows.push({
+      id: `category-row-${index}`,
+      items: cards.slice(index, index + 2)
+    })
+  }
+  return rows
 }
 
 Page({
   data: {
     themeClass: 'theme-default',
-    games: [] as Game[],
-    filteredGames: [] as Game[],
-    view: 'list' as ViewMode,
+    materials: [] as Material[],
+    filteredMaterials: [] as Material[],
+    categoryCards: [] as CategoryCard[],
+    categoryRows: [] as CategoryCardRow[],
+    learningMapItems,
+    trainingPathItems,
+    learningMapPreview,
+    trainingPathPreview,
+    learningMapExpanded: false,
+    trainingPathExpanded: false,
+    view: 'all' as ViewMode,
+    activeCategory: '' as MaterialType | '',
+    isCategoryDetail: false,
+    allActiveClass: 'active',
+    categoryActiveClass: '',
+    discoverTitle: '全部素材',
+    searchPlaceholder: '搜索素材、能力或场景',
     query: '',
-    tag: 'all',
-    people: 'all',
-    duration: 'all',
-    goal: 'all',
+    type: 'all',
+    ability: 'all',
+    scene: 'all',
     status: 'all',
     randomVisible: false,
     filterVisible: false,
@@ -52,30 +111,28 @@ Page({
     modalOpen: false,
     randomIndex: 0,
     drawnCount: 1,
-    randomUseAllGames: false,
-    currentRandomGame: null as Game | null,
-    newGame: {} as NewGameDraft,
-    selectedCategoryTags: ['热身'] as string[],
+    randomUseAllMaterials: false,
+    currentRandomMaterial: null as Material | null,
+    newMaterial: {} as NewMaterialDraft,
+    selectedCategoryTags: ['游戏'] as string[],
     customCategoryVisible: false,
     customCategoryFocus: false,
     customCategoryInput: '',
     categorySuggestions: [] as Array<{ value: string; label: string }>,
     showMoreOptions: false,
-    moreOptionsToggleText: '补充玩法与提示',
-    categoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
-    listActiveClass: 'active',
-    cardActiveClass: '',
-    isListView: true,
-    tagChips: [] as Array<{ value: string; label: string; activeClass: string }>,
-    peopleFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
-    durationFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
-    goalFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    moreOptionsToggleText: '补充训练方法',
+    typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    typeFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    abilityFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    sceneFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     statusFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     fabReady: false,
     fabX: 0,
     fabY: 0,
     layoutStyle: '',
-    loadingGames: true,
+    loadingMaterials: true,
     loadErrorText: '',
     showEmptyState: false,
     showLoadErrorState: false,
@@ -90,96 +147,103 @@ Page({
   fabIgnoreTapUntil: 0,
 
   getRandomCandidates() {
-    return this.data.randomUseAllGames ? this.data.games : this.data.filteredGames
+    const source = this.data.randomUseAllMaterials ? this.data.materials : this.data.filteredMaterials
+    return source.filter((material: Material) => !material.referenceOnly)
   },
 
   syncFromStore() {
     const state = getState()
     this.setData({
-      games: state.games,
+      materials: state.materials,
       view: state.viewMode
     }, () => this.syncFiltered())
   },
 
-  getFilteredGames() {
-    const { games, query, tag, people, duration, goal, status } = this.data
+  getFilteredMaterials() {
+    const { materials, query, type, ability, scene, status, activeCategory } = this.data
     const lowerQuery = query.trim().toLowerCase()
-    return games.filter((game: Game) => {
-      const inTag = tag === 'all' || (game.tags && game.tags.includes(tag))
-      const peopleText = game.meta[0] || ''
-      const durationText = game.meta[1] || ''
-      const inPeople = people === 'all'
-        || (people === '2-4' && /2-4|2-6/.test(peopleText))
-        || (people === '5-8' && /5-8|6-12|4-8/.test(peopleText))
-        || (people === '8+' && /8\+|6-12|8-12|10-/.test(peopleText))
-      const inDuration = duration === 'all'
-        || (duration === '5' && /5\s*分钟|8\s*分钟/.test(durationText))
-        || (duration === '5-15' && /(8|10|12|15)\s*分钟/.test(durationText))
-        || (duration === '15+' && /15|20|30/.test(durationText))
-      const inGoal = goal === 'all'
-        || (game.tags && game.tags.includes(goal))
-        || `${game.desc}`.includes(goal)
+    return materials.filter((material: Material) => {
+      const effectiveType = activeCategory || type
+      const inType = effectiveType === 'all' || material.type === effectiveType
+      const inAbility = ability === 'all' || (material.abilities || []).includes(ability) || (material.tags || []).includes(ability)
+      const inScene = scene === 'all' || (material.scenes || []).includes(scene) || (material.tags || []).includes(scene)
       const inStatus = status === 'all'
-        || (status === 'saved' && game.saved)
-        || (status === 'played' && game.played)
-        || (status === 'unplayed' && !game.played)
-      const text = `${game.title} ${game.desc} ${game.tags.join(' ')} ${game.meta.join(' ')}`.toLowerCase()
-      return inTag && inPeople && inDuration && inGoal && inStatus && (!lowerQuery || text.includes(lowerQuery))
+        || (status === 'saved' && material.saved)
+        || (status === 'played' && material.played)
+        || (status === 'unplayed' && !material.played && !material.referenceOnly)
+      const text = `${material.title} ${material.desc} ${material.type} ${(material.tags || []).join(' ')} ${(material.abilities || []).join(' ')} ${(material.scenes || []).join(' ')} ${(material.meta || []).join(' ')}`.toLowerCase()
+      return inType && inAbility && inScene && inStatus && (!lowerQuery || text.includes(lowerQuery))
     })
   },
 
+  buildCategoryCards() {
+    const tones = ['orange', 'blue', 'mint', 'orange', 'blue', 'mint', 'orange', 'blue']
+    return materialTypes.map((type, index) => ({
+      type,
+      count: this.data.materials.filter((material: Material) => material.type === type).length,
+      tone: tones[index],
+      hint: categoryHints[type]
+    }))
+  },
+
   syncFiltered() {
-    const filteredGames = this.getFilteredGames()
+    const filteredMaterials = this.getFilteredMaterials()
     const randomCandidates = this.getRandomCandidates()
-    const showLoadErrorState = !this.data.loadingGames && !!this.data.loadErrorText && this.data.games.length === 0
-    const showEmptyState = !this.data.loadingGames && !this.data.loadErrorText && this.data.games.length === 0
-    const showFilterNoMatchState = !this.data.loadingGames && this.data.games.length > 0 && filteredGames.length === 0
+    const categoryCards = this.buildCategoryCards()
+    const isCategoryDetail = !!this.data.activeCategory
+    const showLoadErrorState = !this.data.loadingMaterials && !!this.data.loadErrorText && this.data.materials.length === 0
+    const showEmptyState = !this.data.loadingMaterials && !this.data.loadErrorText && this.data.materials.length === 0
+    const showFilterNoMatchState = !this.data.loadingMaterials && this.data.materials.length > 0 && (this.data.view === 'all' || isCategoryDetail) && filteredMaterials.length === 0
     this.setData({
-      filteredGames,
-      currentRandomGame: randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null,
-      listActiveClass: this.data.view === 'list' ? 'active' : '',
-      cardActiveClass: this.data.view === 'card' ? 'active' : '',
-      isListView: this.data.view === 'list',
+      filteredMaterials,
+      categoryCards,
+      categoryRows: buildCategoryRows(categoryCards),
+      currentRandomMaterial: randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null,
+      allActiveClass: this.data.view === 'all' ? 'active' : '',
+      categoryActiveClass: this.data.view === 'category' ? 'active' : '',
+      isCategoryDetail,
+      discoverTitle: isCategoryDetail ? this.data.activeCategory : '全部素材',
+      searchPlaceholder: isCategoryDetail ? `在${this.data.activeCategory}里搜索` : '搜索素材、能力或场景',
       showEmptyState,
       showLoadErrorState,
       showFilterNoMatchState,
-      tagChips: tagOptions.map((item) => Object.assign({}, item, {
-        activeClass: this.data.tag === item.value ? 'active' : ''
+      typeFilters: [{ value: 'all', label: '全部' }].concat(materialTypes.map((item) => ({ value: item, label: item }))).map((item) => {
+        const effectiveType = this.data.activeCategory || this.data.type
+        return Object.assign({}, item, {
+          activeClass: effectiveType === item.value ? 'active' : ''
+        })
+      }),
+      abilityFilters: [{ value: 'all', label: '全部' }].concat(abilityOptions.map((item) => ({ value: item, label: item }))).map((item) => Object.assign({}, item, {
+        activeClass: this.data.ability === item.value ? 'active' : ''
       })),
-      peopleFilters: [
+      sceneFilters: [
         { value: 'all', label: '全部' },
-        { value: '2-4', label: '2-4 人' },
-        { value: '5-8', label: '5-8 人' },
-        { value: '8+', label: '8+ 人' }
+        { value: '临场速查', label: '临场速查' },
+        { value: '备课', label: '备课' },
+        { value: '排练', label: '排练' },
+        { value: '演出', label: '演出' }
       ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.people === item.value ? 'active' : ''
-      })),
-      durationFilters: [
-        { value: 'all', label: '全部' },
-        { value: '5', label: '5 分钟内' },
-        { value: '5-15', label: '5-15 分钟' },
-        { value: '15+', label: '15 分钟+' }
-      ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.duration === item.value ? 'active' : ''
-      })),
-      goalFilters: [
-        { value: 'all', label: '全部' },
-        { value: '破冰', label: '破冰' },
-        { value: '关系', label: '关系' },
-        { value: '身体', label: '身体' },
-        { value: '叙事', label: '叙事' }
-      ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.goal === item.value ? 'active' : ''
+        activeClass: this.data.scene === item.value ? 'active' : ''
       })),
       statusFilters: [
         { value: 'all', label: '全部' },
-        { value: 'played', label: '玩过' },
-        { value: 'unplayed', label: '未玩过' },
+        { value: 'played', label: '练过' },
+        { value: 'unplayed', label: '未练过' },
         { value: 'saved', label: '收藏' }
       ].map((item) => Object.assign({}, item, {
         activeClass: this.data.status === item.value ? 'active' : ''
       })),
-      categoryOptions: this.getCategoryPool().map((value) => ({
+      typeCategoryOptions: materialTypes.map((value) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      abilityCategoryOptions: abilityOptions.map((value) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      sceneCategoryOptions: sceneOptions.map((value) => ({
         value,
         label: value,
         activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
@@ -191,10 +255,10 @@ Page({
   getCategoryPool() {
     const categories: string[] = []
     defaultCategoryOptions.forEach((item) => categories.push(item))
-    this.data.games.forEach((game: Game) => {
-      if (Array.isArray(game.tags)) {
-        game.tags.forEach((tag) => categories.push(tag))
-      }
+    this.data.materials.forEach((material: Material) => {
+      categories.push(material.type)
+      ;(material.tags || []).forEach((tag) => categories.push(tag))
+      ;(material.abilities || []).forEach((ability) => categories.push(ability))
     })
     return Array.from(new Set(categories.map((item) => String(item).trim()).filter(Boolean)))
   },
@@ -208,19 +272,19 @@ Page({
       .map((value) => ({ value, label: value }))
   },
 
-  async loadGames(showRetryToast = false) {
-    this.setData({ loadingGames: true, loadErrorText: '' }, () => this.syncFiltered())
+  async loadMaterials(showRetryToast = false) {
+    this.setData({ loadingMaterials: true, loadErrorText: '' }, () => this.syncFiltered())
     try {
-      setGames(await listGames())
+      setMaterials(await listMaterials())
     } catch (error) {
       this.syncFromStore()
-      const loadErrorText = getState().games.length
-        ? '云端同步失败，先继续查看本次会话里的内容。'
-        : '云端暂时不可用，稍后重试，或先手动添加游戏。'
+      const loadErrorText = getState().materials.length
+        ? '云端同步失败，先继续查看本次会话里的素材。'
+        : '云端暂时不可用，稍后重试，或先手动添加素材。'
       this.setData({ loadErrorText })
       if (showRetryToast) toast(loadErrorText)
     } finally {
-      this.setData({ loadingGames: false }, () => this.syncFiltered())
+      this.setData({ loadingMaterials: false }, () => this.syncFiltered())
     }
   },
 
@@ -231,7 +295,7 @@ Page({
     })
     this.resetFabPosition()
     this.unsubscribeStore = subscribe(() => this.syncFromStore())
-    await this.loadGames()
+    await this.loadMaterials()
   },
 
   onShow() {
@@ -265,7 +329,17 @@ Page({
 
   switchView(event: WechatMiniprogram.TouchEvent) {
     const view = event.currentTarget.dataset.view as ViewMode
-    setState({ viewMode: view })
+    const patch: Record<string, unknown> = {
+      activeCategory: '',
+      query: '',
+      type: 'all',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }
+    this.setData(patch, () => {
+      setState({ viewMode: view })
+    })
   },
 
   search(event: WechatMiniprogram.Input) {
@@ -276,32 +350,69 @@ Page({
     this.setData({ query: '' }, () => this.syncFiltered())
   },
 
-  filterTag(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ tag: event.currentTarget.dataset.tag }, () => this.syncFiltered())
+  openCategoryDetail(event: WechatMiniprogram.TouchEvent) {
+    const activeCategory = String(event.currentTarget.dataset.type || '') as MaterialType
+    if (!materialTypes.includes(activeCategory)) return
+    this.setData({
+      view: 'category',
+      activeCategory,
+      type: 'all',
+      query: '',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }, () => {
+      setState({ viewMode: 'category' })
+      this.syncFiltered()
+    })
+  },
+
+  backToCategoryGrid() {
+    this.setData({
+      activeCategory: '',
+      query: '',
+      type: 'all',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }, () => this.syncFiltered())
+  },
+
+  toggleLearningMap() {
+    this.setData({ learningMapExpanded: !this.data.learningMapExpanded })
+  },
+
+  toggleTrainingPath() {
+    this.setData({ trainingPathExpanded: !this.data.trainingPathExpanded })
+  },
+
+  filterType(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ type: value, activeCategory: '' }, () => this.syncFiltered())
+  },
+
+  filterAbility(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ ability: value }, () => this.syncFiltered())
+  },
+
+  filterScene(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ scene: value }, () => this.syncFiltered())
   },
 
   filterStatus(event: WechatMiniprogram.TouchEvent) {
-    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.status
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
     this.setData({ status: value }, () => this.syncFiltered())
   },
 
-  filterPeople(event: WechatMiniprogram.TouchEvent) {
-    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ people: value }, () => this.syncFiltered())
-  },
-
-  filterDuration(event: WechatMiniprogram.TouchEvent) {
-    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ duration: value }, () => this.syncFiltered())
-  },
-
-  filterGoal(event: WechatMiniprogram.TouchEvent) {
-    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ goal: value }, () => this.syncFiltered())
-  },
-
-  openGame(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
+  openMaterial(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
     wx.navigateTo({ url: `/pages/game-detail/index?id=${event.detail.id}` })
+  },
+
+  openMaterialFromTap(event: WechatMiniprogram.TouchEvent) {
+    const id = String(event.currentTarget.dataset.id || '')
+    if (id) wx.navigateTo({ url: `/pages/game-detail/index?id=${id}` })
   },
 
   async toggleSave(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
@@ -317,11 +428,11 @@ Page({
 
   openRandom() {
     if (Date.now() < this.fabIgnoreTapUntil) return
-    if (!this.data.games.length) return
+    if (!this.data.materials.filter((material: Material) => !material.referenceOnly).length) return
     this.setData({
       drawnCount: 1,
       randomIndex: 0,
-      randomUseAllGames: false
+      randomUseAllMaterials: false
     }, () => {
       this.syncFiltered()
       openModal(this, { randomVisible: true })
@@ -340,9 +451,7 @@ Page({
     if (!touch || !this.fabStartTouch || !this.fabTouchOffset || !this.fabWindow) return
     const distanceX = Math.abs(touch.clientX - this.fabStartTouch.x)
     const distanceY = Math.abs(touch.clientY - this.fabStartTouch.y)
-    if (distanceX > fabDragThreshold || distanceY > fabDragThreshold) {
-      this.fabMoved = true
-    }
+    if (distanceX > fabDragThreshold || distanceY > fabDragThreshold) this.fabMoved = true
     const maxX = Math.max(0, this.fabWindow.width - this.fabWindow.size)
     const maxY = Math.max(0, this.fabWindow.height - this.fabWindow.size)
     const x = Math.min(maxX, Math.max(0, touch.clientX - this.fabTouchOffset.x))
@@ -351,9 +460,7 @@ Page({
   },
 
   onFabTouchEnd() {
-    if (this.fabMoved) {
-      this.fabIgnoreTapUntil = Date.now() + 250
-    }
+    if (this.fabMoved) this.fabIgnoreTapUntil = Date.now() + 250
     this.fabStartTouch = null
     this.fabTouchOffset = null
   },
@@ -367,16 +474,16 @@ Page({
     const randomIndex = this.data.randomIndex + 1
     this.setData({
       randomIndex,
-      currentRandomGame: candidates[randomIndex % candidates.length],
+      currentRandomMaterial: candidates[randomIndex % candidates.length],
       drawnCount: this.data.drawnCount + 1
     })
   },
 
   openRandomDetail() {
-    const game = this.data.currentRandomGame
-    if (!game) return
+    const material = this.data.currentRandomMaterial
+    if (!material) return
     this.closeSheet()
-    wx.navigateTo({ url: `/pages/game-detail/index?id=${game.id}` })
+    wx.navigateTo({ url: `/pages/game-detail/index?id=${material.id}` })
   },
 
   openFilter() {
@@ -385,21 +492,20 @@ Page({
 
   applyFilter() {
     closeModal(this, { filterVisible: false })
-    const count = this.getFilteredGames().length
-    toast(count ? `已筛选出 ${count} 个游戏` : '当前条件下没有匹配游戏')
+    const count = this.getFilteredMaterials().length
+    toast(count ? `已筛选出 ${count} 条素材` : '当前条件下没有匹配素材')
   },
 
   clearFilters() {
     this.setData({
       query: '',
-      tag: 'all',
-      people: 'all',
-      duration: 'all',
-      goal: 'all',
+      type: 'all',
+      ability: 'all',
+      scene: 'all',
       status: 'all',
       randomIndex: 0,
       drawnCount: 1,
-      randomUseAllGames: false
+      randomUseAllMaterials: false
     }, () => this.syncFiltered())
   },
 
@@ -408,16 +514,16 @@ Page({
     toast('已清空条件')
   },
 
-  useAllGamesForRandom() {
+  useAllMaterialsForRandom() {
     this.setData({
-      randomUseAllGames: true,
+      randomUseAllMaterials: true,
       randomIndex: 0,
       drawnCount: 1
     }, () => this.syncFiltered())
   },
 
   retryLoadGames() {
-    this.loadGames(true)
+    this.loadMaterials(true)
   },
 
   openAdd() {
@@ -437,41 +543,38 @@ Page({
       customCategoryFocus: false,
       customCategoryInput: '',
       categorySuggestions: [],
-      newGame: {},
-      randomUseAllGames: false,
-      selectedCategoryTags: ['热身'],
+      newMaterial: {},
+      randomUseAllMaterials: false,
+      selectedCategoryTags: ['游戏'],
       showMoreOptions: false,
-      moreOptionsToggleText: '补充玩法与提示'
+      moreOptionsToggleText: '补充训练方法'
     })
   },
 
   handleGameFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
     const { field, value } = event.detail || { field: '', value: '' }
     if (!field) return
-    this.setData({ [`newGame.${field}`]: value })
+    this.setData({ [`newMaterial.${field}`]: value })
   },
 
-  voiceFill(event: WechatMiniprogram.TouchEvent) {
-    const target = (event as WechatMiniprogram.CustomEvent<{ target: string }>).detail?.target || event.currentTarget.dataset.target
-    const patch: Record<string, string> = {}
-    if (target === 'title') patch['newGame.title'] = '情绪接力'
-    if (target === 'title') patch['newGame.people'] = '4-8 人'
-    if (target === 'title') patch['newGame.duration'] = '10 分钟'
-    if (target === 'desc') patch['newGame.desc'] = '用一个简单动作和一句台词传递情绪，适合让大家快速进入状态。'
-    if (target === 'steps') patch['newGame.steps'] = '围成一圈，第一位做出一个动作并说一句台词。\n下一位接住情绪，再放大或反转。\n一圈结束后复盘哪一次情绪最清楚。'
-    if (target === 'tips') patch['newGame.tips'] = '先示范一轮节奏变化，再提醒大家不要急着抢台词，优先把情绪接清楚。'
-    if (target === 'variant') patch['newGame.variant'] = '可以改成双人接力，或者规定每次必须反转前一个人的情绪。'
-    if (target === 'issue') patch['newGame.issue'] = '最容易卡在情绪不够明确或节奏断掉，带领时要及时示范并收束轮次。'
-    if (target === 'title') {
-      this.setData(Object.assign(patch, { selectedCategoryTags: ['热身', '情绪'] }), () => this.syncFiltered())
-    } else {
-      this.setData(patch)
-    }
-    toast('已模拟语音输入')
+  setNewMaterialType(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    const value = String(event.detail?.value || '').trim()
+    if (!value) return
+    const selectedCategoryTags = this.data.selectedCategoryTags
+      .filter((item) => !materialTypes.includes(item as MaterialType))
+      .concat(value)
+    this.setData({ selectedCategoryTags }, () => this.syncFiltered())
   },
 
-  toggleNewGameCategory(event: WechatMiniprogram.TouchEvent) {
-    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
+  toggleNewMaterialAbility(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleNewMaterialScene(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleNewMaterialCategory(category: string) {
     if (!category) return
     const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
       ? this.data.selectedCategoryTags.filter((item) => item !== category)
@@ -501,9 +604,7 @@ Page({
   },
 
   handleCustomCategoryFocus() {
-    if (!this.data.customCategoryFocus) {
-      this.setData({ customCategoryFocus: true })
-    }
+    if (!this.data.customCategoryFocus) this.setData({ customCategoryFocus: true })
   },
 
   handleCustomCategoryBlur(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
@@ -517,8 +618,7 @@ Page({
 
   selectCategorySuggestion(event: WechatMiniprogram.TouchEvent) {
     const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
-    if (!category) return
-    this.addCategoryTag(category)
+    if (category) this.addCategoryTag(category)
   },
 
   confirmCustomCategory(event?: WechatMiniprogram.CustomEvent<{ value?: string }>) {
@@ -553,48 +653,54 @@ Page({
     const nextVisible = !this.data.showMoreOptions
     this.setData({
       showMoreOptions: nextVisible,
-      moreOptionsToggleText: nextVisible ? '收起玩法与提示' : '补充玩法与提示'
+      moreOptionsToggleText: nextVisible ? '收起训练方法' : '补充训练方法'
     })
   },
 
   async addGame() {
-    const title = this.data.newGame.title
+    const title = this.data.newMaterial.title
     if (!title) {
-      toast('先写游戏名称')
+      toast('先写素材名称')
       return
     }
-    const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
-    if (!tags.length) tags.push('自定义')
-    const steps = typeof this.data.newGame.steps === 'string' && this.data.newGame.steps.trim()
-      ? this.data.newGame.steps.split('\n').map((item) => item.trim()).filter(Boolean)
+    const tags = Array.from(new Set<string>(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
+    const materialType = (materialTypes.find((item) => tags.includes(item)) || '游戏') as MaterialType
+    const abilities = abilityOptions.filter((item) => tags.includes(item))
+    const scenes = sceneOptions.filter((item) => tags.includes(item))
+    const steps = typeof this.data.newMaterial.steps === 'string' && this.data.newMaterial.steps.trim()
+      ? this.data.newMaterial.steps.split('\n').map((item) => item.trim()).filter(Boolean)
       : []
-    const game: Game = {
+    const material: Material = {
       id: `custom-${Date.now()}`,
       title,
-      desc: this.data.newGame.desc || '',
+      desc: this.data.newMaterial.desc || '',
+      type: materialType,
       tags,
-      meta: buildGameMeta(this.data.newGame.people, this.data.newGame.duration),
+      abilities,
+      scenes,
+      meta: buildMaterialMeta(this.data.newMaterial.people, this.data.newMaterial.duration),
       steps,
-      tips: this.data.newGame.tips || '',
-      variant: this.data.newGame.variant || '',
-      issue: this.data.newGame.issue || '',
-      relatedGameId: '',
+      tips: this.data.newMaterial.tips || '',
+      variant: this.data.newMaterial.variant || '',
+      issue: this.data.newMaterial.issue || '',
+      relatedMaterialId: '',
+      referenceOnly: materialType === '路径',
       stripeTone: 'orange',
       sortOrder: 999
     }
-    setGames([game].concat(getState().games))
+    setMaterials([material].concat(getState().materials))
     closeModal(this, {
       addVisible: false,
-      newGame: {},
-      selectedCategoryTags: ['热身'],
+      newMaterial: {},
+      selectedCategoryTags: ['游戏'],
       customCategoryVisible: false,
       customCategoryFocus: false,
       customCategoryInput: '',
       categorySuggestions: [],
       showMoreOptions: false,
-      moreOptionsToggleText: '补充玩法与提示'
+      moreOptionsToggleText: '补充训练方法'
     }, () => this.syncFiltered())
-    await createGame(game)
-    toast('已加入游戏库，可稍后继续完善')
+    await createMaterial(material)
+    toast('已加入素材库，可稍后继续完善')
   }
 })

@@ -6,7 +6,6 @@ const { closeModal, openModal } = require('../../utils/modal')
 const {
   addInspiration,
   addMethodCard,
-  clearVoiceDraft,
   getState,
   getThemeClass
 } = require('../../store/index')
@@ -20,12 +19,11 @@ Page({
     linkedRehearsal: '',
     arrangementValue: '带领提醒',
     selectedTags: [],
-    voiceVisible: false,
     linkVisible: false,
     insightVisible: false,
     modalOpen: false,
-    linkKind: 'game',
-    linkSheetTitle: '选择关联游戏',
+    linkKind: 'material',
+    linkSheetTitle: '选择关联素材',
     linkOptions: [],
     linkEmptyTitle: '',
     linkEmptyDesc: '',
@@ -33,8 +31,6 @@ Page({
     arrangementOptions: [],
     tagOptions: [],
     arrangementLabel: '带领提醒',
-    draftTitle: '',
-    draftSummary: '',
     layoutStyle: ''
   },
 
@@ -43,8 +39,8 @@ Page({
   },
   getLinkOptions(kind) {
     const state = getState()
-    if (kind === 'game') {
-      return (state.games || []).slice(0, 6).map((item) => ({
+    if (kind === 'material') {
+      return (state.materials || []).slice(0, 6).map((item) => ({
         value: item.title,
         title: item.title,
         desc: item.desc
@@ -60,7 +56,7 @@ Page({
     this.setData({
       arrangementOptions: [
         { value: '带领提醒', label: '带领提醒' },
-        { value: '游戏变体', label: '游戏变体' },
+        { value: '素材变体', label: '素材变体' },
         { value: '台词想法', label: '台词想法' },
         { value: '复盘片段', label: '复盘片段' }
       ].map((item) => Object.assign({}, item, {
@@ -84,25 +80,9 @@ Page({
       themeClass: getThemeClass()
     })
     const state = getState()
-    const draft = state.voiceDraft
-    const currentRehearsal = state.currentRehearsal
     const rehearsalHistory = state.rehearsalHistory || []
-    if (draft) {
-      const linkedGame = state.games.find((item) => item.id === draft.linkedGameId)
-      const linkedRehearsal = (currentRehearsal && currentRehearsal.id === draft.linkedRehearsalId
-        ? currentRehearsal
-        : rehearsalHistory.find((item) => item.id === draft.linkedRehearsalId)) || null
-      this.setData({
-        titleValue: draft.title,
-        contentValue: draft.desc,
-        linkedGame: linkedGame ? linkedGame.title : this.data.linkedGame,
-        linkedRehearsal: linkedRehearsal ? linkedRehearsal.title : this.data.linkedRehearsal,
-        draftTitle: draft.title,
-        draftSummary: draft.summary
-      })
-    }
     this.setData({
-      showLinkSection: !!((state.games || []).length || rehearsalHistory.length || this.data.linkedGame || this.data.linkedRehearsal)
+      showLinkSection: !!((state.materials || []).length || rehearsalHistory.length || this.data.linkedGame || this.data.linkedRehearsal)
     })
     this.syncOptions()
   },
@@ -114,20 +94,6 @@ Page({
   updateField(event) {
     const field = event.currentTarget.dataset.field
     this.setData({ [field]: event.detail.value })
-  },
-
-  openVoice() {
-    openModal(this, { voiceVisible: true })
-  },
-
-  fillVoiceDraft() {
-    const draft = getState().voiceDraft
-    closeModal(this, {
-      voiceVisible: false,
-      titleValue: draft ? draft.title : this.data.draftTitle,
-      contentValue: draft ? draft.desc : this.data.draftSummary
-    })
-    toast('已填入语音草稿')
   },
 
   setArrangement(event) {
@@ -147,16 +113,16 @@ Page({
 
   openLink(event) {
     const kind = event.currentTarget.dataset.kind
-    const isGame = kind === 'game'
+    const isGame = kind === 'material'
     const linkOptions = this.getLinkOptions(kind)
     openModal(this, {
       linkVisible: true,
       linkKind: kind,
-      linkSheetTitle: isGame ? '选择关联游戏' : '选择关联排练',
+      linkSheetTitle: isGame ? '选择关联素材' : '选择关联排练',
       linkOptions,
-      linkEmptyTitle: isGame ? '暂时没有可关联的游戏' : '暂时没有可关联的排练',
+      linkEmptyTitle: isGame ? '暂时没有可关联的素材' : '暂时没有可关联的排练',
       linkEmptyDesc: isGame
-        ? '还没有游戏库时，先把灵感存下来，之后再补关联也可以。'
+        ? '还没有素材库时，先把灵感存下来，之后再补关联也可以。'
         : '还没有排练记录时，不需要先补全结构，保存灵感更重要。'
     })
   },
@@ -165,7 +131,7 @@ Page({
     const value = (event.detail && event.detail.id) || event.currentTarget.dataset.value
     closeModal(this, {
       linkVisible: false,
-      linkedGame: this.data.linkKind === 'game' ? value : this.data.linkedGame,
+      linkedGame: this.data.linkKind === 'material' ? value : this.data.linkedGame,
       linkedRehearsal: this.data.linkKind === 'rehearsal' ? value : this.data.linkedRehearsal
     })
   },
@@ -175,7 +141,7 @@ Page({
   },
 
   closeSheet() {
-    closeModal(this, { voiceVisible: false, linkVisible: false, insightVisible: false })
+    closeModal(this, { linkVisible: false, insightVisible: false })
   },
 
   async save() {
@@ -185,7 +151,7 @@ Page({
       title: this.data.titleValue,
       desc: this.data.contentValue,
       meta: this.data.selectedTags,
-      linkedGameTitle: this.data.linkedGame,
+      linkedMaterialTitle: this.data.linkedGame,
       linkedRehearsalTitle: this.data.linkedRehearsal
     }
     try {
@@ -193,7 +159,7 @@ Page({
         title: item.title,
         desc: item.desc,
         meta: item.meta,
-        linkedGameTitle: item.linkedGameTitle,
+        linkedMaterialTitle: item.linkedMaterialTitle,
         linkedRehearsalTitle: item.linkedRehearsalTitle
       })
       addInspiration(item)
@@ -202,7 +168,6 @@ Page({
       addInspiration(Object.assign({}, item, { syncStatus: 'pending' }))
       toast('已本地保存，待同步')
     }
-    clearVoiceDraft()
     wx.navigateBack()
   },
   async createMethodCard() {
@@ -227,6 +192,5 @@ Page({
       addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
       toast('已本地保存，待同步')
     }
-    clearVoiceDraft()
   }
 })

@@ -38,7 +38,6 @@
 .effect-chip-row .chip {
   flex: 0 0 auto;
   width: auto;
-  max-width: none;
   min-height: 64rpx;
   padding: 0 24rpx;
 }
@@ -69,11 +68,6 @@
   padding: 22rpx 24rpx;
   border-radius: 24rpx;
   background: var(--improv-bg-subtle);
-}
-
-.voice-status-card {
-  margin-top: 18rpx;
-  padding: 18rpx 22rpx;
 }
 
 .context-status-card {

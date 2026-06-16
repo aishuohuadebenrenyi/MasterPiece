@@ -2,10 +2,19 @@
   <view class="record-content">
     <view class="record-hero">
       <view class="record-title">记录灵感</view>
-      <button class="record-main" bindtap="openVoice">🎤</button>
-      <text class="record-intro muted">按一下开始，先把感觉留下来。</text>
+      <view class="record-input-card">
+        <textarea
+          class="record-inspiration-input"
+          value="{{inspirationText}}"
+          placeholder="把刚刚闪过的想法先写下来，也可以用输入法语音转文字。"
+          maxlength="-1"
+          bindblur="updateInspirationText"
+        ></textarea>
+        <button class="primary-btn record-save-btn" bindtap="saveInspirationDraft">保存灵感</button>
+      </view>
+      <text class="record-intro muted">先留下原始片段，整理可以稍后再做。</text>
       <view class="record-actions">
-        <button class="small-btn record-action-btn" bindtap="openStartGame">记录游戏</button>
+        <button class="small-btn record-action-btn" bindtap="openStartGame">记录练习</button>
         <button class="small-btn record-action-btn" bindtap="openStartRehearsal">记录排练</button>
       </view>
       <view wx:if="{{showTodaySummary}}" class="record-footnote">
@@ -61,30 +70,9 @@
     </view>
   </view>
 
-  <bottom-sheet visible="{{voiceVisible}}" title="记录灵感" maskVariant="medium" bodyMode="fit" bind:close="closeSheet">
-    <text class="muted" wx:if="{{!activeContextName}}">先说下来，整理可以稍后再做。</text>
-    <view wx:if="{{activeContextName}}" class="active-rehearsal-tip">
-      <text>📍 {{activeContextName}}</text>
-    </view>
-    <view class="pulse">{{timeText}}</view>
-    <view class="voice-actions">
-      <button class="small-btn" bindtap="pauseVoice">暂停</button>
-      <button class="primary-btn" bindtap="startTimer">{{recordingText}}</button>
-      <button class="small-btn" bindtap="finishVoice">完成</button>
-    </view>
-    <view class="card summary" wx:if="{{!timer && elapsed > 0}}">
-      <text class="mini-title">摘要预览</text>
-      <text class="muted">{{voiceSummary}}</text>
-    </view>
-    <view class="save-actions" wx:if="{{!timer && elapsed > 0}}">
-      <button class="ghost-btn" bindtap="saveVoiceAsInspiration">存为灵感</button>
-      <button class="primary-btn" bindtap="archiveToCurrentContext" wx:if="{{activeContextName}}">归档到当前</button>
-    </view>
-  </bottom-sheet>
-
-  <bottom-sheet visible="{{startGameVisible}}" title="快速开始游戏" maskVariant="light" sheetClass="start-game-sheet task-sheet" bodyMode="fit" bind:close="closeSheet">
+  <bottom-sheet visible="{{startGameVisible}}" title="快速开始练习" maskVariant="light" sheetClass="start-game-sheet task-sheet" bodyMode="fit" bind:close="closeSheet">
     <view class="start-game-picker">
-      <search-bar customClass="start-game-search" value="{{gameSearchQuery}}" placeholder="搜索游戏、标签或目标" showClear="{{true}}" bind:focus="showStartGameList" bind:blur="onGameSearchInput" bind:confirm="onGameSearchInput" bind:clear="clearGameSearch" />
+      <search-bar customClass="start-game-search" value="{{gameSearchQuery}}" placeholder="搜索素材、能力或目标" showClear="{{true}}" bind:focus="showStartGameList" bind:blur="onGameSearchInput" bind:confirm="onGameSearchInput" bind:clear="clearGameSearch" />
       <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="start-game-list">
         <selection-card
           wx:for="{{filteredGamesList}}"
@@ -105,7 +93,7 @@
         <empty-state-panel wx:if="{{filteredGamesList.length === 0}}" customClass="start-game-empty" title="{{startGameEmptyTitle}}" desc="{{startGameEmptyDesc}}" />
       </scroll-view>
     </view>
-    <button class="primary-btn start-btn {{!startGameSelectedId ? 'disabled-btn' : ''}}" bindtap="startGameFromRecord" disabled="{{!startGameSelectedId}}">开始游戏</button>
+    <button class="primary-btn start-btn {{!startGameSelectedId ? 'disabled-btn' : ''}}" bindtap="startGameFromRecord" disabled="{{!startGameSelectedId}}">开始练习</button>
   </bottom-sheet>
 
   <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
@@ -135,7 +123,7 @@
           </form-field>
         </view>
       </filter-section>
-      <filter-section label="添加游戏" options="{{sourceOptions}}" customClass="start-rehearsal-section start-rehearsal-section-last" rowClass="start-rehearsal-chips" bind:select="setSource" />
+      <filter-section label="添加素材" options="{{sourceOptions}}" customClass="start-rehearsal-section start-rehearsal-section-last" rowClass="start-rehearsal-chips" bind:select="setSource" />
       <text wx:if="{{rehearsalSourceHint}}" class="muted start-rehearsal-hint">{{rehearsalSourceHint}}</text>
       <button class="primary-btn start-btn start-rehearsal-submit {{savedSourceUnavailable ? 'disabled-btn' : ''}}" bindtap="startRehearsal" disabled="{{savedSourceUnavailable}}">开始排练</button>
     </view>

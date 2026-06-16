@@ -513,7 +513,6 @@ form-field.profile-preference-field {
   flex: 0 0 auto;
   width: auto !important;
   min-width: 96rpx;
-  max-width: none;
   padding: 0 24rpx !important;
   display: inline-flex;
   align-items: center;

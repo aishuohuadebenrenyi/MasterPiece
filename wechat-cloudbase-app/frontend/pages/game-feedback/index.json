@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "游戏反馈",
+  "navigationBarTitleText": "练习复盘",
   "disableScroll": true,
   "usingComponents": {
     "form-card": "../../components/form-card/index",

@@ -10,7 +10,25 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--improv-form-gap-field-body, 14rpx);
+  flex: 0 0 auto;
+  gap: 12rpx;
+}
+
+.filter-section.discover-filter-section {
+  gap: 8rpx;
+}
+
+.filter-section.game-form-category-section {
+  gap: 8rpx;
+}
+
+.filter-section.start-rehearsal-section {
+  margin-top: 0;
+  margin-bottom: var(--improv-form-gap-section, 48rpx);
+}
+
+.filter-section.start-rehearsal-section-last {
+  margin-bottom: var(--improv-form-gap-tight, 10rpx);
 }
 
 .filter-label {
@@ -19,20 +37,74 @@
   font-weight: 900;
 }
 
+.game-form-category-section .filter-label {
+  font-size: 24rpx;
+  line-height: 1.2;
+}
+
+.arrangement-section .filter-label,
+.tag-section .filter-label {
+  font-size: 24rpx;
+}
+
+.start-rehearsal-section .filter-label {
+  font-size: 23rpx;
+}
+
 .chip-scroll {
+  display: block;
+  flex: 0 0 auto;
+  height: 78rpx;
+  overflow: hidden;
+}
+
+.discover-filter-section .chip-scroll {
+  height: 66rpx;
+}
+
+.game-form-category-section .chip-scroll {
+  height: 74rpx;
+  margin-top: 0;
+}
+
+.start-goal-section .chip-scroll {
   height: 84rpx;
+  margin: 0;
 }
 
 .chip-row {
   padding: 0 0 8rpx;
 }
 
+.discover-filter-section .chip-row {
+  padding: 0;
+}
+
+.game-form-category-section .chip-row {
+  padding: 0;
+}
+
+.start-rehearsal-goal-row {
+  padding: 2rpx 0 8rpx;
+}
+
 .filter-chip-track {
   display: inline-flex;
+  align-items: center;
   width: auto;
   min-width: 100%;
+  height: 100%;
   padding: 4rpx 0 2rpx;
   white-space: nowrap;
+}
+
+.discover-filter-section .filter-chip-track {
+  padding: 0;
+}
+
+.game-form-category-section .filter-chip-track {
+  align-items: center;
+  padding: 0;
 }
 
 .filter-chip-wrap {
@@ -45,4 +117,37 @@
   flex: 0 0 auto;
   min-width: 88rpx;
   white-space: nowrap;
+}
+
+.category-chip {
+  flex: 0 0 auto;
+  margin: 0;
+  min-width: 96rpx;
+  height: 62rpx;
+  min-height: 62rpx;
+  max-height: 62rpx;
+  padding: 0 22rpx;
+  font-size: 24rpx;
+  line-height: 1;
+  box-shadow: 0 6rpx 14rpx var(--improv-shadow-xs-color);
+}
+
+.start-rehearsal-chips {
+  gap: var(--improv-form-gap-inline, 16rpx);
+  margin-top: 0;
+}
+
+.start-rehearsal-chips .chip {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.start-rehearsal-goal-chip {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 92rpx;
+}
+
+.tag-row-spaced {
+  margin-top: 14rpx;
 }

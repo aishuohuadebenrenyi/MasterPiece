@@ -1,7 +1,7 @@
 <root-portal wx:if="{{visible}}">
   <view class="float-layer {{themeClass}}">
     <view class="float-mask" catchtap="close" catchtouchmove="noop"></view>
-    <view class="float-card" catchtap="noop" bindtouchstart="handleTouchStart" bindtouchend="handleTouchEnd">
+    <view class="float-card card-surface-container" catchtap="noop" bindtouchstart="handleTouchStart" bindtouchend="handleTouchEnd">
       <view class="float-head">
         <text class="float-title">{{title}}</text>
         <button class="icon-close-btn" catchtap="close">✕</button>

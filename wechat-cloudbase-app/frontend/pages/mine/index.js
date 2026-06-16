@@ -1,7 +1,7 @@
 const { createMethodCard, listMethodCards } = require('../../services/method-card')
 const { listInspirations } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
-const { listGameRecords } = require('../../services/game-record')
+const { listPracticeRecords } = require('../../services/practice-record')
 const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
 const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, toggleThemeMode } = require('../../store/index')
 const { closeModal, openModal } = require('../../utils/modal')
@@ -25,8 +25,8 @@ function getAvatarText(displayName = '') {
 }
 
 function normalizeMethodSourceType(sourceType = '') {
-  if (sourceType === 'inspiration' || sourceType === 'voice') return 'inspiration'
-  if (sourceType === 'gameRecord') return 'gameRecord'
+  if (sourceType === 'inspiration') return 'inspiration'
+  if (sourceType === 'gameRecord' || sourceType === 'practiceRecord') return 'practiceRecord'
   if (sourceType === 'rehearsalReview' || sourceType === 'rehearsal') return 'rehearsalReview'
   return sourceType || 'manual'
 }
@@ -34,7 +34,7 @@ function normalizeMethodSourceType(sourceType = '') {
 function getSourceLabel(sourceType = '') {
   const normalized = normalizeMethodSourceType(sourceType)
   if (normalized === 'inspiration') return '灵感'
-  if (normalized === 'gameRecord') return '游戏实践'
+  if (normalized === 'practiceRecord') return '素材练习'
   if (normalized === 'rehearsalReview') return '排练复盘'
   return '方法卡'
 }
@@ -52,9 +52,9 @@ function filterItemMeta(item = {}) {
 
 function normalizePendingItem(item, sourceType) {
   const label = getSourceLabel(sourceType)
-  const title = item.title || (sourceType === 'gameRecord' ? '未命名游戏记录' : '未命名记录')
+  const title = item.title || (sourceType === 'practiceRecord' ? '未命名练习记录' : '未命名记录')
   const desc = item.desc
-    || (sourceType === 'gameRecord'
+    || (sourceType === 'practiceRecord'
       ? `Keep: ${item.keep || '待整理'}\nTry: ${item.try || '待整理'}`
       : item.reviewReminder || item.summary || '待整理')
   const meta = Array.isArray(item.meta) ? item.meta : []
@@ -75,7 +75,7 @@ function buildPendingItems({ inspirations = [], rehearsals = [], gameRecords = [
   const existing = new Set(sediments.map(getSourceKey))
   const candidates = []
     .concat(inspirations.map((item) => normalizePendingItem(item, 'inspiration')))
-    .concat(gameRecords.map((item) => normalizePendingItem(item, 'gameRecord')))
+    .concat(gameRecords.map((item) => normalizePendingItem(item, 'practiceRecord')))
     .concat(rehearsals
       .filter((item) => item.status === '已完成' || item.reviewKeep || item.reviewTry || item.reviewReminder)
       .map((item) => normalizePendingItem(item, 'rehearsalReview')))
@@ -237,13 +237,13 @@ Page({
     const localSediments = state.methodCards || []
     const localInspirations = state.todayInspirations || []
     const localRehearsals = state.rehearsalHistory || []
-    const localGameRecords = state.gameRecordsHistory || []
+    const localGameRecords = state.practiceRecordsHistory || []
     this.setData(Object.assign({}, buildMineViewData({
       sediments: localSediments,
       inspirations: localInspirations,
       rehearsals: localRehearsals,
       gameRecords: localGameRecords,
-      playedCount: (state.playedGameIds || []).length,
+      playedCount: (state.playedMaterialIds || []).length,
       layoutStyle: getLayoutStyle(),
       profile: state.profile || DEFAULT_PROFILE,
       methodFilter: this.data.methodFilter,
@@ -255,7 +255,7 @@ Page({
       listMethodCards(),
       listInspirations(),
       listRehearsals(),
-      listGameRecords(),
+      listPracticeRecords(),
       getProfile()
     ])
     this.setData(buildMineViewData({
@@ -263,7 +263,7 @@ Page({
       inspirations: inspirationsResult.status === 'fulfilled' ? inspirationsResult.value : localInspirations,
       rehearsals: rehearsalsResult.status === 'fulfilled' ? rehearsalsResult.value : localRehearsals,
       gameRecords: gameRecordsResult.status === 'fulfilled' ? gameRecordsResult.value : localGameRecords,
-      playedCount: (state.playedGameIds || []).length,
+      playedCount: (state.playedMaterialIds || []).length,
       layoutStyle: getLayoutStyle(),
       profile: profileResult.status === 'fulfilled' ? profileResult.value : (state.profile || DEFAULT_PROFILE),
       methodFilter: this.data.methodFilter,

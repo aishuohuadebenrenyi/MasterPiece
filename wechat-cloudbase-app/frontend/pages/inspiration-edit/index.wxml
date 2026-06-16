@@ -2,11 +2,13 @@
   <subpage-header kicker="灵感记录" title="先把想法留下来" bind:back="back" />
 
   <form-card title="先定下这条灵感的方向" kicker="整理方式">
-    <filter-section label="整理方式" options="{{arrangementOptions}}" wrap="{{true}}" customClass="arrangement-section" rowClass="form-chip-row" bind:select="setArrangement" />
-    <filter-section label="标签" options="{{tagOptions}}" wrap="{{true}}" customClass="tag-section" rowClass="form-chip-row tag-row-spaced" bind:select="toggleTag" />
+    <view class="filter-section-stack">
+      <filter-section label="整理方式" options="{{arrangementOptions}}" wrap="{{true}}" customClass="arrangement-section" rowClass="form-chip-row" bind:select="setArrangement" />
+      <filter-section label="标签" options="{{tagOptions}}" wrap="{{true}}" customClass="tag-section" rowClass="form-chip-row tag-row-spaced" bind:select="toggleTag" />
+    </view>
   </form-card>
 
-  <form-card title="灵感草稿" kicker="语音 / 文字" actionText="语音" bind:action="openVoice">
+  <form-card title="灵感草稿" kicker="文字记录">
     <view class="form-field-stack">
       <form-field label="标题">
         <input class="app-input" value="{{titleValue}}" data-field="titleValue" bindblur="updateField" bindconfirm="updateField" />
@@ -17,12 +19,12 @@
     </view>
   </form-card>
 
-  <form-card wx:if="{{showLinkSection}}" title="把灵感挂到游戏或排练里" kicker="可选关联">
+  <form-card wx:if="{{showLinkSection}}" title="把灵感挂到素材或排练里" kicker="可选关联">
     <view class="form-field-stack">
-      <form-field label="关联游戏">
+      <form-field label="关联素材">
         <view class="field-picker">
-          <input class="app-input" value="{{linkedGame}}" placeholder="选择关联游戏" disabled />
-          <button class="small-btn" data-kind="game" bindtap="openLink">选择</button>
+          <input class="app-input" value="{{linkedGame}}" placeholder="选择关联素材" disabled />
+          <button class="small-btn" data-kind="material" bindtap="openLink">选择</button>
         </view>
       </form-field>
       <form-field label="关联排练">
@@ -40,17 +42,6 @@
       <button class="primary-btn" bindtap="save">保存灵感</button>
     </view>
   </root-portal>
-
-  <bottom-sheet visible="{{voiceVisible}}" title="语音速记" bodyMode="fit" bind:close="closeSheet">
-    <text class="muted">先说下来，整理可以稍后再做。</text>
-    <view class="voice-pulse">00:36</view>
-    <view class="card draft-preview">
-      <text class="mini-title">最近语音草稿</text>
-      <view class="entry-title sheet-title">{{draftTitle}}</view>
-      <text class="muted">{{draftSummary}}</text>
-    </view>
-    <button class="primary-btn sheet-submit" bindtap="fillVoiceDraft">填入当前草稿</button>
-  </bottom-sheet>
 
   <bottom-sheet visible="{{linkVisible}}" title="{{linkSheetTitle}}" bodyMode="fit" bind:close="closeSheet">
     <empty-state-panel wx:if="{{!linkOptions.length}}" customClass="empty-link-card" title="{{linkEmptyTitle}}" desc="{{linkEmptyDesc}}" secondaryText="先不关联" bind:secondary="closeSheet" />
@@ -75,7 +66,7 @@
         <text class="muted">新手场先用身体和声音统一节奏，再进入关系和叙事，会明显更顺。</text>
       </view>
       <view class="card insight-card">
-        <text class="pill blue">游戏改造</text>
+        <text class="pill blue">素材改造</text>
         <view class="entry-title">一句话交换身份只推进一个信息</view>
         <text class="muted">每轮只确认一个关系点，现场会更稳，也更容易接住。</text>
       </view>

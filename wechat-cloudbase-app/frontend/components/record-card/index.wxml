@@ -1,4 +1,4 @@
-<view class="card record-card {{customClass}}" bindtap="onCardTap">
+<view class="card card-surface-content record-card {{customClass}}" bindtap="onCardTap">
   <view class="card-head">
     <view class="record-card-main">
       <text wx:if="{{miniTitle}}" class="mini-title">{{miniTitle}}</text>

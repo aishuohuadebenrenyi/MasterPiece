@@ -4,14 +4,14 @@ const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
 
 function normalizePlan(plan = []) {
-  const games = getState().games || []
+  const games = getState().materials || []
   const gameTitleMap = games.reduce((map, game) => {
     map[game.id] = game.title
     return map
   }, {})
   return plan.map((item, index) => ({
     ...item,
-    title: gameTitleMap[item.gameId] || item.gameId || `游戏 ${index + 1}`,
+    title: gameTitleMap[item.materialId || item.gameId] || item.materialId || item.gameId || `素材 ${index + 1}`,
     status: item.status || '未开始',
     keep: item.keep || '',
     try: item.try || ''
@@ -32,7 +32,7 @@ function getDisplayDesc(record = {}) {
   if (record.displayDesc) return record.displayDesc
   if (record.desc && /^完成：|^Try：|^Keep：/.test(record.desc)) return record.desc
   if (record.desc) return `完成：${String(record.desc).replace(/\s*→\s*/g, '、')}`
-  return '按时间回看团队练习、游戏反馈和下次提醒。'
+  return '按时间回看团队练习、素材反馈和下次提醒。'
 }
 
 function normalizeRecordForView(record = {}, index = 0) {
@@ -42,7 +42,7 @@ function normalizeRecordForView(record = {}, index = 0) {
   const review = firstMetaByPattern(meta, /复盘|提醒|沉淀|关系/)
   const displayMeta = [
     people,
-    `${plan.length} 个游戏`,
+    `${plan.length} 条素材`,
     review || (record.status === '已完成' ? '已完成' : record.status || '')
   ].filter(Boolean)
 
@@ -129,7 +129,7 @@ Page({
       selectedDetailMeta: [
         `${selectedRecord.duration} 分钟`,
         selectedRecord.statusLabel,
-        `${(selectedRecord.plan || []).length} 个游戏`
+        `${(selectedRecord.plan || []).length} 条素材`
       ].filter(Boolean)
     })
   },

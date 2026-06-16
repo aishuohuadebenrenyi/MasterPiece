@@ -126,6 +126,27 @@ page,
   --improv-bg-subtle-glass: rgba(247, 249, 253, 0.94);
   --improv-radius-card: 40rpx;
   --improv-radius-sheet: 44rpx;
+  --improv-card-nav-bg: rgba(255, 255, 255, 0.9);
+  --improv-card-nav-border: rgba(94, 114, 144, 0.08);
+  --improv-card-nav-shadow: 0 14rpx 30rpx rgba(55, 82, 150, 0.08);
+  --improv-card-reference-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(247, 249, 253, 0.9));
+  --improv-card-reference-border: rgba(94, 114, 144, 0.08);
+  --improv-card-reference-shadow: 0 18rpx 38rpx rgba(50, 68, 120, 0.08);
+  --improv-card-content-bg: rgba(255, 255, 255, 0.96);
+  --improv-card-content-border: rgba(94, 114, 144, 0.1);
+  --improv-card-content-shadow: 0 24rpx 56rpx rgba(55, 82, 150, 0.12);
+  --improv-card-container-bg: rgba(255, 255, 255, 0.94);
+  --improv-card-container-border: rgba(94, 114, 144, 0.08);
+  --improv-card-container-shadow: 0 22rpx 48rpx rgba(50, 68, 120, 0.1);
+  --improv-accent-soft: rgba(79, 140, 255, 0.08);
+  --improv-accent-muted: rgba(79, 140, 255, 0.14);
+  --improv-card-kicker: #7e8aa3;
+  --improv-card-counter-bg: rgba(79, 140, 255, 0.08);
+  --improv-card-counter-text: #2f6ff2;
+  --improv-card-padding-sm: 28rpx;
+  --improv-card-padding-md: 36rpx;
+  --improv-card-gap-sm: 12rpx;
+  --improv-card-gap-md: 18rpx;
 }
 
 .theme-alt {
@@ -151,6 +172,7 @@ page,
   --improv-surface-brand-gradient: linear-gradient(135deg, rgba(217, 70, 239, 0.12), rgba(37, 99, 235, 0.12));
   --improv-surface-brand-gradient-soft: linear-gradient(135deg, rgba(217, 70, 239, 0.09), rgba(37, 99, 235, 0.09));
   --improv-toast-warm-bg: rgba(217, 70, 239, 0.94);
+  --improv-card-counter-text: #1d4ed8;
 }
 
 .theme-vivid {
@@ -222,6 +244,23 @@ page,
   --improv-toast-bg: rgba(2, 6, 23, 0.92);
   --improv-toast-warm-bg: rgba(225, 29, 72, 0.94);
   --improv-toast-error-bg: rgba(2, 6, 23, 0.94);
+  --improv-card-nav-bg: rgba(15, 118, 110, 0.88);
+  --improv-card-nav-border: rgba(255, 255, 255, 0.08);
+  --improv-card-nav-shadow: 0 14rpx 30rpx rgba(0, 0, 0, 0.18);
+  --improv-card-reference-bg: linear-gradient(160deg, rgba(15, 118, 110, 0.94), rgba(19, 78, 74, 0.88));
+  --improv-card-reference-border: rgba(255, 255, 255, 0.08);
+  --improv-card-reference-shadow: 0 18rpx 38rpx rgba(0, 0, 0, 0.18);
+  --improv-card-content-bg: rgba(15, 118, 110, 0.94);
+  --improv-card-content-border: rgba(255, 255, 255, 0.08);
+  --improv-card-content-shadow: 0 24rpx 56rpx rgba(0, 0, 0, 0.22);
+  --improv-card-container-bg: rgba(6, 78, 59, 0.96);
+  --improv-card-container-border: rgba(255, 255, 255, 0.08);
+  --improv-card-container-shadow: 0 22rpx 48rpx rgba(0, 0, 0, 0.2);
+  --improv-accent-soft: rgba(234, 179, 8, 0.12);
+  --improv-accent-muted: rgba(234, 179, 8, 0.18);
+  --improv-card-kicker: #cbd5e1;
+  --improv-card-counter-bg: rgba(234, 179, 8, 0.16);
+  --improv-card-counter-text: #fde68a;
 }
 
 .surface-card {

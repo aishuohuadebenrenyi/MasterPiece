@@ -1,3 +1,4 @@
+@import "../../app.wxss";
 @import "../../styles/theme.wxss";
 
 .game-card {
@@ -5,14 +6,10 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 28rpx;
+  gap: 24rpx;
   min-height: 196rpx;
-  padding: 30rpx;
+  padding: var(--improv-card-padding-md, 36rpx);
   border-radius: var(--improv-radius-card);
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid var(--improv-line-subtle);
-  box-shadow: var(--improv-shadow-md);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -42,20 +39,20 @@
 
 .stripe,
 .stripe.orange {
-  flex: 0 0 12rpx;
-  width: 12rpx;
-  height: 124rpx;
-  margin-top: 6rpx;
+  flex: 0 0 10rpx;
+  width: 10rpx;
+  height: 108rpx;
+  margin-top: 4rpx;
   border-radius: 999rpx;
-  background: linear-gradient(180deg, var(--improv-primary, #ff7a45), var(--improv-primary-glow, #ffb569));
+  background: linear-gradient(180deg, rgba(255, 122, 69, 0.44), rgba(255, 181, 105, 0.9));
 }
 
 .stripe.blue {
-  background: linear-gradient(180deg, var(--improv-secondary, #4f8cff), var(--improv-secondary-glow, #7fb1ff));
+  background: linear-gradient(180deg, rgba(79, 140, 255, 0.42), rgba(127, 177, 255, 0.9));
 }
 
 .stripe.mint {
-  background: linear-gradient(180deg, var(--improv-success, #35bfa6), var(--improv-success-soft, #7ce0cf));
+  background: linear-gradient(180deg, rgba(53, 191, 166, 0.42), rgba(124, 224, 207, 0.9));
 }
 
 .game-main {
@@ -64,6 +61,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: 16rpx;
 }
 
 .game-head {
@@ -81,7 +79,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8rpx;
+  gap: 10rpx;
   white-space: normal;
 }
 
@@ -95,7 +93,7 @@
   color: var(--improv-text);
   font-size: 34rpx;
   font-weight: 900;
-  line-height: 1.18;
+  line-height: 1.22;
   white-space: normal;
   word-break: break-all;
 }
@@ -114,9 +112,9 @@
 
 .game-desc {
   color: var(--improv-text-soft, #5a6781);
-  font-size: 28rpx;
+  font-size: 27rpx;
   font-weight: 600;
-  line-height: 1.55;
+  line-height: 1.5;
   letter-spacing: 0.2rpx;
   white-space: normal;
   word-break: break-all;
@@ -164,6 +162,7 @@
   flex-wrap: wrap;
   gap: 10rpx;
   white-space: normal;
+  margin-top: 2rpx;
 }
 
 .meta text {
@@ -171,7 +170,7 @@
   align-items: center;
   min-height: 0;
   padding: 6rpx 16rpx;
-  background: var(--improv-bg-soft);
+  background: var(--improv-accent-soft, var(--improv-bg-soft));
   color: var(--improv-muted);
   font-size: 22rpx;
   font-weight: 700;

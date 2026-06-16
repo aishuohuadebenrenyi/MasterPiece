@@ -1,4 +1,4 @@
-const { listGameRecords } = require('../../services/game-record')
+const { listPracticeRecords } = require('../../services/practice-record')
 const { getState , getThemeClass } = require('../../store/index')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
@@ -63,14 +63,14 @@ Page({
     this.setData({ themeClass: getThemeClass() })
     const state = getState()
     this.setData({
-      records: buildRecordViewModels(state.gameRecordsHistory || []),
+      records: buildRecordViewModels(state.practiceRecordsHistory || []),
       layoutStyle: getLayoutStyle(),
       loading: true,
       errorText: '',
       showSummaryCard: false
     })
     try {
-      const records = await listGameRecords()
+      const records = await listPracticeRecords()
       const normalizedRecords = buildRecordViewModels(records)
       this.setData({
         records: normalizedRecords,
@@ -79,11 +79,11 @@ Page({
         showSummaryCard: normalizedRecords.length > 0
       })
     } catch (error) {
-      const fallbackRecords = buildRecordViewModels(state.gameRecordsHistory || [])
+      const fallbackRecords = buildRecordViewModels(state.practiceRecordsHistory || [])
       this.setData({
         records: fallbackRecords,
         loading: false,
-        errorText: '云端暂时不可用，当前只显示本次会话里的游戏记录。',
+        errorText: '云端暂时不可用，当前只显示本次会话里的练习记录。',
         showSummaryCard: fallbackRecords.length > 0
       })
     }

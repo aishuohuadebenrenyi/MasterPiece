@@ -1,4 +1,4 @@
-<view class="form-card card">
+<view class="form-card card card-surface-container">
   <view class="card-head" wx:if="{{title || kicker}}">
     <view class="card-head-title">
       <text class="kicker" wx:if="{{kicker}}">{{kicker}}</text>

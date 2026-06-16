@@ -6,13 +6,16 @@
 }
 
 .record-card {
-  padding: 36rpx;
+  padding: var(--improv-card-padding-md, 36rpx);
   margin-bottom: 18rpx;
 }
 
 .record-card-main {
   flex: 1 1 0;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
 .record-card-actions {
@@ -21,6 +24,14 @@
   gap: 12rpx;
   flex: 0 0 auto;
   align-self: flex-start;
+}
+
+.record-card .muted {
+  margin-top: 14rpx;
+}
+
+.record-card .meta-row {
+  margin-top: 16rpx;
 }
 
 .record-card-actions .small-btn {

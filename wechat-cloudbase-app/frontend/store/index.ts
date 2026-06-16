@@ -1,14 +1,13 @@
 import type {
   AppState,
-  Game,
-  GameSession,
   InspirationItem,
+  Material,
+  MaterialSession,
   MethodCardItem,
+  PracticeRecord,
   RehearsalPlanItem,
   RehearsalRecord,
-  TodayItem,
-  VoiceDraft,
-  GameRecord
+  TodayItem
 } from '../types/domain'
 
 type Listener = (state: AppState) => void
@@ -19,21 +18,20 @@ const THEME_MODE_STORAGE = 'improv_theme_mode'
 
 const defaultState: AppState = {
   themeMode: 'default',
-  viewMode: 'list',
-  games: [] as Game[],
-  recommendGameId: '',
-  savedGameIds: [] as string[],
-  playedGameIds: [] as string[],
+  viewMode: 'all',
+  materials: [] as Material[],
+  recommendMaterialId: '',
+  savedMaterialIds: [] as string[],
+  playedMaterialIds: [] as string[],
   todayInspirations: [] as InspirationItem[],
   todayRehearsals: [] as RehearsalRecord[],
   methodCards: [] as MethodCardItem[],
   pausedRehearsal: null,
   currentRehearsal: null,
-  currentGame: null,
+  currentMaterial: null,
   rehearsalHistory: [] as RehearsalRecord[],
-  gameRecordsHistory: [] as GameRecord[],
+  practiceRecordsHistory: [] as PracticeRecord[],
   dismissedPendingKeys: [] as string[],
-  voiceDraft: null,
   profile: null as { displayName: string; avatarUrl: string } | null
 }
 
@@ -77,7 +75,14 @@ function emit() {
 }
 
 export function getState(): AppState {
-  return clone(state)
+  const snapshot = clone(state) as AppState & Record<string, unknown>
+  snapshot.games = snapshot.materials
+  snapshot.recommendGameId = snapshot.recommendMaterialId
+  snapshot.savedGameIds = snapshot.savedMaterialIds
+  snapshot.playedGameIds = snapshot.playedMaterialIds
+  snapshot.currentGame = snapshot.currentMaterial
+  snapshot.gameRecordsHistory = snapshot.practiceRecordsHistory
+  return snapshot as AppState
 }
 
 export function setState(patch: Partial<AppState>) {
@@ -96,56 +101,56 @@ export function subscribe(listener: Listener) {
   }
 }
 
-export function setGames(nextGames: Game[]) {
-  const nextGameIds = new Set(nextGames.map((g) => g.id))
-  const localCustomGames = state.games.filter((g) => g.id.startsWith('custom-') && !nextGameIds.has(g.id))
-  const mergedGames = localCustomGames.concat(nextGames)
+export function setMaterials(nextMaterials: Material[]) {
+  const nextMaterialIds = new Set(nextMaterials.map((material) => material.id))
+  const localCustomMaterials = state.materials.filter((material) => material.id.startsWith('custom-') && !nextMaterialIds.has(material.id))
+  const mergedMaterials = localCustomMaterials.concat(nextMaterials)
 
-  const saved = new Set(state.savedGameIds)
-  const played = new Set(state.playedGameIds)
+  const saved = new Set(state.savedMaterialIds)
+  const played = new Set(state.playedMaterialIds)
   setState({
-    games: mergedGames.map((game) => Object.assign({}, game, {
-      saved: game.saved || saved.has(game.id),
-      played: game.played || played.has(game.id)
+    materials: mergedMaterials.map((material) => Object.assign({}, material, {
+      saved: material.saved || saved.has(material.id),
+      played: material.played || played.has(material.id)
     })),
-    savedGameIds: mergedGames.filter((game) => game.saved || saved.has(game.id)).map((game) => game.id),
-    playedGameIds: mergedGames.filter((game) => game.played || played.has(game.id)).map((game) => game.id)
+    savedMaterialIds: mergedMaterials.filter((material) => material.saved || saved.has(material.id)).map((material) => material.id),
+    playedMaterialIds: mergedMaterials.filter((material) => material.played || played.has(material.id)).map((material) => material.id)
   })
 }
 
-export function toggleSaved(gameId: string, value?: boolean) {
-  const ids = new Set(state.savedGameIds)
-  const nextValue = typeof value === 'boolean' ? value : !ids.has(gameId)
-  if (nextValue) ids.add(gameId)
-  else ids.delete(gameId)
+export function toggleSaved(materialId: string, value?: boolean) {
+  const ids = new Set(state.savedMaterialIds)
+  const nextValue = typeof value === 'boolean' ? value : !ids.has(materialId)
+  if (nextValue) ids.add(materialId)
+  else ids.delete(materialId)
   setState({
-    savedGameIds: Array.from(ids),
-    games: state.games.map((game) => game.id === gameId ? Object.assign({}, game, { saved: nextValue }) : game)
+    savedMaterialIds: Array.from(ids),
+    materials: state.materials.map((material) => material.id === materialId ? Object.assign({}, material, { saved: nextValue }) : material)
   })
   return nextValue
 }
 
-export function markPlayed(gameId: string) {
-  const ids = new Set(state.playedGameIds)
-  ids.add(gameId)
+export function markPlayed(materialId: string) {
+  const ids = new Set(state.playedMaterialIds)
+  ids.add(materialId)
   setState({
-    playedGameIds: Array.from(ids),
-    games: state.games.map((game) => game.id === gameId ? Object.assign({}, game, {
+    playedMaterialIds: Array.from(ids),
+    materials: state.materials.map((material) => material.id === materialId ? Object.assign({}, material, {
       played: true,
-      playedCount: (game.playedCount || 0) + 1
-    }) : game)
+      playedCount: (material.playedCount || 0) + 1
+    }) : material)
   })
 }
 
-export function unmarkPlayed(gameId: string) {
-  const ids = new Set(state.playedGameIds)
-  ids.delete(gameId)
+export function unmarkPlayed(materialId: string) {
+  const ids = new Set(state.playedMaterialIds)
+  ids.delete(materialId)
   setState({
-    playedGameIds: Array.from(ids),
-    games: state.games.map((game) => game.id === gameId ? Object.assign({}, game, {
+    playedMaterialIds: Array.from(ids),
+    materials: state.materials.map((material) => material.id === materialId ? Object.assign({}, material, {
       played: false,
-      playedCount: Math.max(0, (game.playedCount || 0) - 1)
-    }) : game)
+      playedCount: Math.max(0, (material.playedCount || 0) - 1)
+    }) : material)
   })
 }
 
@@ -165,10 +170,6 @@ export function addMethodCard(item: MethodCardItem) {
   setState({ methodCards: [item].concat(state.methodCards || []) })
 }
 
-export function setVoiceDraft(voiceDraft: VoiceDraft | null) {
-  setState({ voiceDraft })
-}
-
 export function setProfile(profile: { displayName: string; avatarUrl: string } | null) {
   setState({ profile })
 }
@@ -177,8 +178,8 @@ export function setThemeMode(mode: 'default' | 'vivid') {
   setState({ themeMode: mode })
 }
 
-export function setRecommendGameId(recommendGameId: string) {
-  setState({ recommendGameId })
+export function setRecommendMaterialId(recommendMaterialId: string) {
+  setState({ recommendMaterialId })
 }
 
 export function setDismissedPendingKeys(dismissedPendingKeys: string[]) {
@@ -191,10 +192,6 @@ export function toggleThemeMode() {
 
 export function getThemeClass() {
   return state.themeMode === 'vivid' ? 'theme-vivid' : 'theme-default'
-}
-
-export function clearVoiceDraft() {
-  setState({ voiceDraft: null })
 }
 
 function buildPausedRehearsal(rehearsal: RehearsalRecord | null) {
@@ -216,20 +213,20 @@ function getRehearsalMutexLabel() {
   return ''
 }
 
-function getGameMutexLabel() {
-  if (!state.currentGame) return ''
-  return state.currentGame.status === '暂停中' ? '暂停中的游戏' : '进行中的游戏'
+function getMaterialMutexLabel() {
+  if (!state.currentMaterial) return ''
+  return state.currentMaterial.status === '暂停中' ? '暂停中的素材练习' : '进行中的素材练习'
 }
 
-export function getTaskMutexError(target: 'rehearsal' | 'game') {
+export function getTaskMutexError(target: 'rehearsal' | 'material') {
   if (target === 'rehearsal') {
-    if (state.currentGame) return `当前有${getGameMutexLabel()}，请先结束后再开始排练`
+    if (state.currentMaterial) return `当前有${getMaterialMutexLabel()}，请先结束后再开始排练`
     if (hasActiveRehearsal()) return `当前有${getRehearsalMutexLabel()}，请先结束后再开始排练`
     return ''
   }
 
-  if (hasActiveRehearsal()) return `当前有${getRehearsalMutexLabel()}，请先结束后再开始游戏`
-  if (state.currentGame) return `当前有${getGameMutexLabel()}，请先结束后再开始游戏`
+  if (hasActiveRehearsal()) return `当前有${getRehearsalMutexLabel()}，请先结束后再开始素材练习`
+  if (state.currentMaterial) return `当前有${getMaterialMutexLabel()}，请先结束后再开始素材练习`
   return ''
 }
 
@@ -264,12 +261,12 @@ export function upsertRehearsalHistory(rehearsal: RehearsalRecord) {
   })
 }
 
-export function setGameRecordsHistory(records: GameRecord[]) {
-  setState({ gameRecordsHistory: records })
+export function setPracticeRecordsHistory(records: PracticeRecord[]) {
+  setState({ practiceRecordsHistory: records })
 }
 
-export function addGameRecord(record: GameRecord) {
-  setState({ gameRecordsHistory: [record].concat(state.gameRecordsHistory || []) })
+export function addPracticeRecord(record: PracticeRecord) {
+  setState({ practiceRecordsHistory: [record].concat(state.practiceRecordsHistory || []) })
 }
 
 export function startRehearsal(rehearsal: RehearsalRecord) {
@@ -283,20 +280,20 @@ export function startRehearsal(rehearsal: RehearsalRecord) {
   })
 }
 
-export function startGameSession(session: GameSession) {
-  const mutexError = getTaskMutexError('game')
+export function startMaterialSession(session: MaterialSession) {
+  const mutexError = getTaskMutexError('material')
   if (mutexError) throw new Error(mutexError)
-  setState({ currentGame: session })
+  setState({ currentMaterial: session })
 }
 
-export function updateGameSession(patch: Partial<GameSession>) {
-  if (state.currentGame) {
-    setState({ currentGame: { ...state.currentGame, ...patch } })
+export function updateMaterialSession(patch: Partial<MaterialSession>) {
+  if (state.currentMaterial) {
+    setState({ currentMaterial: { ...state.currentMaterial, ...patch } })
   }
 }
 
-export function clearGameSession() {
-  setState({ currentGame: null })
+export function clearMaterialSession() {
+  setState({ currentMaterial: null })
 }
 
 export function finishCurrentRehearsal(summaryPatch: Partial<RehearsalRecord> = {}) {
@@ -313,10 +310,10 @@ export function finishCurrentRehearsal(summaryPatch: Partial<RehearsalRecord> = 
   return finished
 }
 
-export function updateCurrentRehearsalPlan(gameId: string, patch: Partial<RehearsalPlanItem>) {
+export function updateCurrentRehearsalPlan(materialId: string, patch: Partial<RehearsalPlanItem>) {
   const current = state.currentRehearsal
   if (!current) return null
-  const plan = current.plan.map((item) => item.gameId === gameId ? Object.assign({}, item, patch) : item)
+  const plan = current.plan.map((item) => item.materialId === materialId ? Object.assign({}, item, patch) : item)
   const next = Object.assign({}, current, { plan })
   setState({
     currentRehearsal: next,
@@ -326,11 +323,11 @@ export function updateCurrentRehearsalPlan(gameId: string, patch: Partial<Rehear
   return next
 }
 
-export function addGameToCurrentRehearsal(gameId: string) {
+export function addMaterialToCurrentRehearsal(materialId: string) {
   const current = state.currentRehearsal
-  if (!current || current.plan.some((item) => item.gameId === gameId)) return current
+  if (!current || current.plan.some((item) => item.materialId === materialId)) return current
   const nextPlan = current.plan.concat({
-    gameId,
+    materialId,
     status: '未开始',
     keep: '',
     try: ''
@@ -338,12 +335,21 @@ export function addGameToCurrentRehearsal(gameId: string) {
   return patchCurrentRehearsal({ plan: nextPlan })
 }
 
-export function resetStoreForSeed(nextGames: Game[] = []) {
+export function resetStoreForSeed(nextMaterials: Material[] = []) {
   state = Object.assign(clone(defaultState), {
-    games: nextGames,
-    savedGameIds: nextGames.filter((game) => game.saved).map((game) => game.id),
-    playedGameIds: nextGames.filter((game) => game.played).map((game) => game.id)
+    materials: nextMaterials,
+    savedMaterialIds: nextMaterials.filter((material) => material.saved).map((material) => material.id),
+    playedMaterialIds: nextMaterials.filter((material) => material.played).map((material) => material.id)
   })
   persist()
   emit()
 }
+
+export const setGames = setMaterials
+export const setRecommendGameId = setRecommendMaterialId
+export const setGameRecordsHistory = setPracticeRecordsHistory
+export const addGameRecord = addPracticeRecord
+export const startGameSession = startMaterialSession
+export const updateGameSession = updateMaterialSession
+export const clearGameSession = clearMaterialSession
+export const addGameToCurrentRehearsal = addMaterialToCurrentRehearsal

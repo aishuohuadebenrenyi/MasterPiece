@@ -11,7 +11,7 @@
   <view class="section-title">{{sectionTitle}}</view>
   <block wx:if="{{plan.length}}">
     <view class="detail-plan">
-      <view wx:for="{{plan}}" wx:key="gameId" class="detail-game">
+      <view wx:for="{{plan}}" wx:key="materialId" class="detail-game">
         <view class="detail-game-head">
           <text class="step-index">{{index + 1}}</text>
           <view>

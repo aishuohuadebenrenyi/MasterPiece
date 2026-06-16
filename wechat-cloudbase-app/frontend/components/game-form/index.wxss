@@ -19,7 +19,7 @@
 }
 
 .primary-group {
-  gap: var(--improv-form-gap-related, 24rpx);
+  gap: var(--improv-form-gap-section, 36rpx);
 }
 
 .advanced-group {
@@ -40,6 +40,7 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 18rpx;
+  margin-top: 8rpx;
 }
 
 .add-sheet-grid-item {
@@ -48,24 +49,17 @@
   min-width: 0;
 }
 
-.category-field {
+.category-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--improv-form-gap-field-body, 14rpx);
+  flex: 0 0 auto;
+  gap: 34rpx;
+  padding-top: 2rpx;
+  padding-bottom: 12rpx;
 }
 
 .add-sheet-grid-item .input-shell {
   width: 100%;
-}
-
-.category-chip {
-  flex: 0 0 auto;
-  margin: 0;
-  min-width: 100rpx;
-  min-height: 70rpx;
-  padding: 0 26rpx;
-  font-size: 24rpx;
-  box-shadow: 0 8rpx 18rpx var(--improv-shadow-xs-color);
 }
 
 .custom-category-chip.active {

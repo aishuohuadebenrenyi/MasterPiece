@@ -133,6 +133,7 @@ button::after {
 .primary-btn,
 .ghost-btn,
 .small-btn,
+.mini-action-btn,
 .chip,
 .pill {
   display: inline-flex;
@@ -176,6 +177,21 @@ button::after {
   color: #667289;
   color: var(--improv-muted, #667289);
   font-size: 24rpx;
+}
+
+.mini-action-btn {
+  flex: 0 0 auto;
+  min-width: 96rpx;
+  min-height: 54rpx;
+  padding: 0 20rpx;
+  background: #ffffff;
+  background: var(--improv-card-strong, #ffffff);
+  border: 2rpx solid rgba(94, 114, 144, 0.12);
+  border: 2rpx solid var(--improv-line-soft, rgba(94, 114, 144, 0.12));
+  color: #667289;
+  color: var(--improv-muted, #667289);
+  font-size: 24rpx;
+  box-shadow: none;
 }
 
 .chip {

@@ -1,3 +1,4 @@
+@import "../../app.wxss";
 @import "../../styles/theme.wxss";
 
 :host {
@@ -6,7 +7,7 @@
 }
 
 .form-card {
-  padding: 38rpx 34rpx;
+  padding: 40rpx 34rpx;
   margin-bottom: 32rpx;
   display: flex;
   flex-direction: column;
@@ -18,7 +19,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20rpx;
-  margin-bottom: 14rpx;
+  margin-bottom: 18rpx;
 }
 
 .card-head-title {
@@ -26,15 +27,11 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 8rpx;
 }
 
 .kicker {
-  display: block;
-  color: var(--improv-light-strong);
-  font-size: 22rpx;
-  font-weight: 700;
-  letter-spacing: 0.6rpx;
-  margin-bottom: 6rpx;
+  margin-bottom: 0;
 }
 
 .title {
@@ -57,4 +54,5 @@
 .card-body {
   display: flex;
   flex-direction: column;
+  gap: 12rpx;
 }

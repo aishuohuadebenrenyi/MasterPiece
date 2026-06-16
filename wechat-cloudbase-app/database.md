@@ -1,33 +1,37 @@
 # CloudBase 数据库与接口说明
 
-更新时间：2026-06-08
+更新时间：2026-06-14
 
-本小程序使用 `improv_` 前缀集合。当前版本采用重建策略，不兼容旧数据。
+本小程序使用 `improv_` 前缀集合。当前版本采用重建策略，素材体系以 `Material` 为上位对象，不兼容旧 `Game` 集合数据。
 
 ## 1. 集合
 
-- `improv_games`：即兴游戏库。
-- `improv_user_game_states`：用户对游戏的收藏、玩过、最近排练状态。
+- `improv_materials`：即兴素材库，包含游戏、角色、才艺、格式、主理、技巧、复盘、路径。
+- `improv_user_material_states`：用户对素材的收藏、练过、最近使用状态。
 - `improv_profiles`：用户个人资料。
 - `improv_inspirations`：灵感记录。
 - `improv_rehearsals`：排练记录。
-- `improv_game_records`：单次游戏实践反馈。
+- `improv_practice_records`：单次素材练习复盘。
 - `improv_method_cards`：个人沉淀方法卡。
 
-## 2. improv_games
+## 2. improv_materials
 
 固定字段：
 
 - `id`
 - `title`
 - `desc`
+- `type`：`游戏`、`角色`、`才艺`、`格式`、`主理`、`技巧`、`复盘`、`路径`
 - `tags`
+- `abilities`
+- `scenes`
 - `meta`
 - `steps`
 - `tips`
 - `variant`
 - `issue`
-- `relatedGameId`
+- `relatedMaterialId`
+- `referenceOnly`
 - `stripeTone`
 - `sortOrder`
 - `ownerOpenId`
@@ -43,12 +47,17 @@
 - `lastPlayedAt`
 - `lastRehearsalAt`
 
-## 3. improv_user_game_states
+说明：
+
+- `路径` 是参考型素材，`referenceOnly` 必须为 `true`；只支持查看、收藏和筛选跳转，不进入训练计时、抽卡训练池或复盘链路。
+- 其他素材类型可收藏、标记练过、开始训练、暂停、结束复盘。
+
+## 3. improv_user_material_states
 
 固定字段：
 
 - `ownerOpenId`
-- `gameId`
+- `materialId`
 - `saved`
 - `playedCount`
 - `lastPlayedAt`
@@ -70,7 +79,7 @@
 - `improv_profiles`
 - `improv_inspirations`
 - `improv_rehearsals`
-- `improv_game_records`
+- `improv_practice_records`
 - `improv_method_cards`
 
 ### improv_rehearsals
@@ -97,15 +106,16 @@
 说明：
 
 - `goals` 支持固定目标与自定义目标混合写入。
-- 排练复盘直接更新在 `improv_rehearsals` 上，不额外写入 `improv_game_records`。
+- `plan` 中每一项使用 `materialId`，可加入除 `路径` 外的多类型素材。
+- 排练复盘直接更新在 `improv_rehearsals` 上，不额外写入 `improv_practice_records`。
 - 历史排练保持只读，不支持事后追加编辑；后续归档统一在“我的 -> 待整理”中完成。
 
-### improv_game_records
+### improv_practice_records
 
 固定字段：
 
 - `id`
-- `gameId`
+- `materialId`
 - `rehearsalId`
 - `title`
 - `desc`
@@ -122,8 +132,8 @@
 
 说明：
 
-- `title` 为本次反馈对应的游戏名。
-- `rehearsalId` 只记录当前排练或从反馈新建的排练，不回写历史排练。
+- `title` 为本次练习对应的素材名。
+- `rehearsalId` 只记录当前排练或从复盘新建的排练，不回写历史排练。
 
 ### improv_profiles
 
@@ -144,15 +154,15 @@
 
 | action | 说明 |
 | --- | --- |
-| `game.seed` | 已停用代码内 seed，调用时会提示改为手动导入仓库根目录 `mock_data/improv_games.json`。 |
-| `game.list` | 返回游戏列表，并合并当前用户收藏/玩过状态。 |
-| `game.create` | 创建自定义游戏。 |
-| `game.update` | 更新当前用户创建的自定义游戏。 |
-| `game.delete` | 软删除当前用户创建的自定义游戏。 |
-| `game.updateState` | 统一更新 `saved` / `played` / `lastRehearsalAt`。 |
+| `material.seed` | 已停用代码内 seed，调用时提示改为手动导入 `mock_data/improv_materials.json`。 |
+| `material.list` | 返回素材列表，并合并当前用户收藏/练过状态。 |
+| `material.create` | 创建自定义素材。 |
+| `material.update` | 更新当前用户创建的自定义素材。 |
+| `material.delete` | 软删除当前用户创建的自定义素材。 |
+| `material.updateState` | 统一更新 `saved` / `played` / `lastRehearsalAt`。 |
 | `profile.get` | 返回当前用户个人资料；没有资料时返回空。 |
 | `profile.update` | 更新当前用户的名字、头像和 `troupeName`。 |
-| `today.summary` | 返回记录页今日聚合：`inspirations`、`rehearsals`、`recommendGameId`。 |
+| `today.summary` | 返回记录页今日聚合：`inspirations`、`rehearsals`、`recommendMaterialId`。 |
 | `inspiration.list` | 返回当前用户灵感记录。 |
 | `inspiration.create` | 创建灵感记录。 |
 | `methodCard.list` | 返回当前用户方法卡。 |
@@ -160,15 +170,27 @@
 | `rehearsal.list` | 返回当前用户排练记录。 |
 | `rehearsal.create` | 创建排练记录；`goals` 支持自定义字符串。 |
 | `rehearsal.update` | 更新排练记录，也承载暂停、完成与复盘字段写回。 |
-| `rehearsal.updateGameStatus` | 更新排练计划中单个游戏的状态、Keep、Try。 |
-| `gameRecord.list` | 返回当前用户单次游戏实践反馈。 |
-| `gameRecord.create` | 创建单次游戏实践反馈，不用于保存排练复盘。 |
+| `rehearsal.updateMaterialStatus` | 更新排练计划中单个素材的状态、Keep、Try。 |
+| `practiceRecord.list` | 返回当前用户单次素材练习复盘。 |
+| `practiceRecord.create` | 创建单次素材练习复盘，不用于保存排练复盘。 |
+
+`material.list` 可选 `payload`：
+
+- `query`：按标题、描述、类型、标签、能力、场景和 meta 做文本匹配。
+- `type`：素材类型；`all` 或空值表示全部类型。
+- `ability`：训练能力；`all` 或空值表示不限。
+- `scene`：使用场景；`all` 或空值表示不限。
+- `status`：`all`、`saved`、`played`、`unplayed`。
+- `limit`：返回数量上限，当前最大 100。
+
+说明：`saved`、`played`、`unplayed` 依赖当前用户状态，云函数会先合并 `improv_user_material_states` 再过滤。
 
 兼容别名：
 
-- `seed.games` 仍会命中 `game.seed`，但同样只返回手动导入提示。
-- `game.updateSaved` 会转到 `game.updateState`。
-- `game.updatePlayed` 会转到 `game.updateState`。
+- `seed.games`、`game.seed` 会转到 `material.seed`。
+- `game.list/create/update/delete/updateState/updateSaved/updatePlayed` 会转到对应 `material.*` action。
+- `rehearsal.updateGameStatus` 会转到 `rehearsal.updateMaterialStatus`。
+- `gameRecord.list/create` 会转到 `practiceRecord.list/create`。
 
 ## 6. 请求与返回结构
 
@@ -178,7 +200,7 @@
 wx.cloud.callFunction({
   name: 'improv-api',
   data: {
-    action: 'game.list',
+    action: 'material.list',
     requestId: `improv_${Date.now()}`,
     payload: {}
   }
@@ -203,26 +225,27 @@ wx.cloud.callFunction({
 3. 上传并部署云函数 `improv-api`。
 4. 从仓库根目录 `mock_data/` 手动导入集合数据：
 
-- `mock_data/improv_games.json`
-- `mock_data/improv_user_game_states.sample.json`
+- `mock_data/improv_materials.json`
+- `mock_data/improv_user_material_states.sample.json`
 - `mock_data/improv_inspirations.sample.json`
 - `mock_data/improv_rehearsals.sample.json`
 - `mock_data/improv_method_cards.sample.json`
-- `mock_data/improv_game_records.sample.json`
+- `mock_data/improv_practice_records.sample.json`
 
 5. 导入私有集合前，先把 `ownerOpenId` 替换为真实值：
 
-- `improv_user_game_states`
+- `improv_user_material_states`
 - `improv_inspirations`
 - `improv_rehearsals`
-- `improv_game_records`
+- `improv_practice_records`
 - `improv_method_cards`
 
 6. 导入完成后，在小程序中验证：
 
-- `game.list`
+- `material.list`
 - `inspiration.list`
 - `rehearsal.list`
+- `practiceRecord.list`
 - `methodCard.list`
 
 当前开发阶段补充说明：

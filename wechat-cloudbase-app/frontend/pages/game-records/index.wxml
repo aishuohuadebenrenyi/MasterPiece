@@ -1,18 +1,18 @@
 <scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="game-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
   <view class="game-records-page">
-    <subpage-header title="游戏记录" bind:back="back" />
+    <subpage-header title="练习记录" bind:back="back" />
 
-    <form-card wx:if="{{showSummaryCard}}" title="游戏实践" kicker="游戏概览">
+    <form-card wx:if="{{showSummaryCard}}" title="素材练习" kicker="练习概览">
       <view class="card-head">
-        <text class="muted">按时间回看单次游戏反馈和经验。</text>
+        <text class="muted">按时间回看单次素材练习复盘和经验。</text>
         <text class="pill blue">{{records.length}} 条</text>
       </view>
     </form-card>
 
     <view wx:if="{{errorText}}" class="notice-note-card">{{errorText}}</view>
 
-    <view wx:if="{{loading}}" class="state-note-card">正在同步游戏记录...</view>
-    <empty-state-panel wx:elif="{{!records.length}}" title="还没有游戏记录" desc="这里会回看单次游戏的 Keep、Try 和提醒。等你真的玩过一次，再把它留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
+    <view wx:if="{{loading}}" class="state-note-card">正在同步练习记录...</view>
+    <empty-state-panel wx:elif="{{!records.length}}" title="还没有练习记录" desc="这里会回看单次素材练习的 Keep、Try 和提醒。等你真的练过一次，再把它留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
 
     <view wx:else class="record-list">
       <record-card wx:for="{{records}}" wx:key="id" itemId="{{item.id}}" miniTitle="{{item.dateLabel}}" title="{{item.title}}" desc="{{item.displayDesc}}" meta="{{item.displayMeta}}" pending="{{item.syncStatus === 'pending'}}" actionText="查看" bind:action="openRecord" />
@@ -20,7 +20,7 @@
   </view>
 
   <bottom-sheet visible="{{detailVisible}}" title="记录详情" sheetClass="record-detail-sheet" bind:close="closeSheet">
-    <record-detail-panel wx:if="{{selectedRecord}}" title="{{selectedRecord.title}}" meta="{{selectedRecord.displayMeta}}" pending="{{selectedRecord.syncStatus === 'pending'}}" sectionTitle="反馈详情" notes="{{selectedNotes}}" emptyText="无具体反馈内容。" readonlyNote="这是历史记录的只读回看。需要再次玩这个游戏时，可前往游戏详情页开启。" />
+    <record-detail-panel wx:if="{{selectedRecord}}" title="{{selectedRecord.title}}" meta="{{selectedRecord.displayMeta}}" pending="{{selectedRecord.syncStatus === 'pending'}}" sectionTitle="复盘详情" notes="{{selectedNotes}}" emptyText="无具体复盘内容。" readonlyNote="这是历史记录的只读回看。需要再次练这条素材时，可前往素材详情页开启。" />
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">

@@ -58,17 +58,10 @@
   flex: 1;
 }
 
-.tag-row-spaced {
-  margin-top: 14rpx;
-}
-
-.arrangement-section + .tag-section {
-  margin-top: 18rpx;
-}
-
-.arrangement-section .filter-label,
-.tag-section .filter-label {
-  font-size: 24rpx;
+.filter-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
 }
 
 .card-head {
@@ -82,28 +75,6 @@
 .entry-title {
   margin: 12rpx 0 8rpx;
   font-size: 34rpx;
-}
-
-.voice-pulse {
-  width: 240rpx;
-  height: 240rpx;
-  margin: 24rpx auto;
-  border-radius: 120rpx;
-  background: var(--improv-action-gradient);
-  color: var(--improv-on-brand);
-  font-size: 56rpx;
-  font-weight: 900;
-  line-height: 240rpx;
-  text-align: center;
-}
-
-.draft-preview {
-  padding: 24rpx;
-  margin-top: 8rpx;
-}
-
-.sheet-title {
-  margin: 12rpx 0 8rpx;
 }
 
 .sheet-submit {

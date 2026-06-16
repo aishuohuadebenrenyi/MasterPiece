@@ -1,16 +1,12 @@
 <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{themeClass}}" style="{{layoutStyle}}" wx:if="{{game}}">
-  <subpage-header kicker="{{duration > 0 ? '本次游戏时长：' + durationText : '游戏实践反馈'}}" title="{{game.title}}" bind:back="back" />
+  <subpage-header kicker="{{duration > 0 ? '本次练习时长：' + durationText : '素材练习复盘'}}" title="{{game.title}}" bind:back="back" />
 
-  <form-card title="本次记录对象" actionText="导入语音" bind:action="openVoice">
+  <form-card title="本次记录对象">
     <view class="feedback-object-summary">
       <view class="feedback-object-title">{{game.title}}</view>
       <text class="muted feedback-object-desc">{{game.desc}}</text>
     </view>
     <view class="meta-row feedback-object-meta"><text wx:for="{{game.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
-    <view class="feedback-status-card voice-status-card">
-      <text class="feedback-status-title">{{voiceHintTitle}}</text>
-      <text class="feedback-helper">{{voiceHintDesc}}</text>
-    </view>
   </form-card>
 
   <form-card title="记录本次反馈">
