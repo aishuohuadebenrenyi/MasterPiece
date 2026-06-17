@@ -4,6 +4,7 @@ import type {
   Material,
   MaterialSession,
   MethodCardItem,
+  PendingIntentMark,
   PracticeRecord,
   RehearsalPlanItem,
   RehearsalRecord,
@@ -14,6 +15,7 @@ type Listener = (state: AppState) => void
 
 const listeners: Listener[] = []
 const DISMISSED_PENDING_KEYS_STORAGE = 'improv_dismissed_pending_keys'
+const PENDING_INTENT_MARKS_STORAGE = 'improv_pending_intent_marks'
 const THEME_MODE_STORAGE = 'improv_theme_mode'
 
 const defaultState: AppState = {
@@ -32,6 +34,7 @@ const defaultState: AppState = {
   rehearsalHistory: [] as RehearsalRecord[],
   practiceRecordsHistory: [] as PracticeRecord[],
   dismissedPendingKeys: [] as string[],
+  pendingIntentMarks: [] as PendingIntentMark[],
   profile: null as { displayName: string; avatarUrl: string } | null
 }
 
@@ -54,6 +57,15 @@ function readInitialState(): AppState {
         .map((item) => String(item || '').trim())
         .filter(Boolean)
     }
+    const pendingIntentMarks = wx.getStorageSync(PENDING_INTENT_MARKS_STORAGE)
+    if (Array.isArray(pendingIntentMarks)) {
+      initialState.pendingIntentMarks = pendingIntentMarks
+        .map((item) => ({
+          key: String((item && item.key) || '').trim(),
+          intent: (item && item.intent === 'rehearsal' ? 'rehearsal' : 'training') as PendingIntentMark['intent']
+        }))
+        .filter((item) => item.key)
+    }
   } catch (error) {
     // Ignore storage read failures and keep in-memory defaults.
   }
@@ -64,6 +76,7 @@ function persist() {
   try {
     wx.setStorageSync(THEME_MODE_STORAGE, state.themeMode)
     wx.setStorageSync(DISMISSED_PENDING_KEYS_STORAGE, state.dismissedPendingKeys || [])
+    wx.setStorageSync(PENDING_INTENT_MARKS_STORAGE, state.pendingIntentMarks || [])
   } catch (error) {
     // Ignore storage write failures for UI-only local preferences.
   }
@@ -184,6 +197,10 @@ export function setRecommendMaterialId(recommendMaterialId: string) {
 
 export function setDismissedPendingKeys(dismissedPendingKeys: string[]) {
   setState({ dismissedPendingKeys })
+}
+
+export function setPendingIntentMarks(pendingIntentMarks: PendingIntentMark[]) {
+  setState({ pendingIntentMarks })
 }
 
 export function toggleThemeMode() {

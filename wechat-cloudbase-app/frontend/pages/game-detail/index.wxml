@@ -1,7 +1,7 @@
 <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page detail {{themeClass}}" style="{{layoutStyle}}" wx:if="{{game}}">
   <subpage-header customClass="detail-header-row" bind:back="back" />
   <view class="card header">
-    <button wx:if="{{isCustomGame && !isEditMode}}" class="card-action-btn" bindtap="enterEditMode">编辑</button>
+    <button wx:if="{{canEditGame && !isEditMode}}" class="card-action-btn" bindtap="enterEditMode">编辑</button>
     <button wx:if="{{isEditMode}}" class="card-action-btn" bindtap="cancelEdit">取消</button>
     <view class="detail-heading">
       <text class="kicker">{{tagText}}</text>
@@ -64,7 +64,7 @@
 
   <root-portal>
     <view class="fixed-actions" wx:if="{{isEditMode}}">
-      <button class="ghost-btn delete-btn" bindtap="confirmDelete">删除游戏</button>
+      <button class="ghost-btn delete-btn" bindtap="confirmDelete">删除素材</button>
       <button class="primary-btn add-submit-btn" bindtap="saveGame">保存修改</button>
     </view>
     <view class="fixed-actions" wx:else>

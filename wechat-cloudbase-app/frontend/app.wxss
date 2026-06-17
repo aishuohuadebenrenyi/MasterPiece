@@ -5,6 +5,11 @@ page {
   --content-safe-top: 172rpx;
   --page-side: 40rpx;
   --page-bottom: 128rpx;
+  --fixed-action-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  --fixed-action-padding: 14rpx;
+  --fixed-action-button-height: 76rpx;
+  --fixed-action-clearance: 24rpx;
+  --fixed-action-spacer: calc(152rpx + env(safe-area-inset-bottom));
   width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
@@ -686,10 +691,10 @@ form-field {
   position: fixed;
   left: 34rpx;
   right: 34rpx;
-  bottom: calc(16rpx + env(safe-area-inset-bottom));
+  bottom: var(--fixed-action-bottom);
   z-index: 30;
   margin-top: 0;
-  padding: 14rpx;
+  padding: var(--fixed-action-padding);
   border-radius: 44rpx;
   background: var(--improv-card);
   box-shadow: 0 18rpx 42rpx var(--improv-shadow-fixed-color);
@@ -704,7 +709,7 @@ form-field {
 
 .form-actions button,
 .fixed-actions button {
-  min-height: 76rpx;
+  min-height: var(--fixed-action-button-height);
 }
 
 .sheet-submit {

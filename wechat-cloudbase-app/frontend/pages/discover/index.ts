@@ -1,5 +1,5 @@
 import type { Material, MaterialType, ViewMode } from '../../types/domain'
-import { createMaterial, listMaterials, updateSaved } from '../../services/material'
+import { createMaterial, listMaterials, updateMaterial, updateSaved } from '../../services/material'
 import { getState, setMaterials, setState, subscribe, toggleSaved, getThemeClass } from '../../store/index'
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
@@ -34,6 +34,47 @@ type ExpandCardItem = {
   desc: string
 }
 
+type PathPreset = {
+  key: string
+  title: string
+  desc: string
+  preview: string[]
+  abilities: string[]
+  scenes: string[]
+  steps: ExpandCardItem[]
+  tips: string
+  sortOrder: number
+}
+
+type PathEntry = {
+  key: string
+  title: string
+  desc: string
+  preview: string[]
+  customLabel: string
+}
+
+type PathSheetState = {
+  key: string
+  title: string
+  desc: string
+  abilities: string[]
+  scenes: string[]
+  steps: ExpandCardItem[]
+  tips: string
+  customId: string
+  editText: string
+  saveText: string
+}
+
+type PathDraft = {
+  title: string
+  desc: string
+  steps: string
+  abilityText: string
+  tips: string
+}
+
 const fabSizeRpx = 116
 const fabRightRpx = 42
 const fabBottomRpx = 160
@@ -64,6 +105,30 @@ const trainingPathItems: ExpandCardItem[] = [
 ]
 const learningMapPreview = ['反应', '身体', '角色', '叙事', '主理']
 const trainingPathPreview = ['热身', '双人', '小组', '演出', '复盘']
+const pathPresets: PathPreset[] = [
+  {
+    key: 'learning-map',
+    title: '学习地图',
+    desc: '从基础反应到格式主理，按能力层层展开。',
+    preview: learningMapPreview,
+    abilities: ['自发性', '积极聆听', '身体空间', '角色塑造', '叙事构建', '主持'],
+    scenes: ['备课'],
+    steps: learningMapItems,
+    tips: '学习地图用于查阅和自定义学习顺序，不进入训练计时。',
+    sortOrder: 980
+  },
+  {
+    key: 'training-path',
+    title: '训练路径',
+    desc: '从个人启动到演后复盘，形成一条可执行路线。',
+    preview: trainingPathPreview,
+    abilities: ['身体空间', '积极聆听', '团队协作', '主持', '失败复原'],
+    scenes: ['备课', '排练'],
+    steps: trainingPathItems,
+    tips: '训练路径用于安排练习方向，具体练习仍从非路径素材开始。',
+    sortOrder: 981
+  }
+]
 
 function buildMaterialMeta(people = '', duration = '') {
   return [people || '', duration || ''].filter(Boolean)
@@ -80,6 +145,36 @@ function buildCategoryRows(cards: CategoryCard[]): CategoryCardRow[] {
   return rows
 }
 
+function getPathPreset(key: string) {
+  return pathPresets.find((preset) => preset.key === key) || pathPresets[0]
+}
+
+function getCustomPathMaterial(materials: Material[], key: string) {
+  return materials.find((material) => material.type === '路径' && material.relatedMaterialId === key) || null
+}
+
+function splitPathText(value: string) {
+  return String(value || '').split(/[,\n，、；;]+/).map((item) => item.trim()).filter(Boolean)
+}
+
+function materialToPathSteps(material: Material | null, preset: PathPreset) {
+  if (!material || !material.steps || !material.steps.length) return preset.steps
+  return material.steps.map((step) => ({ title: step, desc: '' }))
+}
+
+function buildPathEntries(materials: Material[]): PathEntry[] {
+  return pathPresets.map((preset) => {
+    const custom = getCustomPathMaterial(materials, preset.key)
+    return {
+      key: preset.key,
+      title: custom?.title || preset.title,
+      desc: custom?.desc || preset.desc,
+      preview: custom?.steps && custom.steps.length ? custom.steps.slice(0, 5) : preset.preview,
+      customLabel: custom ? '我的版本' : ''
+    }
+  })
+}
+
 Page({
   data: {
     themeClass: 'theme-default',
@@ -87,12 +182,11 @@ Page({
     filteredMaterials: [] as Material[],
     categoryCards: [] as CategoryCard[],
     categoryRows: [] as CategoryCardRow[],
-    learningMapItems,
-    trainingPathItems,
-    learningMapPreview,
-    trainingPathPreview,
-    learningMapExpanded: false,
-    trainingPathExpanded: false,
+    pathEntries: buildPathEntries([]) as PathEntry[],
+    pathVisible: false,
+    pathEditMode: false,
+    activePath: null as PathSheetState | null,
+    pathDraft: {} as PathDraft,
     view: 'all' as ViewMode,
     activeCategory: '' as MaterialType | '',
     isCategoryDetail: false,
@@ -198,6 +292,7 @@ Page({
       filteredMaterials,
       categoryCards,
       categoryRows: buildCategoryRows(categoryCards),
+      pathEntries: buildPathEntries(this.data.materials),
       currentRandomMaterial: randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null,
       allActiveClass: this.data.view === 'all' ? 'active' : '',
       categoryActiveClass: this.data.view === 'category' ? 'active' : '',
@@ -378,12 +473,120 @@ Page({
     }, () => this.syncFiltered())
   },
 
-  toggleLearningMap() {
-    this.setData({ learningMapExpanded: !this.data.learningMapExpanded })
+  buildActivePath(key: string): PathSheetState {
+    const preset = getPathPreset(key)
+    const custom = getCustomPathMaterial(this.data.materials, key)
+    const source = custom || preset
+    return {
+      key,
+      title: source.title,
+      desc: source.desc,
+      abilities: source.abilities || preset.abilities,
+      scenes: source.scenes || preset.scenes,
+      steps: custom ? materialToPathSteps(custom, preset) : preset.steps,
+      tips: source.tips || preset.tips,
+      customId: custom?.id || '',
+      editText: custom ? '编辑我的版本' : '编辑我的版本',
+      saveText: custom ? '保存修改' : '保存为我的路径'
+    }
   },
 
-  toggleTrainingPath() {
-    this.setData({ trainingPathExpanded: !this.data.trainingPathExpanded })
+  openPathSheet(event: WechatMiniprogram.TouchEvent) {
+    const key = String(event.currentTarget.dataset.key || '')
+    if (!key) return
+    openModal(this, {
+      pathVisible: true,
+      pathEditMode: false,
+      activePath: this.buildActivePath(key),
+      pathDraft: {}
+    })
+  },
+
+  editPath() {
+    const activePath = this.data.activePath
+    if (!activePath) return
+    this.setData({
+      pathEditMode: true,
+      pathDraft: {
+        title: activePath.title,
+        desc: activePath.desc,
+        steps: activePath.steps.map((item: ExpandCardItem) => item.title).join('\n'),
+        abilityText: activePath.abilities.join('，'),
+        tips: activePath.tips
+      }
+    })
+  },
+
+  cancelPathEdit() {
+    const activePath = this.data.activePath
+    this.setData({
+      pathEditMode: false,
+      pathDraft: {},
+      activePath: activePath ? this.buildActivePath(activePath.key) : null
+    })
+  },
+
+  handlePathDraftFieldChange(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const field = String(event.currentTarget.dataset.field || '')
+    if (!field) return
+    this.setData({ [`pathDraft.${field}`]: String(event.detail?.value || '') })
+  },
+
+  async savePathDraft() {
+    const activePath = this.data.activePath
+    if (!activePath) return
+    const preset = getPathPreset(activePath.key)
+    const title = String(this.data.pathDraft.title || '').trim()
+    if (!title) {
+      toast('先写路径名称')
+      return
+    }
+    const abilities = splitPathText(this.data.pathDraft.abilityText)
+    const steps = splitPathText(this.data.pathDraft.steps)
+    const material: Material = {
+      id: activePath.customId || `custom-${activePath.key}-${Date.now()}`,
+      title,
+      desc: String(this.data.pathDraft.desc || '').trim(),
+      type: '路径',
+      tags: Array.from(new Set(['路径', '学习路径', '自定义'].concat(abilities))),
+      abilities,
+      scenes: preset.scenes,
+      meta: ['我的路径', '参考'],
+      steps,
+      tips: String(this.data.pathDraft.tips || '').trim(),
+      variant: '',
+      issue: '',
+      relatedMaterialId: activePath.key,
+      referenceOnly: true,
+      stripeTone: 'mint',
+      sortOrder: preset.sortOrder
+    }
+    try {
+      if (activePath.customId) await updateMaterial(material)
+      else await createMaterial(material)
+      const nextMaterials = [material].concat(getState().materials.filter((item) => item.id !== material.id))
+      setMaterials(nextMaterials)
+      this.setData({
+        materials: nextMaterials,
+        pathEditMode: false,
+        activePath: {
+          key: activePath.key,
+          title: material.title,
+          desc: material.desc,
+          abilities: material.abilities,
+          scenes: material.scenes,
+          steps: materialToPathSteps(material, preset),
+          tips: material.tips,
+          customId: material.id,
+          editText: '编辑我的版本',
+          saveText: '保存修改'
+        },
+        pathDraft: {}
+      }, () => this.syncFiltered())
+      toast(activePath.customId ? '已保存修改' : '已保存为我的路径')
+    } catch (error) {
+      toast('路径保存失败，请稍后再试')
+    }
   },
 
   filterType(event: WechatMiniprogram.TouchEvent) {
@@ -539,6 +742,10 @@ Page({
       randomVisible: false,
       filterVisible: false,
       addVisible: false,
+      pathVisible: false,
+      pathEditMode: false,
+      activePath: null,
+      pathDraft: {},
       customCategoryVisible: false,
       customCategoryFocus: false,
       customCategoryInput: '',

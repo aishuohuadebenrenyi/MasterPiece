@@ -7,6 +7,8 @@ text {
 }
 
 .sheet-layer {
+  --sheet-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  --sheet-action-bottom-gap: 24rpx;
   position: fixed;
   top: 0;
   right: 0;
@@ -57,7 +59,7 @@ text {
   position: fixed;
   left: 20rpx;
   right: 20rpx;
-  bottom: calc(18rpx + env(safe-area-inset-bottom));
+  bottom: var(--sheet-bottom);
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -74,6 +76,10 @@ text {
   pointer-events: auto;
 }
 
+.sheet.sheet-with-actions {
+  padding-bottom: 0;
+}
+
 .sheet-content {
   width: 100%;
   display: flex;
@@ -88,7 +94,7 @@ text {
   min-height: 0;
   height: calc(78vh - 160rpx);
   box-sizing: border-box;
-  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  padding-bottom: 12rpx;
   display: flex;
   flex-direction: column;
 }
@@ -98,7 +104,7 @@ text {
   width: 100%;
   max-height: calc(78vh - 160rpx);
   box-sizing: border-box;
-  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  padding-bottom: 12rpx;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -113,7 +119,7 @@ text {
   align-items: center;
   justify-content: center;
   padding-top: 18rpx;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--sheet-action-bottom-gap);
 }
 
 .sheet.compact-sheet {
@@ -140,6 +146,23 @@ text {
   flex-direction: column;
 }
 
+.sheet.path-sheet {
+  bottom: var(--sheet-bottom);
+  max-height: 84vh;
+  background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.98));
+}
+
+.sheet.path-sheet .sheet-scroll {
+  height: calc(84vh - 198rpx);
+  padding-bottom: 20rpx;
+}
+
+.sheet.path-sheet .sheet-actions {
+  padding-top: 10rpx;
+  padding-bottom: var(--sheet-action-bottom-gap);
+  background: var(--improv-sheet-action-gradient, linear-gradient(180deg, rgba(255, 255, 255, 0.76), #ffffff 38%));
+}
+
 .sheet.profile-edit-sheet-shell {
   max-height: 72vh;
   padding-bottom: 30rpx;
@@ -163,7 +186,7 @@ text {
 .sheet.filter-sheet {
   left: 26rpx;
   right: 26rpx;
-  bottom: calc(16rpx + env(safe-area-inset-bottom));
+  bottom: var(--sheet-bottom);
   padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 42rpx;
   background: #ffffff;
@@ -177,20 +200,20 @@ text {
 }
 
 .sheet.filter-sheet .sheet-scroll-static {
-  padding-bottom: calc(6rpx + env(safe-area-inset-bottom));
+  padding-bottom: 6rpx;
 }
 
 .sheet.tab-sheet {
   left: 24rpx;
   right: 24rpx;
-  bottom: calc(14rpx + env(safe-area-inset-bottom));
+  bottom: var(--sheet-bottom);
   border-radius: 44rpx;
 }
 
 .sheet.add-sheet {
   left: 24rpx;
   right: 24rpx;
-  bottom: calc(14rpx + env(safe-area-inset-bottom));
+  bottom: var(--sheet-bottom);
   padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 44rpx;
   max-height: 82vh;
@@ -211,7 +234,7 @@ text {
 
 .sheet.add-sheet .sheet-actions {
   padding-top: 18rpx;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--sheet-action-bottom-gap);
   background: var(--improv-sheet-action-gradient, linear-gradient(180deg, rgba(255, 255, 255, 0.72), #ffffff 34%));
 }
 
@@ -219,7 +242,7 @@ text {
 .sheet.mine-detail-sheet {
   left: 24rpx;
   right: 24rpx;
-  bottom: calc(14rpx + env(safe-area-inset-bottom));
+  bottom: var(--sheet-bottom);
   padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 44rpx;
   max-height: 72vh;

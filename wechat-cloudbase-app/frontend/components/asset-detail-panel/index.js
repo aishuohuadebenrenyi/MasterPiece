@@ -10,6 +10,7 @@ Component({
     desc: { type: String, value: '' },
     meta: { type: Array, value: [] },
     canSediment: { type: Boolean, value: false },
+    canMarkIntent: { type: Boolean, value: false },
     loading: { type: Boolean, value: false }
   },
   methods: {
@@ -18,6 +19,9 @@ Component({
     },
     onSediment() {
       this.triggerEvent('sediment')
+    },
+    onMarkIntent(event) {
+      this.triggerEvent('markintent', { intent: event.currentTarget.dataset.intent })
     }
   }
 })

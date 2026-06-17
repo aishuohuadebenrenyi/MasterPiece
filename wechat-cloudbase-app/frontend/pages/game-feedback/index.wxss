@@ -3,7 +3,7 @@
 }
 
 .feedback {
-  padding-bottom: calc(252rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--fixed-action-spacer) + 72rpx);
 }
 
 .feedback-object-summary {
@@ -99,8 +99,13 @@
   position: fixed;
   left: 34rpx;
   right: 34rpx;
-  bottom: calc(16rpx + env(safe-area-inset-bottom));
+  bottom: var(--fixed-action-bottom);
   z-index: 30;
+  padding: var(--fixed-action-padding);
+  border-radius: 44rpx;
+  background: var(--improv-card);
+  box-shadow: 0 18rpx 42rpx var(--improv-shadow-fixed-color);
+  backdrop-filter: blur(16rpx);
 }
 
 .action-note {
@@ -121,6 +126,17 @@
 }
 
 .form-actions {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  margin-top: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
   flex-direction: row;
   gap: 20rpx;
 }

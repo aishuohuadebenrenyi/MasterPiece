@@ -71,53 +71,25 @@
           </view>
         </view>
 
-        <view class="category-reference-block card card-surface-reference">
+        <view class="category-reference-block">
           <view class="reference-block-head">
             <text class="reference-block-title">学习地图与训练路径</text>
           </view>
 
           <view class="path-card-stack">
-            <view class="path-card">
-              <view class="path-card-head" bindtap="toggleLearningMap" hover-class="none">
+            <view wx:for="{{pathEntries}}" wx:key="key" class="path-card" data-key="{{item.key}}" bindtap="openPathSheet" hover-class="none">
+              <view class="path-card-head">
                 <view class="path-card-content">
-                  <text class="path-card-title">学习地图</text>
-                  <text class="path-card-desc">从基础反应到格式主理，按能力层层展开。</text>
-                  <view wx:if="{{!learningMapExpanded}}" class="path-summary-row">
-                    <text wx:for="{{learningMapPreview}}" wx:key="*this" class="path-summary-pill">{{item}}</text>
+                  <view class="path-title-row">
+                    <text class="path-card-title">{{item.title}}</text>
+                    <text wx:if="{{item.customLabel}}" class="path-custom-label">{{item.customLabel}}</text>
+                  </view>
+                  <text class="path-card-desc">{{item.desc}}</text>
+                  <view class="path-summary-row">
+                    <text wx:for="{{item.preview}}" wx:for-item="tag" wx:key="*this" class="path-summary-pill">{{tag}}</text>
                   </view>
                 </view>
-                <text class="path-card-toggle">{{learningMapExpanded ? '收起' : '展开'}}</text>
-              </view>
-              <view wx:if="{{learningMapExpanded}}" class="path-card-body">
-                <view wx:for="{{learningMapItems}}" wx:for-item="stage" wx:key="title" class="path-step">
-                  <text class="path-step-index">{{index + 1}}</text>
-                  <view class="path-step-main">
-                    <text class="path-step-title">{{stage.title}}</text>
-                    <text class="path-step-desc">{{stage.desc}}</text>
-                  </view>
-                </view>
-              </view>
-            </view>
-
-            <view class="path-card">
-              <view class="path-card-head" bindtap="toggleTrainingPath" hover-class="none">
-                <view class="path-card-content">
-                  <text class="path-card-title">训练路径</text>
-                  <text class="path-card-desc">从个人启动到演后复盘，形成一条可执行路线。</text>
-                  <view wx:if="{{!trainingPathExpanded}}" class="path-summary-row">
-                    <text wx:for="{{trainingPathPreview}}" wx:key="*this" class="path-summary-pill">{{item}}</text>
-                  </view>
-                </view>
-                <text class="path-card-toggle">{{trainingPathExpanded ? '收起' : '展开'}}</text>
-              </view>
-              <view wx:if="{{trainingPathExpanded}}" class="path-card-body">
-                <view wx:for="{{trainingPathItems}}" wx:for-item="stage" wx:key="title" class="path-step">
-                  <text class="path-step-index">{{index + 1}}</text>
-                  <view class="path-step-main">
-                    <text class="path-step-title">{{stage.title}}</text>
-                    <text class="path-step-desc">{{stage.desc}}</text>
-                  </view>
-                </view>
+                <text class="path-card-toggle">查看</text>
               </view>
             </view>
           </view>
@@ -204,6 +176,61 @@
     </block>
   </bottom-sheet>
 
+  <bottom-sheet visible="{{pathVisible}}" title="{{pathEditMode ? '编辑我的路径' : '路径详情'}}" maskVariant="medium" sheetClass="path-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
+    <block wx:if="{{activePath}}">
+      <block wx:if="{{!pathEditMode}}">
+        <view class="path-sheet-hero">
+          <text class="path-sheet-title">{{activePath.title}}</text>
+          <text class="path-sheet-desc">{{activePath.desc}}</text>
+        </view>
+        <view class="path-sheet-steps">
+          <view wx:for="{{activePath.steps}}" wx:for-item="stage" wx:key="title" class="path-step">
+            <view class="path-step-index">{{index + 1}}</view>
+            <view class="path-step-main">
+              <text class="path-step-title">{{stage.title}}</text>
+              <text wx:if="{{stage.desc}}" class="path-step-desc">{{stage.desc}}</text>
+            </view>
+          </view>
+        </view>
+        <view wx:if="{{activePath.tips}}" class="path-note-card">{{activePath.tips}}</view>
+        <view class="path-sheet-meta">
+          <text class="path-meta-label">相关能力</text>
+          <view class="path-sheet-tags">
+            <text wx:for="{{activePath.abilities}}" wx:key="*this" class="path-filter-chip">{{item}}</text>
+            <text wx:for="{{activePath.scenes}}" wx:key="*this" class="path-summary-pill">{{item}}</text>
+          </view>
+        </view>
+      </block>
+
+      <block wx:else>
+        <view class="path-edit-form">
+          <form-field label="路径名称">
+            <input class="app-input" value="{{pathDraft.title}}" data-field="title" placeholder="例如：我的演员学习地图" bindblur="handlePathDraftFieldChange" bindconfirm="handlePathDraftFieldChange" />
+          </form-field>
+          <form-field label="简短描述">
+            <textarea class="app-textarea" value="{{pathDraft.desc}}" data-field="desc" placeholder="这条路径解决什么训练问题？" bindblur="handlePathDraftFieldChange"></textarea>
+          </form-field>
+          <form-field label="阶段步骤">
+            <textarea class="app-textarea steps-textarea" value="{{pathDraft.steps}}" data-field="steps" placeholder="每行一个阶段，例如：建立关系" bindblur="handlePathDraftFieldChange"></textarea>
+          </form-field>
+          <form-field label="能力标签">
+            <input class="app-input" value="{{pathDraft.abilityText}}" data-field="abilityText" placeholder="用顿号或逗号分隔，例如：自发性，角色塑造" bindblur="handlePathDraftFieldChange" bindconfirm="handlePathDraftFieldChange" />
+          </form-field>
+          <form-field label="备注">
+            <textarea class="app-textarea steps-textarea" value="{{pathDraft.tips}}" data-field="tips" placeholder="记录你带练时需要提醒自己的事" bindblur="handlePathDraftFieldChange"></textarea>
+          </form-field>
+        </view>
+      </block>
+    </block>
+    <view slot="actions" class="path-sheet-actions">
+      <button wx:if="{{activePath && !pathEditMode}}" class="primary-btn path-action-btn" catchtap="editPath">{{activePath.editText}}</button>
+      <block wx:else>
+        <button wx:if="{{activePath}}" class="ghost-btn path-action-btn" catchtap="cancelPathEdit">取消</button>
+        <button wx:if="{{activePath}}" class="primary-btn path-action-btn" catchtap="savePathDraft">{{activePath.saveText}}</button>
+      </block>
+    </view>
+  </bottom-sheet>
+
   <bottom-sheet visible="{{addVisible}}" title="添加素材" maskVariant="medium" sheetClass="add-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
     <game-form
       value="{{newMaterial}}"
@@ -227,7 +254,6 @@
       bind:selectsuggestion="selectCategorySuggestion"
       bind:togglemore="toggleMoreOptions"
     />
-    <view class="add-sheet-spacer"></view>
     <view slot="actions" class="add-submit-wrap">
       <button class="primary-btn add-submit-btn" bindtap="addGame">加入素材库</button>
     </view>

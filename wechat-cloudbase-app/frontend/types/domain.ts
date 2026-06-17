@@ -4,6 +4,7 @@ export type StripeTone = 'orange' | 'blue' | 'mint'
 export type RehearsalStatus = '未开始' | '进行中' | '已完成' | '暂停中'
 export type MaterialSessionStatus = '进行中' | '暂停中' | '已完成'
 export type MaterialType = '游戏' | '角色' | '才艺' | '格式' | '主理' | '技巧' | '复盘' | '路径'
+export type PendingIntent = 'training' | 'rehearsal'
 
 export interface MaterialSession {
   id: string
@@ -17,6 +18,7 @@ export interface MaterialSession {
 export interface Material {
   _id?: string
   id: string
+  ownerOpenId?: string
   title: string
   desc: string
   type: MaterialType
@@ -67,6 +69,11 @@ export interface MethodCardItem extends TodayItem {
   sourceType?: string
 }
 
+export interface PendingIntentMark {
+  key: string
+  intent: PendingIntent
+}
+
 export interface RehearsalPlanItem {
   materialId: string
   status: RehearsalStatus
@@ -109,6 +116,7 @@ export interface AppState {
   rehearsalHistory: RehearsalRecord[]
   practiceRecordsHistory: PracticeRecord[]
   dismissedPendingKeys: string[]
+  pendingIntentMarks: PendingIntentMark[]
   profile: { displayName: string; avatarUrl: string; troupeName?: string } | null
   games?: Material[]
   recommendGameId?: string

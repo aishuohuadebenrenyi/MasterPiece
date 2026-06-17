@@ -478,18 +478,13 @@
 
 .category-reference-block {
   width: 100%;
-  padding: 26rpx;
-  border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.72);
-  background: var(--improv-card-muted, rgba(255, 255, 255, 0.72));
-  border: 2rpx solid var(--improv-line-subtle);
-  box-shadow: none;
+  padding: 8rpx 0 0;
 }
 
 .reference-block-head {
   width: 100%;
   display: flex;
-  margin-bottom: 18rpx;
+  margin-bottom: 16rpx;
 }
 
 .reference-block-title {
@@ -503,17 +498,16 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 14rpx;
 }
 
 .path-card {
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding: 22rpx;
-  border-radius: 26rpx;
-  background: rgba(255, 255, 255, 0.9);
-  background: var(--improv-card-translucent, rgba(255, 255, 255, 0.9));
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  background: var(--improv-card-muted, rgba(255, 255, 255, 0.68));
   border: 2rpx solid var(--improv-line-subtle);
 }
 
@@ -534,11 +528,32 @@
   gap: 8rpx;
 }
 
+.path-title-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+}
+
 .path-card-title {
   color: var(--improv-text);
   font-size: 28rpx;
   font-weight: 900;
   line-height: 1.25;
+}
+
+.path-custom-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34rpx;
+  padding: 0 12rpx;
+  border-radius: 999rpx;
+  background: var(--improv-secondary-soft);
+  color: var(--improv-secondary-strong);
+  font-size: 20rpx;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .path-card-desc {
@@ -570,23 +585,74 @@
 .path-summary-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 38rpx;
-  padding: 0 14rpx;
+  width: auto;
+  max-width: 100%;
+  min-height: 34rpx;
+  margin: 0;
+  padding: 0 12rpx;
   border-radius: 999rpx;
   background: var(--improv-bg-soft);
-  color: var(--improv-muted);
-  font-size: 22rpx;
+  color: var(--improv-light);
+  font-size: 20rpx;
   font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.path-card-body {
+.path-sheet-hero,
+.path-edit-form {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 14rpx;
-  margin-top: 18rpx;
-  padding-top: 18rpx;
-  border-top: 2rpx solid var(--improv-line-subtle);
+}
+
+.path-sheet-title {
+  color: var(--improv-text);
+  font-size: 46rpx;
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+.path-sheet-desc {
+  color: var(--improv-muted);
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.path-sheet-tags {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.path-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 100%;
+  min-height: 34rpx;
+  margin: 0;
+  padding: 0 12rpx;
+  border-radius: 999rpx;
+  background: var(--improv-bg-soft);
+  color: var(--improv-muted);
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.path-sheet-steps {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 30rpx;
 }
 
 .path-step {
@@ -594,18 +660,22 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 14rpx;
+  gap: 18rpx;
+  padding: 24rpx 24rpx 24rpx 22rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-muted, rgba(255, 255, 255, 0.72));
+  border: 2rpx solid var(--improv-line-subtle);
 }
 
 .path-step-index {
-  flex: 0 0 42rpx;
-  width: 42rpx;
-  height: 42rpx;
+  flex: 0 0 46rpx;
+  width: 46rpx;
+  height: 46rpx;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999rpx;
-  background: var(--improv-secondary-soft);
+  background: rgba(79, 140, 255, 0.12);
   color: var(--improv-secondary-strong);
   font-size: 22rpx;
   font-weight: 900;
@@ -617,21 +687,62 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: 8rpx;
 }
 
 .path-step-title {
   color: var(--improv-text);
-  font-size: 25rpx;
+  font-size: 31rpx;
   font-weight: 900;
-  line-height: 1.3;
+  line-height: 1.28;
 }
 
 .path-step-desc {
   color: var(--improv-muted);
-  font-size: 23rpx;
+  font-size: 26rpx;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.48;
+}
+
+.path-sheet-meta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 22rpx;
+}
+
+.path-meta-label {
+  color: var(--improv-light);
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.path-note-card {
+  margin-top: 24rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 26rpx;
+  background: var(--improv-bg-soft);
+  color: var(--improv-muted);
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.path-sheet-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 18rpx;
+}
+
+.path-action-btn {
+  min-width: 220rpx;
+  min-height: 82rpx;
+  margin: 0;
+  padding: 0 28rpx;
 }
 
 .filter-group {
@@ -716,10 +827,6 @@
   padding: 0;
 }
 
-.add-sheet-spacer {
-  height: 28rpx;
-}
-
 .random-card-wrapper {
   position: relative;
   width: 100%;
@@ -727,7 +834,7 @@
   min-height: 720rpx;
   max-height: 85vh;
   margin-top: 40rpx;
-  padding-bottom: 240rpx;
+  padding-bottom: var(--fixed-action-clearance);
 }
 
 .random-game-sheet {

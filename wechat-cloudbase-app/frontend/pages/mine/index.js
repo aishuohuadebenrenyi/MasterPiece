@@ -3,7 +3,7 @@ const { listInspirations } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
 const { listPracticeRecords } = require('../../services/practice-record')
 const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
-const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, toggleThemeMode } = require('../../store/index')
+const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, setPendingIntentMarks, toggleThemeMode } = require('../../store/index')
 const { closeModal, openModal } = require('../../utils/modal')
 const { syncTabBar } = require('../../utils/tabbar')
 const { getLayoutStyle } = require('../../utils/layout')
@@ -99,6 +99,44 @@ function filterSediments(sediments = [], methodFilter = 'all') {
   return sediments.filter((item) => normalizeMethodSourceType(item.sourceType) === methodFilter)
 }
 
+function getIntentLabel(intent = '') {
+  return intent === 'rehearsal' ? '排练线索' : '训练线索'
+}
+
+function getIntentMap(pendingIntentMarks = []) {
+  const intentMap = {}
+  pendingIntentMarks.forEach((item) => {
+    if (item && item.key) intentMap[item.key] = item.intent
+  })
+  return intentMap
+}
+
+function buildInspirationFilterOptions(activeFilter = 'all') {
+  return [
+    { value: 'all', label: '全部' },
+    { value: 'pending', label: '待整理' },
+    { value: 'training', label: '训练线索' },
+    { value: 'rehearsal', label: '排练线索' },
+    { value: 'sedimented', label: '已沉淀' }
+  ].map((item) => Object.assign({}, item, {
+    activeClass: activeFilter === item.value ? 'active' : ''
+  }))
+}
+
+function filterInspirations(inspirations = [], inspirationFilter = 'all', { sediments = [], discardedPendingKeys = [], pendingIntentMarks = [] } = {}) {
+  if (inspirationFilter === 'all') return inspirations
+  const sedimented = new Set(sediments.map(getSourceKey))
+  const discarded = new Set(discardedPendingKeys)
+  const intentMap = getIntentMap(pendingIntentMarks)
+  return inspirations.filter((item) => {
+    const key = getSourceKey(item)
+    if (inspirationFilter === 'sedimented') return sedimented.has(key)
+    if (inspirationFilter === 'training' || inspirationFilter === 'rehearsal') return intentMap[key] === inspirationFilter
+    if (inspirationFilter === 'pending') return !sedimented.has(key) && !discarded.has(key) && !intentMap[key]
+    return true
+  })
+}
+
 function normalizeDetailIndex(index, items = []) {
   if (!Array.isArray(items) || !items.length) return 0
   const numericIndex = Number(index)
@@ -108,7 +146,7 @@ function normalizeDetailIndex(index, items = []) {
   return numericIndex
 }
 
-function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', discardedPendingKeys = [] } = {}) {
+function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', inspirationFilter = 'all', discardedPendingKeys = [], pendingIntentMarks = [] } = {}) {
   const mappedSediments = sediments.map(item => Object.assign({}, item, {
     sourceType: normalizeMethodSourceType(item.sourceType),
     type: item.type || getSourceLabel(item.sourceType),
@@ -124,8 +162,12 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
     }))
   }))
   const discarded = new Set(discardedPendingKeys)
+  const intentMarked = new Set((pendingIntentMarks || []).map((item) => item.key).filter(Boolean))
   const pendingItems = buildPendingItems({ inspirations: mappedInspirations, rehearsals, gameRecords, sediments: mappedSediments })
-    .filter((item) => !discarded.has(getSourceKey(item)))
+    .filter((item) => {
+      const key = getSourceKey(item)
+      return !discarded.has(key) && !intentMarked.has(key)
+    })
   const totalRecords = mappedInspirations.length + getRehearsalCount(rehearsals) + mappedSediments.length + (gameRecords.length || 0)
   const methodCount = mappedSediments.length
   const rehearsalCount = getRehearsalCount(rehearsals)
@@ -163,8 +205,22 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
     profileAvatarText: getAvatarText(nextProfile.displayName),
     profileTroupeName: nextProfile.troupeName,
     profileTags: computeProfileTags(nextProfile.troupeName),
-    methodFilterOptions: buildMethodFilterOptions(mappedSediments, methodFilter)
+    methodFilterOptions: buildMethodFilterOptions(mappedSediments, methodFilter),
+    inspirationFilterOptions: buildInspirationFilterOptions(inspirationFilter)
   }
+}
+
+function getListItemsForKind(kind, data, overrides = {}) {
+  const methodFilter = Object.prototype.hasOwnProperty.call(overrides, 'methodFilter') ? overrides.methodFilter : data.methodFilter
+  const inspirationFilter = Object.prototype.hasOwnProperty.call(overrides, 'inspirationFilter') ? overrides.inspirationFilter : data.inspirationFilter
+  const sediments = Object.prototype.hasOwnProperty.call(overrides, 'sediments') ? overrides.sediments : data.sediments
+  const inspirations = Object.prototype.hasOwnProperty.call(overrides, 'inspirations') ? overrides.inspirations : data.inspirations
+  const pendingItems = Object.prototype.hasOwnProperty.call(overrides, 'pendingItems') ? overrides.pendingItems : data.pendingItems
+  const discardedPendingKeys = Object.prototype.hasOwnProperty.call(overrides, 'discardedPendingKeys') ? overrides.discardedPendingKeys : data.discardedPendingKeys
+  const pendingIntentMarks = Object.prototype.hasOwnProperty.call(overrides, 'pendingIntentMarks') ? overrides.pendingIntentMarks : data.pendingIntentMarks
+  if (kind === 'sediments') return filterSediments(sediments, methodFilter)
+  if (kind === 'pending') return pendingItems
+  return filterInspirations(inspirations, inspirationFilter, { sediments, discardedPendingKeys, pendingIntentMarks })
 }
 
 Page({
@@ -176,6 +232,7 @@ Page({
     pendingItems: [],
     pendingCount: 0,
     discardedPendingKeys: [],
+    pendingIntentMarks: [],
     totalRecords: 0,
     playedCount: 0,
     methodCount: 0,
@@ -187,7 +244,9 @@ Page({
     detailTitle: '',
     currentKind: 'sediments',
     methodFilter: 'all',
+    inspirationFilter: 'all',
     methodFilterOptions: [],
+    inspirationFilterOptions: [],
     pillClass: 'orange',
     modalOpen: false,
     currentIndex: 0,
@@ -243,7 +302,9 @@ Page({
       layoutStyle: getLayoutStyle(),
       profile: state.profile || DEFAULT_PROFILE,
       methodFilter: this.data.methodFilter,
-      discardedPendingKeys: state.dismissedPendingKeys || this.data.discardedPendingKeys
+      inspirationFilter: this.data.inspirationFilter,
+      discardedPendingKeys: state.dismissedPendingKeys || this.data.discardedPendingKeys,
+      pendingIntentMarks: state.pendingIntentMarks || this.data.pendingIntentMarks
     }), {
       themeClass: getThemeClass()
     }))
@@ -263,7 +324,9 @@ Page({
       layoutStyle: getLayoutStyle(),
       profile: profileResult.status === 'fulfilled' ? profileResult.value : (state.profile || DEFAULT_PROFILE),
       methodFilter: this.data.methodFilter,
-      discardedPendingKeys: getState().dismissedPendingKeys || this.data.discardedPendingKeys
+      inspirationFilter: this.data.inspirationFilter,
+      discardedPendingKeys: getState().dismissedPendingKeys || this.data.discardedPendingKeys,
+      pendingIntentMarks: getState().pendingIntentMarks || this.data.pendingIntentMarks
     }))
   },
 
@@ -274,7 +337,9 @@ Page({
     const nextRehearsals = hasOwn('rehearsals') ? overrides.rehearsals : this.data.rehearsals
     const nextGameRecords = hasOwn('gameRecords') ? overrides.gameRecords : this.data.gameRecords
     const nextMethodFilter = hasOwn('methodFilter') ? overrides.methodFilter : this.data.methodFilter
+    const nextInspirationFilter = hasOwn('inspirationFilter') ? overrides.inspirationFilter : this.data.inspirationFilter
     const nextDiscardedPendingKeys = hasOwn('discardedPendingKeys') ? overrides.discardedPendingKeys : this.data.discardedPendingKeys
+    const nextPendingIntentMarks = hasOwn('pendingIntentMarks') ? overrides.pendingIntentMarks : this.data.pendingIntentMarks
     const nextProfile = {
       displayName: hasOwn('profileName') ? overrides.profileName : this.data.profileName,
       avatarUrl: hasOwn('profileAvatar') ? overrides.profileAvatar : this.data.profileAvatar,
@@ -289,13 +354,16 @@ Page({
       layoutStyle: this.data.layoutStyle,
       profile: nextProfile,
       methodFilter: nextMethodFilter,
-      discardedPendingKeys: nextDiscardedPendingKeys
+      inspirationFilter: nextInspirationFilter,
+      discardedPendingKeys: nextDiscardedPendingKeys,
+      pendingIntentMarks: nextPendingIntentMarks
     })
-    const nextListItems = this.data.currentKind === 'sediments'
-      ? filterSediments(nextViewData.sediments, nextMethodFilter)
-      : this.data.currentKind === 'pending'
-        ? nextViewData.pendingItems
-        : nextViewData.inspirations
+    const nextListItems = getListItemsForKind(this.data.currentKind, this.data, Object.assign({}, nextViewData, {
+      methodFilter: nextMethodFilter,
+      inspirationFilter: nextInspirationFilter,
+      discardedPendingKeys: nextDiscardedPendingKeys,
+      pendingIntentMarks: nextPendingIntentMarks
+    }))
     this.setData(Object.assign({}, nextViewData, overrides, {
       listItems: nextListItems
     }), callback)
@@ -303,11 +371,7 @@ Page({
 
   openList(event) {
     const kind = event.currentTarget.dataset.kind
-    const listItems = kind === 'sediments'
-      ? filterSediments(this.data.sediments, this.data.methodFilter)
-      : kind === 'pending'
-        ? this.data.pendingItems
-        : this.data.inspirations
+    const listItems = getListItemsForKind(kind, this.data)
     openModal(this, {
       listVisible: true,
       detailVisible: false,
@@ -329,6 +393,21 @@ Page({
     })
   },
 
+  filterInspirations(event) {
+    const inspirationFilter = event.currentTarget.dataset.filter || 'all'
+    this.setData({
+      inspirationFilter,
+      inspirationFilterOptions: buildInspirationFilterOptions(inspirationFilter),
+      listItems: this.data.currentKind === 'inspirations'
+        ? filterInspirations(this.data.inspirations, inspirationFilter, {
+          sediments: this.data.sediments,
+          discardedPendingKeys: this.data.discardedPendingKeys,
+          pendingIntentMarks: this.data.pendingIntentMarks
+        })
+        : this.data.listItems
+    })
+  },
+
   closeSheet() {
     closeModal(this, {
       listVisible: false,
@@ -346,11 +425,7 @@ Page({
   noop() {},
 
   openDetail(event) {
-    const items = this.data.currentKind === 'sediments'
-      ? filterSediments(this.data.sediments, this.data.methodFilter)
-      : this.data.currentKind === 'pending'
-        ? this.data.pendingItems
-        : this.data.inspirations
+    const items = getListItemsForKind(this.data.currentKind, this.data)
     const targetId = event.detail && event.detail.id
       ? event.detail.id
       : ''
@@ -368,11 +443,7 @@ Page({
   },
 
   syncDetail() {
-    const items = this.data.currentKind === 'sediments'
-      ? filterSediments(this.data.sediments, this.data.methodFilter)
-      : this.data.currentKind === 'pending'
-        ? this.data.pendingItems
-        : this.data.inspirations
+    const items = getListItemsForKind(this.data.currentKind, this.data)
     if (!items.length) {
       this.setData({
         detailItem: null,
@@ -394,11 +465,7 @@ Page({
 
   moveDetail(event) {
     const step = Number(event.currentTarget.dataset.step)
-    const items = this.data.currentKind === 'sediments'
-      ? filterSediments(this.data.sediments, this.data.methodFilter)
-      : this.data.currentKind === 'pending'
-        ? this.data.pendingItems
-        : this.data.inspirations
+    const items = getListItemsForKind(this.data.currentKind, this.data)
     if (!items.length) return
     const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
     const next = (currentIndex + step + items.length) % items.length
@@ -406,11 +473,7 @@ Page({
   },
 
   prevDetail() {
-    const items = this.data.currentKind === 'sediments'
-      ? filterSediments(this.data.sediments, this.data.methodFilter)
-      : this.data.currentKind === 'pending'
-        ? this.data.pendingItems
-        : this.data.inspirations
+    const items = getListItemsForKind(this.data.currentKind, this.data)
     if (!items.length) return
     const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
     const next = (currentIndex - 1 + items.length) % items.length
@@ -418,11 +481,7 @@ Page({
   },
 
   nextDetail() {
-    const items = this.data.currentKind === 'sediments'
-      ? filterSediments(this.data.sediments, this.data.methodFilter)
-      : this.data.currentKind === 'pending'
-        ? this.data.pendingItems
-        : this.data.inspirations
+    const items = getListItemsForKind(this.data.currentKind, this.data)
     if (!items.length) return
     const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
     const next = (currentIndex + 1) % items.length
@@ -451,6 +510,32 @@ Page({
       currentIndex
     }, () => this.syncDetail())
     toast('已不再整理，原记录仍保留')
+  },
+
+  markCurrentDetailIntent(event) {
+    const source = this.data.detailItem
+    const intent = event.detail && event.detail.intent === 'rehearsal' ? 'rehearsal' : 'training'
+    if (!source || this.data.currentKind !== 'pending' || normalizeMethodSourceType(source.sourceType) !== 'inspiration') return
+    const sourceKey = getSourceKey(source)
+    const pendingIntentMarks = (this.data.pendingIntentMarks || []).filter((entry) => entry.key !== sourceKey)
+      .concat({ key: sourceKey, intent })
+    setPendingIntentMarks(pendingIntentMarks)
+    const nextPendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
+    if (!nextPendingItems.length) {
+      this.refreshMineView({
+        pendingIntentMarks,
+        currentIndex: 0
+      })
+      this.closeDetail()
+      toast(`已标记为${getIntentLabel(intent)}，原记录仍保留`)
+      return
+    }
+    const currentIndex = Math.min(this.data.currentIndex, nextPendingItems.length - 1)
+    this.refreshMineView({
+      pendingIntentMarks,
+      currentIndex
+    }, () => this.syncDetail())
+    toast(`已标记为${getIntentLabel(intent)}，原记录仍保留`)
   },
 
   async sedimentCurrentDetail() {

@@ -98,6 +98,10 @@
   font-size: 28rpx;
 }
 
+.detail-intent-row button {
+  min-height: 76rpx;
+}
+
 .detail-action-note {
   display: block;
   margin: 0;

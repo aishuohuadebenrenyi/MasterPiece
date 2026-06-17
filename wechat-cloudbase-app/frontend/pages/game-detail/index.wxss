@@ -1,5 +1,5 @@
 .detail {
-  padding-bottom: 192rpx;
+  padding-bottom: var(--fixed-action-spacer);
 }
 
 .back {
@@ -178,7 +178,7 @@
 
 .history-section {
   margin-top: 32rpx;
-  padding-bottom: 240rpx;
+  padding-bottom: var(--fixed-action-clearance);
 }
 
 .history-card {

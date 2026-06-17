@@ -78,9 +78,11 @@ async function listMaterials(payload, requestId) {
   const ability = typeof payload.ability === 'string' ? payload.ability.trim() : ''
   const scene = typeof payload.scene === 'string' ? payload.scene.trim() : ''
   const status = typeof payload.status === 'string' ? payload.status.trim() : ''
-  const materialWhere = type && type !== 'all'
-    ? { deletedAt: null, type }
-    : { deletedAt: null }
+  const visibleOwners = ownerOpenId ? ['system', ownerOpenId] : ['system']
+  const materialWhere = Object.assign(
+    { deletedAt: null, ownerOpenId: _.in(visibleOwners) },
+    type && type !== 'all' ? { type } : {}
+  )
   const materialsResult = await db.collection(COLLECTIONS.materials)
     .where(materialWhere)
     .orderBy('sortOrder', 'asc')

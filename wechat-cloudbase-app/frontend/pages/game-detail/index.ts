@@ -28,6 +28,14 @@ function buildGameMeta(people = '', duration = '') {
   return [people || '', duration || '']
 }
 
+function canEditMaterial(material: Material) {
+  return material.ownerOpenId !== 'system' && (Boolean(material.ownerOpenId) || material.tags.includes('自定义') || material.id.startsWith('custom-'))
+}
+
+function isPermissionError(message = '') {
+  return message.includes('权限') || message.includes('无权限')
+}
+
 Page({
   data: {
     themeClass: 'theme-default',
@@ -44,7 +52,7 @@ Page({
     detailLoading: true,
     detailErrorTitle: '',
     detailErrorDesc: '',
-    isCustomGame: false,
+    canEditGame: false,
     isEditMode: false,
     editGame: {} as EditGameDraft,
     timer: null as number | null,
@@ -151,12 +159,12 @@ Page({
     const allGames = getState().materials
     const related = allGames.find((item) => item.id === game.relatedMaterialId) || findLocalMaterial(game.relatedMaterialId)
     const state = getState()
-    const isCustomGame = game.tags.includes('自定义') || game.id.startsWith('custom-')
+    const canEditGame = canEditMaterial(game)
     const displayMeta = (game.meta || []).filter((item) => typeof item === 'string' && item.trim())
     this.setData({
       game,
       related,
-      isCustomGame,
+      canEditGame,
       tagText: [game.type, ...(game.abilities || []), ...(game.tags || [])].filter(Boolean).join(' · '),
       displayMeta,
       saved: state.savedMaterialIds.includes(game.id),
@@ -270,6 +278,10 @@ Page({
   enterEditMode() {
     const game = this.data.game
     if (!game) return
+    if (!this.data.canEditGame) {
+      toast('只能修改自己创建的素材')
+      return
+    }
     const editGame: EditGameDraft = { ...game }
     editGame.people = game.meta[0] || ''
     editGame.duration = game.meta[1] || ''
@@ -464,10 +476,14 @@ Page({
       toast('先写素材名称')
       return
     }
+    if (!this.data.game || !this.data.canEditGame) {
+      toast('只能修改自己创建的素材')
+      return
+    }
     const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
     if (!tags.length) tags.push('自定义')
 
-    const currentGame = { ...(this.data.game as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string }) }
+    const currentGame = { ...(this.data.game as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string; ownerOpenId?: string }) }
     delete currentGame.fit
     delete currentGame.lead
     delete currentGame.avoid
@@ -494,39 +510,74 @@ Page({
       variant: this.data.editGame.variant || '',
       issue: this.data.editGame.issue || '',
       relatedMaterialId: currentGame.relatedMaterialId || '',
-      referenceOnly: currentGame.referenceOnly || false
+      referenceOnly: materialType === '路径' ? true : currentGame.referenceOnly || false
+    }
+
+    const updatePayload = { ...updatedGame }
+    delete updatePayload.ownerOpenId
+    const response = await updateMaterial(updatePayload)
+    if (response.code !== 0) {
+      if (isPermissionError(response.message)) {
+        toast('只能修改自己创建的素材')
+        this.refreshMaterials(updatedGame.id)
+        return
+      }
+      toast('保存失败，请稍后重试')
+      return
     }
 
     const allGames = getState().materials
-    const index = allGames.findIndex((gameItem: Material) => gameItem.id === updatedGame.id)
-    if (index > -1) {
-      allGames[index] = updatedGame
-      setMaterials([...allGames])
-    }
-
+    const nextGames = allGames.map((gameItem: Material) => gameItem.id === updatedGame.id ? Object.assign({}, gameItem, updatedGame) : gameItem)
+    setMaterials(nextGames)
     this.renderGame(updatedGame)
     this.cancelEdit()
-    await updateMaterial(updatedGame)
     toast('已保存修改')
   },
 
+  async refreshMaterials(materialId?: string) {
+    try {
+      const serverGames = await listMaterials()
+      setMaterials(serverGames)
+      const currentId = materialId || this.data.game?.id
+      const game = currentId ? serverGames.find((item: Material) => item.id === currentId) || null : null
+      if (game) {
+        this.renderGame(game)
+      }
+    } catch (error) {
+      // The original action already told the user what failed; keep this refresh best-effort.
+    }
+  },
+
   confirmDelete() {
+    if (!this.data.game || !this.data.canEditGame) {
+      toast('只能删除自己创建的素材')
+      return
+    }
     wx.showModal({
       title: '确认删除',
-      content: '删除后无法恢复，是否继续？',
+      content: '删除后会从你的素材库移除，是否继续？',
       success: async (res) => {
         if (res.confirm) {
           const materialId = this.data.game?.id
           if (!materialId) return
-          
+
+          const response = await deleteMaterial(materialId)
+          if (response.code !== 0) {
+            if (isPermissionError(response.message)) {
+              toast('只能删除自己创建的素材')
+              this.refreshMaterials(materialId)
+              return
+            }
+            toast('删除失败，请稍后重试')
+            return
+          }
+
           const allGames = getState().materials
           setMaterials(allGames.filter((gameItem: Material) => gameItem.id !== materialId))
-          
           wx.navigateBack()
           setTimeout(() => {
             toast('已删除')
           }, 300)
-          await deleteMaterial(materialId)
         }
       }
     })

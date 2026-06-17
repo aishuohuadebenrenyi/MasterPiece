@@ -1,7 +1,7 @@
 <root-portal wx:if="{{mounted}}">
   <view class="sheet-layer {{themeClass}}">
     <view class="sheet-mask mask-{{resolvedMaskVariant}} {{maskVisibleClass}} {{maskClass}}" catchtap="closeFromMask" catchtouchmove="noop"></view>
-    <view class="sheet {{showClass}} {{sheetClass}}" catchtap="noop">
+    <view class="sheet {{showClass}} {{sheetClass}} {{showActions ? 'sheet-with-actions' : ''}}" catchtap="noop">
       <view class="sheet-content">
         <view class="handle"></view>
         <view class="sheet-head">

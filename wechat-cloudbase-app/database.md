@@ -50,6 +50,7 @@
 说明：
 
 - `路径` 是参考型素材，`referenceOnly` 必须为 `true`；只支持查看、收藏和筛选跳转，不进入训练计时、抽卡训练池或复盘链路。
+- 学习地图和训练路径的个人自定义版本复用 `路径` 素材：官方预设保持只读，用户副本写入当前用户 `ownerOpenId`，并用 `relatedMaterialId` 关联预设 key。
 - 其他素材类型可收藏、标记练过、开始训练、暂停、结束复盘。
 
 ## 3. improv_user_material_states
@@ -183,7 +184,10 @@
 - `status`：`all`、`saved`、`played`、`unplayed`。
 - `limit`：返回数量上限，当前最大 100。
 
-说明：`saved`、`played`、`unplayed` 依赖当前用户状态，云函数会先合并 `improv_user_material_states` 再过滤。
+说明：
+
+- `material.list` 只返回公共系统素材（`ownerOpenId: "system"`）和当前用户自己的自定义素材。
+- `saved`、`played`、`unplayed` 依赖当前用户状态，云函数会先合并 `improv_user_material_states` 再过滤。
 
 兼容别名：
 

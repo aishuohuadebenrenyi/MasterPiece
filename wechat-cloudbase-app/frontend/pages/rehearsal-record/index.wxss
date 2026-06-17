@@ -3,7 +3,7 @@
 }
 
 .rehearsal {
-  padding-bottom: calc(164rpx + env(safe-area-inset-bottom));
+  padding-bottom: var(--fixed-action-spacer);
 }
 
 .subpage-header .back {
