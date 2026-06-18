@@ -5,6 +5,7 @@
     "form-field": "../../components/form-field/index",
     "empty-state-panel": "../../components/empty-state-panel/index",
     "record-card": "../../components/record-card/index",
-    "asset-detail-panel": "../../components/asset-detail-panel/index"
+    "asset-detail-panel": "../../components/asset-detail-panel/index",
+    "privacy-popup": "../../components/privacy-popup/index"
   }
 }

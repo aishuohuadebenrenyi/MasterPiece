@@ -50,7 +50,7 @@ Component({
         const deltaX = endX - this.data.touchStartX
         const deltaY = endY - this.data.touchStartY
 
-        // If horizontal swipe is more significant than vertical swipe and meets threshold
+        // 水平滑动幅度大于垂直滑动且超过阈值时触发翻页
         if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
           if (deltaX < 0) {
             this.next()

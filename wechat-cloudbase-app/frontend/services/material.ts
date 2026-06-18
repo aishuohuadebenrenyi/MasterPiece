@@ -1,6 +1,7 @@
 import type { Material } from '../types/domain'
 import { callImprovAction } from './cloud'
 import { getState } from '../store/index'
+import { DEFAULT_SORT_ORDER } from '../config/constants'
 
 export type MaterialListFilters = {
   query?: string
@@ -11,7 +12,7 @@ export type MaterialListFilters = {
   limit?: number
 }
 
-export function normalizeMaterial(raw: Partial<Material> & { _id?: string; related?: string; relatedGameId?: string }): Material {
+export function normalizeMaterial(raw: Partial<Material> & { _id?: string }): Material {
   const id = raw.id || raw._id || 'unknown-material'
   const type = raw.type || '游戏'
   return Object.assign({
@@ -30,14 +31,14 @@ export function normalizeMaterial(raw: Partial<Material> & { _id?: string; relat
     relatedMaterialId: '',
     referenceOnly: type === '路径',
     stripeTone: 'orange',
-    sortOrder: 999,
+    sortOrder: DEFAULT_SORT_ORDER,
     saved: false,
     played: false,
     playedCount: 0
   }, raw, {
     id,
     type,
-    relatedMaterialId: raw.relatedMaterialId || raw.relatedGameId || raw.related || '',
+    relatedMaterialId: raw.relatedMaterialId || '',
     referenceOnly: typeof raw.referenceOnly === 'boolean' ? raw.referenceOnly : type === '路径',
     abilities: Array.isArray(raw.abilities) ? raw.abilities : [],
     scenes: Array.isArray(raw.scenes) ? raw.scenes : []

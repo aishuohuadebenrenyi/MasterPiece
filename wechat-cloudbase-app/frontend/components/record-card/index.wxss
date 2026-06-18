@@ -3,58 +3,172 @@
 
 :host {
   display: block;
+  width: 100%;
+  min-width: 0;
+  --record-card-inset: var(--improv-card-padding-md, 40rpx);
+  --record-card-action-width: 132rpx;
+}
+
+.record-card-swipe {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  border-radius: 40rpx;
+  overflow: hidden;
+}
+
+.record-card-delete-reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--record-card-action-width);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff0eb;
+  color: #ff6a3d;
+  font-size: 25rpx;
+  line-height: 1.2;
+  font-weight: 900;
 }
 
 .record-card {
-  padding: var(--improv-card-padding-md, 40rpx);
-  margin-bottom: 18rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+  --record-card-inset: var(--improv-card-padding-md, 40rpx);
+  padding: var(--record-card-inset);
+  display: block;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  border-radius: 40rpx;
+  background: var(--improv-card-strong, #ffffff);
+  border: 2rpx solid var(--improv-line-subtle, rgba(94, 114, 144, 0.08));
+  box-shadow: var(--improv-shadow-md, 0 24rpx 56rpx rgba(55, 82, 150, 0.14));
+  box-sizing: border-box;
+  overflow: hidden;
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+
+.record-card-swipe-open .record-card {
+  transform: translateX(calc(-1 * var(--record-card-action-width)));
+}
+
+.record-card.mine-list-record-card {
+  --record-card-inset: var(--improv-card-padding-md, 40rpx);
+}
+
+.record-card-header {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.record-card-header.has-action {
+  padding-right: 140rpx;
 }
 
 .record-card-top-tags {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 12rpx;
-}
-
-.record-card-middle {
-  width: 100%;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-}
-
-.record-card-bottom-tags {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 16rpx;
   flex-wrap: wrap;
-}
-
-.record-card .meta-row {
-  margin-top: 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-wrap: nowrap;
   gap: 12rpx;
+}
+
+.record-card-eyebrow {
+  display: block;
+  line-height: 1.2;
+}
+
+.record-card-top-tags + .record-card-eyebrow {
+  margin-top: 12rpx;
+}
+
+.record-card-body {
+  width: 100%;
+  min-width: 0;
+  margin-top: 14rpx;
+  box-sizing: border-box;
+}
+
+.record-card-body.has-action {
+  padding-right: 140rpx;
+}
+
+.record-card-copy {
+  width: 100%;
+  min-width: 0;
+}
+
+.record-card .section-title,
+.record-card .muted,
+.record-card .mini-title {
+  max-width: 100%;
   overflow: hidden;
+  word-break: break-all;
 }
 
-.record-card .meta-row .meta-pill {
-  flex: 0 0 auto;
+.record-card .section-title {
+  display: block;
+  line-height: 1.28;
+  max-height: 82rpx;
 }
 
-.record-card-bottom-tags .small-btn {
-  flex: 0 0 112rpx;
-  width: 112rpx;
-  min-width: 112rpx;
-  max-width: 112rpx;
-  min-height: 64rpx;
-  padding: 0;
-  border-radius: 34rpx;
+.record-card-body-text {
+  display: block;
+  margin-top: 10rpx;
+  line-height: 1.5 !important;
+  max-height: 76rpx;
+}
+
+.record-card-footer {
+  width: 100%;
+  min-width: 0;
+  margin-top: 20rpx;
+  display: block;
+}
+
+.record-card-footer-history {
+  padding-top: 4rpx;
+}
+
+.record-card-meta-row {
+  margin-top: 0 !important;
+  display: block;
+  line-height: 0;
+  margin-bottom: -12rpx;
+}
+
+.record-card-meta-row .meta-pill {
+  display: inline-block;
+  margin-right: 12rpx;
+  margin-bottom: 12rpx;
+  line-height: 1;
+  vertical-align: top;
+}
+
+.record-card-action-top-right {
+  position: absolute;
+  top: var(--record-card-inset);
+  right: var(--record-card-inset);
+  z-index: 10;
+}
+
+.record-card-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96rpx;
+  height: 56rpx;
+  padding: 0 18rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-strong, #ffffff);
+  border: 2rpx solid var(--improv-line, rgba(94, 114, 144, 0.14));
+  color: var(--improv-muted, #667289);
+  box-shadow: var(--improv-shadow-xs, 0 8rpx 18rpx rgba(50, 68, 120, 0.05));
+  box-sizing: border-box;
+  font-size: 24rpx;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
 }

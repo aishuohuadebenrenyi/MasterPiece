@@ -1,0 +1,34 @@
+@import '../../styles/theme.wxss';
+
+.privacy-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.privacy-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 8rpx;
+}
+
+.privacy-updated {
+  font-size: 24rpx;
+  color: var(--improv-text-muted, #96a1b4);
+  margin-bottom: 32rpx;
+}
+
+.privacy-section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-top: 24rpx;
+  margin-bottom: 12rpx;
+}
+
+.privacy-text {
+  font-size: 26rpx;
+  color: #4a4a6a;
+  line-height: 1.7;
+  margin-bottom: 8rpx;
+}

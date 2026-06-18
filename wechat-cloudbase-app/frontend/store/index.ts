@@ -10,6 +10,7 @@ import type {
   RehearsalRecord,
   TodayItem
 } from '../types/domain'
+import { SESSION_EXPIRE_MS } from '../config/constants'
 
 type Listener = (state: AppState) => void
 
@@ -17,6 +18,8 @@ const listeners: Listener[] = []
 const DISMISSED_PENDING_KEYS_STORAGE = 'improv_dismissed_pending_keys'
 const PENDING_INTENT_MARKS_STORAGE = 'improv_pending_intent_marks'
 const THEME_MODE_STORAGE = 'improv_theme_mode'
+const REHEARSAL_SESSION_STORAGE = 'improv_rehearsal_session'
+const MATERIAL_SESSION_STORAGE = 'improv_material_session'
 
 const defaultState: AppState = {
   themeMode: 'default',
@@ -40,12 +43,16 @@ const defaultState: AppState = {
 
 let state: AppState = readInitialState()
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value))
+// 浅拷贝 state，避免深拷贝性能开销
+function shallowClone<T>(value: T): T {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return Object.assign({}, value)
+  }
+  return value
 }
 
 function readInitialState(): AppState {
-  const initialState = clone(defaultState)
+  const initialState = Object.assign({}, defaultState)
   try {
     const themeMode = wx.getStorageSync(THEME_MODE_STORAGE)
     if (themeMode === 'default' || themeMode === 'vivid') {
@@ -66,10 +73,119 @@ function readInitialState(): AppState {
         }))
         .filter((item) => item.key)
     }
-  } catch (error) {
-    // Ignore storage read failures and keep in-memory defaults.
+    // 从 Storage 恢复 session 数据
+    const rehearsalRaw = wx.getStorageSync(REHEARSAL_SESSION_STORAGE)
+    if (typeof rehearsalRaw === 'string' && rehearsalRaw) {
+      const unwrapped = unwrapFromStorage(rehearsalRaw)
+      if (unwrapped && isValidRehearsalRecord(unwrapped.data) && !isSessionExpired(unwrapped.savedAt)) {
+        initialState.currentRehearsal = unwrapped.data as RehearsalRecord
+        if ((unwrapped.data as RehearsalRecord).status === '暂停中') {
+          initialState.pausedRehearsal = buildPausedRehearsal(unwrapped.data as RehearsalRecord)
+        }
+      } else {
+        wx.removeStorageSync(REHEARSAL_SESSION_STORAGE)
+      }
+    }
+    const materialRaw = wx.getStorageSync(MATERIAL_SESSION_STORAGE)
+    if (typeof materialRaw === 'string' && materialRaw) {
+      const unwrapped = unwrapFromStorage(materialRaw)
+      if (unwrapped && isValidMaterialSession(unwrapped.data) && !isSessionExpired(unwrapped.savedAt)) {
+        initialState.currentMaterial = unwrapped.data as MaterialSession
+      } else {
+        wx.removeStorageSync(MATERIAL_SESSION_STORAGE)
+      }
+    }
+  } catch (_error) {
+    // 忽略 Storage 读取失败，使用内存默认值
   }
   return initialState
+}
+
+function safeParseJSON(raw: string): unknown {
+  try {
+    return JSON.parse(raw)
+  } catch (_error) {
+    return null
+  }
+}
+
+function isValidRehearsalRecord(value: unknown): value is RehearsalRecord {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.id === 'string' && record.id !== '' &&
+    typeof record.title === 'string' &&
+    typeof record.status === 'string' &&
+    Array.isArray(record.plan)
+  )
+}
+
+function isValidMaterialSession(value: unknown): value is MaterialSession {
+  if (!value || typeof value !== 'object') return false
+  const session = value as Record<string, unknown>
+  return (
+    typeof session.id === 'string' && session.id !== '' &&
+    typeof session.materialId === 'string' && session.materialId !== '' &&
+    typeof session.status === 'string' &&
+    typeof session.startTime === 'number'
+  )
+}
+
+function isSessionExpired(savedAt: number): boolean {
+  if (typeof savedAt !== 'number' || savedAt <= 0) return true
+  return Date.now() - savedAt > SESSION_EXPIRE_MS
+}
+
+interface StorageWrapper {
+  data: unknown
+  savedAt: number
+}
+
+function wrapForStorage(data: unknown): string {
+  return JSON.stringify({ data, savedAt: Date.now() } as StorageWrapper)
+}
+
+function unwrapFromStorage(raw: string): { data: unknown; savedAt: number } | null {
+  const wrapper = safeParseJSON(raw)
+  if (!wrapper || typeof wrapper !== 'object') return null
+  const w = wrapper as Record<string, unknown>
+  if (typeof w.savedAt !== 'number' || w.savedAt <= 0) return null
+  return { data: w.data, savedAt: w.savedAt }
+}
+
+export function restoreSessions() {
+  try {
+    const rehearsalRaw = wx.getStorageSync(REHEARSAL_SESSION_STORAGE)
+    if (typeof rehearsalRaw === 'string' && rehearsalRaw) {
+      const unwrapped = unwrapFromStorage(rehearsalRaw)
+      if (unwrapped && isValidRehearsalRecord(unwrapped.data) && !isSessionExpired(unwrapped.savedAt)) {
+        state.currentRehearsal = unwrapped.data as RehearsalRecord
+        if ((unwrapped.data as RehearsalRecord).status === '暂停中') {
+          state.pausedRehearsal = buildPausedRehearsal(unwrapped.data as RehearsalRecord)
+        }
+      } else {
+        wx.removeStorageSync(REHEARSAL_SESSION_STORAGE)
+      }
+    } else {
+      wx.removeStorageSync(REHEARSAL_SESSION_STORAGE)
+    }
+
+    const materialRaw = wx.getStorageSync(MATERIAL_SESSION_STORAGE)
+    if (typeof materialRaw === 'string' && materialRaw) {
+      const unwrapped = unwrapFromStorage(materialRaw)
+      if (unwrapped && isValidMaterialSession(unwrapped.data) && !isSessionExpired(unwrapped.savedAt)) {
+        state.currentMaterial = unwrapped.data as MaterialSession
+      } else {
+        wx.removeStorageSync(MATERIAL_SESSION_STORAGE)
+      }
+    } else {
+      wx.removeStorageSync(MATERIAL_SESSION_STORAGE)
+    }
+
+    emit()
+  } catch (_error) {
+    // 忽略 session 恢复过程中的 Storage 读取失败
+  }
 }
 
 function persist() {
@@ -77,8 +193,8 @@ function persist() {
     wx.setStorageSync(THEME_MODE_STORAGE, state.themeMode)
     wx.setStorageSync(DISMISSED_PENDING_KEYS_STORAGE, state.dismissedPendingKeys || [])
     wx.setStorageSync(PENDING_INTENT_MARKS_STORAGE, state.pendingIntentMarks || [])
-  } catch (error) {
-    // Ignore storage write failures for UI-only local preferences.
+  } catch (_error) {
+    // 忽略 UI 偏好设置的 Storage 写入失败
   }
 }
 
@@ -87,15 +203,9 @@ function emit() {
   listeners.slice().forEach((listener) => listener(snapshot))
 }
 
+// 返回 state 的浅拷贝，避免外部直接修改内部状态
 export function getState(): AppState {
-  const snapshot = clone(state) as AppState & Record<string, unknown>
-  snapshot.games = snapshot.materials
-  snapshot.recommendGameId = snapshot.recommendMaterialId
-  snapshot.savedGameIds = snapshot.savedMaterialIds
-  snapshot.playedGameIds = snapshot.playedMaterialIds
-  snapshot.currentGame = snapshot.currentMaterial
-  snapshot.gameRecordsHistory = snapshot.practiceRecordsHistory
-  return snapshot as AppState
+  return Object.assign({}, state)
 }
 
 export function setState(patch: Partial<AppState>) {
@@ -252,6 +362,15 @@ export function setCurrentRehearsal(rehearsal: RehearsalRecord | null) {
     currentRehearsal: rehearsal,
     pausedRehearsal: rehearsal && rehearsal.status === '暂停中' ? buildPausedRehearsal(rehearsal) : null
   })
+  try {
+    if (rehearsal && rehearsal.status !== '已完成') {
+      wx.setStorageSync(REHEARSAL_SESSION_STORAGE, wrapForStorage(rehearsal))
+    } else {
+      wx.removeStorageSync(REHEARSAL_SESSION_STORAGE)
+    }
+  } catch (_error) {
+    // 忽略 session 持久化的 Storage 写入失败
+  }
 }
 
 export function patchCurrentRehearsal(patch: Partial<RehearsalRecord>) {
@@ -301,6 +420,13 @@ export function startMaterialSession(session: MaterialSession) {
   const mutexError = getTaskMutexError('material')
   if (mutexError) throw new Error(mutexError)
   setState({ currentMaterial: session })
+  try {
+    if (session) {
+      wx.setStorageSync(MATERIAL_SESSION_STORAGE, wrapForStorage(session))
+    }
+  } catch (_error) {
+    // 忽略 session 持久化的 Storage 写入失败
+  }
 }
 
 export function updateMaterialSession(patch: Partial<MaterialSession>) {
@@ -311,6 +437,11 @@ export function updateMaterialSession(patch: Partial<MaterialSession>) {
 
 export function clearMaterialSession() {
   setState({ currentMaterial: null })
+  try {
+    wx.removeStorageSync(MATERIAL_SESSION_STORAGE)
+  } catch (_error) {
+    // 忽略 session 持久化的 Storage 删除失败
+  }
 }
 
 export function finishCurrentRehearsal(summaryPatch: Partial<RehearsalRecord> = {}) {
@@ -324,6 +455,11 @@ export function finishCurrentRehearsal(summaryPatch: Partial<RehearsalRecord> = 
     rehearsalHistory,
     todayRehearsals
   })
+  try {
+    wx.removeStorageSync(REHEARSAL_SESSION_STORAGE)
+  } catch (_error) {
+    // 忽略 session 持久化的 Storage 删除失败
+  }
   return finished
 }
 
@@ -353,7 +489,7 @@ export function addMaterialToCurrentRehearsal(materialId: string) {
 }
 
 export function resetStoreForSeed(nextMaterials: Material[] = []) {
-  state = Object.assign(clone(defaultState), {
+  state = Object.assign({}, defaultState, {
     materials: nextMaterials,
     savedMaterialIds: nextMaterials.filter((material) => material.saved).map((material) => material.id),
     playedMaterialIds: nextMaterials.filter((material) => material.played).map((material) => material.id)
@@ -361,12 +497,3 @@ export function resetStoreForSeed(nextMaterials: Material[] = []) {
   persist()
   emit()
 }
-
-export const setGames = setMaterials
-export const setRecommendGameId = setRecommendMaterialId
-export const setGameRecordsHistory = setPracticeRecordsHistory
-export const addGameRecord = addPracticeRecord
-export const startGameSession = startMaterialSession
-export const updateGameSession = updateMaterialSession
-export const clearGameSession = clearMaterialSession
-export const addGameToCurrentRehearsal = addMaterialToCurrentRehearsal

@@ -15,7 +15,7 @@
               <text wx:for="{{profileTags}}" wx:key="*this" class="role-pill">{{item}}</text>
             </view>
           </view>
-          <view class="profile-edit-btn" catchtap="openEditProfile">编辑</view>
+          <button class="small-btn profile-edit-btn" catchtap="openEditProfile">编辑</button>
         </view>
         <text class="muted">练习复盘、灵感和排练复盘，都会慢慢收进这里。</text>
           </view>
@@ -63,7 +63,7 @@
               <text wx:for="{{profileTags}}" wx:key="*this" class="role-pill">{{item}}</text>
             </view>
           </view>
-          <view class="profile-edit-btn" catchtap="openEditProfile">编辑</view>
+          <button class="small-btn profile-edit-btn" catchtap="openEditProfile">编辑</button>
         </view>
         <text class="muted">把热身、关系和灵感收集成一套顺手可用的排练工具，让每次现场都能更快进入状态。</text>
       </view>
@@ -80,7 +80,7 @@
             <text class="kicker">待整理</text>
             <view class="mine-entry-title">{{pendingCount}} 条可沉淀记录</view>
           </view>
-          <view class="mine-entry-action">整理</view>
+          <view class="small-btn mine-entry-action" data-kind="pending" catchtap="openList">整理</view>
           <view class="tags"><text>灵感</text><text>素材练习</text><text>排练复盘</text></view>
         </view>
 
@@ -89,7 +89,7 @@
             <text class="kicker">个人沉淀</text>
             <view class="mine-entry-title">{{sediments.length}} 张方法卡</view>
           </view>
-          <view class="mine-entry-action">查看</view>
+          <view class="small-btn mine-entry-action" data-kind="sediments" catchtap="openList">查看</view>
           <view class="tags"><text>带领提醒</text><text>素材改造</text><text>排练复盘</text></view>
         </view>
 
@@ -98,7 +98,7 @@
             <text class="kicker">灵感记录</text>
             <view class="mine-entry-title">{{inspirations.length}} 条灵感</view>
           </view>
-          <view class="mine-entry-action">查看</view>
+          <view class="small-btn mine-entry-action" data-kind="inspirations" catchtap="openList">查看</view>
         </view>
 
         <view wx:if="{{showGameRecordsCard}}" class="card mine-entry-card" bindtap="openGameRecords">
@@ -106,7 +106,7 @@
             <text class="kicker">练习记录</text>
             <view class="mine-entry-title">{{gameRecordsCount}} 次素材练习</view>
           </view>
-          <view class="mine-entry-action">查看</view>
+          <view class="small-btn mine-entry-action" catchtap="openGameRecords">查看</view>
         </view>
 
         <view wx:if="{{showRehearsalCard}}" class="card mine-entry-card" bindtap="openTeamRecords">
@@ -114,7 +114,7 @@
             <text class="kicker">排练记录</text>
             <view class="mine-entry-title">{{rehearsalCount}} 次排练</view>
           </view>
-          <view class="mine-entry-action">查看</view>
+          <view class="small-btn mine-entry-action" catchtap="openTeamRecords">查看</view>
         </view>
       </view>
     </block>
@@ -133,7 +133,9 @@
         </view>
       </scroll-view>
       <empty-state-panel wx:if="{{!listItems.length}}" customClass="empty-list" title="暂无记录" desc="{{currentKind === 'sediments' ? '还没沉淀方法卡，去整理一条吧。' : (currentKind === 'pending' ? '当前没有待整理记录。' : '还没有灵感记录，随时记下闪念。')}}" />
-      <record-card wx:for="{{listItems}}" wx:key="title" itemId="{{item.id}}" badgeText="{{item.type}}" badgeTone="{{item.type === '素材练习' ? 'orange' : (item.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{item.syncStatus === 'pending'}}" title="{{item.title}}" desc="{{item.desc}}" meta="{{item.filteredMeta}}" bind:tapcard="openDetail" />
+      <view wx:for="{{listItems}}" wx:key="title" class="mine-list-item-wrap">
+        <record-card customClass="mine-list-record-card" itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" badgeText="{{item.cardView.badgeText}}" badgeTone="{{item.cardView.badgeTone}}" primaryActionText="{{(currentKind === 'sediments' || currentKind === 'inspirations') ? '编辑' : ''}}" bind:tapcard="openDetail" bind:action="onEditCard" />
+      </view>
     </view>
   </bottom-sheet>
 
@@ -175,7 +177,23 @@
     </view>
   </bottom-sheet>
 
+  <bottom-sheet visible="{{showMethodCardEditSheet}}" title="编辑方法卡" bind:close="closeMethodCardEdit">
+    <view class="edit-form">
+      <view class="edit-form-field">
+        <text class="edit-form-label">标题</text>
+        <input class="edit-form-input" value="{{methodCardDraftTitle}}" bindinput="onMethodCardDraftTitleInput" placeholder="方法卡标题" />
+      </view>
+      <view class="edit-form-field">
+        <text class="edit-form-label">内容</text>
+        <textarea class="edit-form-textarea" value="{{methodCardDraftContent}}" bindinput="onMethodCardDraftContentInput" placeholder="方法卡内容" />
+      </view>
+      <button class="edit-form-submit" bindtap="saveMethodCardEdit">保存</button>
+    </view>
+  </bottom-sheet>
+
   <root-portal wx:if="{{appToastVisible}}">
     <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>
+
+<privacy-popup visible="{{privacyVisible}}" bind:agree="onPrivacyAgree" bind:refuse="onPrivacyRefuse" />

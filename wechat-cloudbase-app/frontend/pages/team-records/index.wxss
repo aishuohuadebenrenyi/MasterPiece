@@ -25,9 +25,16 @@
 }
 
 .record-list {
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 28rpx;
+}
+
+.record-item-wrap {
+  width: 100%;
+  min-width: 0;
 }
 
 .record-item .muted {

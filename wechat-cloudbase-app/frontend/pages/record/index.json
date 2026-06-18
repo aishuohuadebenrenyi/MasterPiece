@@ -8,6 +8,7 @@
     "search-bar": "../../components/search-bar/index",
     "empty-state-panel": "../../components/empty-state-panel/index",
     "filter-section": "../../components/filter-section/index",
-    "selection-card": "../../components/selection-card/index"
+    "selection-card": "../../components/selection-card/index",
+    "privacy-popup": "../../components/privacy-popup/index"
   }
 }

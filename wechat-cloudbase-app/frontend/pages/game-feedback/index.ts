@@ -40,6 +40,27 @@ Page({
     durationText: ''
   },
 
+  onShareAppMessage() {
+    const game = this.data.game
+    if (game) {
+      const stripeMap: Record<string, string> = {
+        orange: '/assets/share/share-material-orange.png',
+        blue: '/assets/share/share-material-blue.png',
+        mint: '/assets/share/share-material-mint.png'
+      }
+      return {
+        title: `【${game.type}】${game.title} — 练习复盘`,
+        path: `/pages/game-detail/index?id=${game.id}`,
+        imageUrl: stripeMap[game.stripeTone] || '/assets/share/share-brand.png'
+      }
+    }
+    return {
+      title: '练习复盘 — 即兴工具箱',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
   syncContextSummary() {
     const linkedRehearsal = this.data.linkedRehearsal || '单独记录'
     const summaryMap: Record<string, { title: string; desc: string }> = {

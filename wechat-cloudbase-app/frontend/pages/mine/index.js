@@ -1,5 +1,5 @@
-const { createMethodCard, listMethodCards } = require('../../services/method-card')
-const { listInspirations } = require('../../services/inspiration')
+const { createMethodCard, listMethodCards, deleteMethodCard, updateMethodCard } = require('../../services/method-card')
+const { listInspirations, deleteInspiration, updateInspiration } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
 const { listPracticeRecords } = require('../../services/practice-record')
 const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
@@ -7,6 +7,7 @@ const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, setPend
 const { closeModal, openModal } = require('../../utils/modal')
 const { syncTabBar } = require('../../utils/tabbar')
 const { getLayoutStyle } = require('../../utils/layout')
+const { buildSummaryRecordCardViewModel } = require('../../utils/record-card')
 const { toast } = require('../../utils/page')
 
 function computeProfileTags(troupeName) {
@@ -26,7 +27,7 @@ function getAvatarText(displayName = '') {
 
 function normalizeMethodSourceType(sourceType = '') {
   if (sourceType === 'inspiration') return 'inspiration'
-  if (sourceType === 'gameRecord' || sourceType === 'practiceRecord') return 'practiceRecord'
+  if (sourceType === 'practiceRecord') return 'practiceRecord'
   if (sourceType === 'rehearsalReview' || sourceType === 'rehearsal') return 'rehearsalReview'
   return sourceType || 'manual'
 }
@@ -48,6 +49,22 @@ function getSourceKey(item = {}) {
 
 function filterItemMeta(item = {}) {
   return (item.meta || []).filter((entry) => entry && entry !== item.type)
+}
+
+function getCardBadgeTone(type = '') {
+  if (type === '素材练习') return 'orange'
+  if (type === '排练复盘') return 'mint'
+  return 'blue'
+}
+
+function attachSummaryCardView(item = {}) {
+  const badgeTone = getCardBadgeTone(item.type)
+  return Object.assign({}, item, {
+    badgeTone,
+    cardView: buildSummaryRecordCardViewModel(Object.assign({}, item, {
+      badgeTone
+    }))
+  })
 }
 
 function normalizePendingItem(item, sourceType) {
@@ -147,20 +164,20 @@ function normalizeDetailIndex(index, items = []) {
 }
 
 function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', inspirationFilter = 'all', discardedPendingKeys = [], pendingIntentMarks = [] } = {}) {
-  const mappedSediments = sediments.map(item => Object.assign({}, item, {
+  const mappedSediments = sediments.map(item => attachSummaryCardView(Object.assign({}, item, {
     sourceType: normalizeMethodSourceType(item.sourceType),
     type: item.type || getSourceLabel(item.sourceType),
     filteredMeta: filterItemMeta(Object.assign({}, item, {
       type: item.type || getSourceLabel(item.sourceType)
     }))
-  }))
-  const mappedInspirations = inspirations.map((item) => Object.assign({}, item, {
+  })))
+  const mappedInspirations = inspirations.map((item) => attachSummaryCardView(Object.assign({}, item, {
     sourceType: item.sourceType || 'inspiration',
     type: item.type || '灵感',
     filteredMeta: filterItemMeta(Object.assign({}, item, {
       type: item.type || '灵感'
     }))
-  }))
+  })))
   const discarded = new Set(discardedPendingKeys)
   const intentMarked = new Set((pendingIntentMarks || []).map((item) => item.key).filter(Boolean))
   const pendingItems = buildPendingItems({ inspirations: mappedInspirations, rehearsals, gameRecords, sediments: mappedSediments })
@@ -168,6 +185,7 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
       const key = getSourceKey(item)
       return !discarded.has(key) && !intentMarked.has(key)
     })
+    .map((item) => attachSummaryCardView(item))
   const totalRecords = mappedInspirations.length + getRehearsalCount(rehearsals) + mappedSediments.length + (gameRecords.length || 0)
   const methodCount = mappedSediments.length
   const rehearsalCount = getRehearsalCount(rehearsals)
@@ -276,7 +294,22 @@ Page({
     showInspirationsCard: false,
     showGameRecordsCard: false,
     showRehearsalCard: false,
-    showStatsCard: false
+    showStatsCard: false,
+    privacyVisible: false,
+    editingMethodCardId: '',
+    methodCardDraftTitle: '',
+    methodCardDraftContent: '',
+    showMethodCardEditSheet: false
+  },
+
+  unsubscribePrivacy: null,
+
+  onShareAppMessage() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
   },
 
   onLoad() {
@@ -284,9 +317,31 @@ Page({
       layoutStyle: getLayoutStyle(),
       themeClass: getThemeClass()
     })
+    const app = getApp()
+    if (app.subscribePrivacy) {
+      this.unsubscribePrivacy = app.subscribePrivacy(() => {
+        this.setData({ privacyVisible: true })
+      })
+    }
   },
 
-  async onShow() {
+  onUnload() {
+    if (this.unsubscribePrivacy) this.unsubscribePrivacy()
+  },
+
+  onPrivacyAgree() {
+    const app = getApp()
+    if (app.onPrivacyAgree) app.onPrivacyAgree()
+    this.setData({ privacyVisible: false })
+  },
+
+  onPrivacyRefuse() {
+    const app = getApp()
+    if (app.onPrivacyRefuse) app.onPrivacyRefuse()
+    this.setData({ privacyVisible: false })
+  },
+
+  async loadAllData() {
     syncTabBar(this, 2)
     const state = getState()
     const localSediments = state.methodCards || []
@@ -328,6 +383,15 @@ Page({
       discardedPendingKeys: getState().dismissedPendingKeys || this.data.discardedPendingKeys,
       pendingIntentMarks: getState().pendingIntentMarks || this.data.pendingIntentMarks
     }))
+  },
+
+  async onShow() {
+    await this.loadAllData()
+  },
+
+  async onPullDownRefresh() {
+    await this.loadAllData()
+    wx.stopPullDownRefresh()
   },
 
   refreshMineView(overrides = {}, callback) {
@@ -714,5 +778,125 @@ Page({
   toggleTheme() {
     toggleThemeMode()
     this.setData({ themeClass: getThemeClass() })
+  },
+
+  async onDeleteInspiration(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    const confirmed = await new Promise((resolve) => {
+      wx.showModal({
+        title: '删除灵感',
+        content: '确定删除这条灵感记录吗？',
+        confirmText: '删除',
+        confirmColor: '#FF6A3D',
+        success: (res) => resolve(res.confirm),
+        fail: () => resolve(false)
+      })
+    })
+    if (!confirmed) return
+    try {
+      const result = await deleteInspiration(id)
+      if (result.code === 0) {
+        const inspirations = this.data.inspirations.filter(item => item.id !== id)
+        this.refreshMineView({ inspirations })
+        toast('已删除')
+      } else {
+        toast(result.message || '删除失败')
+      }
+    } catch (err) {
+      toast('删除失败')
+    }
+  },
+
+  onEditInspiration(e) {
+    const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
+    if (!id) return
+    wx.navigateTo({ url: `/pages/inspiration-edit/index?id=${id}` })
+  },
+
+  async onDeleteMethodCard(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    const confirmed = await new Promise((resolve) => {
+      wx.showModal({
+        title: '删除方法卡',
+        content: '确定删除这张方法卡吗？',
+        confirmText: '删除',
+        confirmColor: '#FF6A3D',
+        success: (res) => resolve(res.confirm),
+        fail: () => resolve(false)
+      })
+    })
+    if (!confirmed) return
+    try {
+      const result = await deleteMethodCard(id)
+      if (result.code === 0) {
+        const sediments = this.data.sediments.filter(item => item.id !== id)
+        this.refreshMineView({ sediments })
+        wx.showToast({ title: '已删除', icon: 'none' })
+      } else {
+        wx.showToast({ title: result.message || '删除失败', icon: 'none' })
+      }
+    } catch (err) {
+      wx.showToast({ title: '删除失败', icon: 'none' })
+    }
+  },
+
+  onEditMethodCard(e) {
+    const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
+    if (!id) return
+    const card = this.data.sediments.find(item => item.id === id)
+    if (!card) return
+    this.setData({
+      editingMethodCardId: id,
+      methodCardDraftTitle: card.title || '',
+      methodCardDraftContent: card.content || card.desc || card.summary || '',
+      showMethodCardEditSheet: true
+    })
+  },
+
+  onEditCard(e) {
+    if (this.data.currentKind === 'sediments') {
+      this.onEditMethodCard(e)
+    } else if (this.data.currentKind === 'inspirations') {
+      this.onEditInspiration(e)
+    }
+  },
+
+  saveMethodCardEdit() {
+    const id = this.data.editingMethodCardId
+    if (!id) return
+    const title = String(this.data.methodCardDraftTitle || '').trim()
+    const content = String(this.data.methodCardDraftContent || '').trim()
+    if (!title || !content) {
+      wx.showToast({ title: '请填写完整', icon: 'none' })
+      return
+    }
+    updateMethodCard(id, { title, content }).then((result) => {
+      if (result.code === 0) {
+        const sediments = this.data.sediments.map(item =>
+          item.id === id ? Object.assign({}, item, { title, desc: content, content }) : item
+        )
+        this.setData({ showMethodCardEditSheet: false })
+        this.refreshMineView({ sediments })
+        wx.showToast({ title: '已保存', icon: 'none' })
+      } else {
+        wx.showToast({ title: result.message || '保存失败', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.showToast({ title: '保存失败', icon: 'none' })
+    })
+  },
+
+  closeMethodCardEdit() {
+    this.setData({ showMethodCardEditSheet: false })
+  },
+
+  onMethodCardDraftTitleInput(e) {
+    this.setData({ methodCardDraftTitle: e.detail.value })
+  },
+
+  onMethodCardDraftContentInput(e) {
+    this.setData({ methodCardDraftContent: e.detail.value })
   }
 })

@@ -133,3 +133,5 @@
     <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </view>
+
+<privacy-popup visible="{{privacyVisible}}" bind:agree="onPrivacyAgree" bind:refuse="onPrivacyRefuse" />

@@ -1,0 +1,34 @@
+{
+  "improv_materials": {
+    ".read": "auth.openId == 'system'",
+    ".write": "auth.openId == 'system'",
+    "doc.ownerOpenId": {
+      ".read": "doc.ownerOpenId == 'system' || doc.ownerOpenId == auth.openId",
+      ".write": "doc.ownerOpenId == auth.openId"
+    }
+  },
+  "improv_user_material_states": {
+    ".read": "doc.ownerOpenId == auth.openId",
+    ".write": "doc.ownerOpenId == auth.openId"
+  },
+  "improv_profiles": {
+    ".read": "doc.ownerOpenId == auth.openId",
+    ".write": "doc.ownerOpenId == auth.openId"
+  },
+  "improv_inspirations": {
+    ".read": "doc.ownerOpenId == auth.openId",
+    ".write": "doc.ownerOpenId == auth.openId"
+  },
+  "improv_rehearsals": {
+    ".read": "doc.ownerOpenId == auth.openId",
+    ".write": "doc.ownerOpenId == auth.openId"
+  },
+  "improv_practice_records": {
+    ".read": "doc.ownerOpenId == auth.openId",
+    ".write": "doc.ownerOpenId == auth.openId"
+  },
+  "improv_method_cards": {
+    ".read": "doc.ownerOpenId == auth.openId",
+    ".write": "doc.ownerOpenId == auth.openId"
+  }
+}

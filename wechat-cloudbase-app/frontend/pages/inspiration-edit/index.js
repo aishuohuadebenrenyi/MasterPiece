@@ -1,5 +1,5 @@
 const { toast } = require('../../utils/page')
-const { createInspiration } = require('../../services/inspiration')
+const { createInspiration, updateInspiration, listInspirations } = require('../../services/inspiration')
 const { createMethodCard: createMethodCardRecord } = require('../../services/method-card')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
@@ -13,6 +13,7 @@ const {
 Page({
   data: {
     themeClass: 'theme-default',
+    editingId: '',
     titleValue: '',
     contentValue: '',
     linkedGame: '',
@@ -32,6 +33,14 @@ Page({
     tagOptions: [],
     arrangementLabel: '带领提醒',
     layoutStyle: ''
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
   },
 
   onShow() {
@@ -74,11 +83,39 @@ Page({
     })
   },
 
-  onLoad() {
+  async onLoad(query) {
     this.setData({
       layoutStyle: getLayoutStyle(),
       themeClass: getThemeClass()
     })
+    const editingId = (query && query.id) || ''
+    if (editingId) {
+      let existing = null
+      const state = getState()
+      existing = (state.todayInspirations || []).find((item) => item.id === editingId)
+      if (!existing) {
+        // store 中没有，从云端加载
+        try {
+          const allInspirations = await listInspirations()
+          existing = allInspirations.find((item) => item.id === editingId)
+        } catch (error) {
+          toast('加载灵感失败')
+        }
+      }
+      if (existing) {
+        this.setData({
+          editingId,
+          titleValue: existing.title || existing.desc || '',
+          contentValue: existing.desc || existing.content || '',
+          linkedGame: existing.linkedMaterialTitle || '',
+          linkedRehearsal: existing.linkedRehearsalTitle || '',
+          selectedTags: existing.meta || existing.tags || []
+        })
+      } else {
+        this.setData({ editingId })
+        toast('未找到灵感记录')
+      }
+    }
     const state = getState()
     const rehearsalHistory = state.rehearsalHistory || []
     this.setData({
@@ -145,28 +182,40 @@ Page({
   },
 
   async save() {
-    const item = {
-      id: `inspiration-${Date.now()}`,
-      type: '灵感',
+    const editingId = this.data.editingId
+    const payload = {
       title: this.data.titleValue,
       desc: this.data.contentValue,
       meta: this.data.selectedTags,
       linkedMaterialTitle: this.data.linkedGame,
       linkedRehearsalTitle: this.data.linkedRehearsal
     }
-    try {
-      await createInspiration({
-        title: item.title,
-        desc: item.desc,
-        meta: item.meta,
-        linkedMaterialTitle: item.linkedMaterialTitle,
-        linkedRehearsalTitle: item.linkedRehearsalTitle
-      })
-      addInspiration(item)
-      toast('已保存灵感')
-    } catch (error) {
-      addInspiration(Object.assign({}, item, { syncStatus: 'pending' }))
-      toast('已本地保存，待同步')
+    if (editingId) {
+      try {
+        await updateInspiration(editingId, payload)
+        toast('已更新灵感')
+      } catch (error) {
+        toast('保存失败，请重试')
+        return
+      }
+    } else {
+      const item = {
+        id: `inspiration-${Date.now()}`,
+        type: '灵感',
+        title: this.data.titleValue,
+        desc: this.data.contentValue,
+        meta: this.data.selectedTags,
+        linkedMaterialTitle: this.data.linkedGame,
+        linkedRehearsalTitle: this.data.linkedRehearsal
+      }
+      try {
+        await createInspiration(payload)
+        addInspiration(item)
+        toast('已保存灵感')
+      } catch (error) {
+        addInspiration(Object.assign({}, item, { syncStatus: 'pending' }))
+        toast('已本地保存，待同步')
+      }
     }
     wx.navigateBack()
   },

@@ -16,8 +16,8 @@
   </view>
   <view wx:if="{{canSediment}}" class="detail-action-block">
     <view wx:if="{{canMarkIntent}}" class="detail-action-row detail-intent-row">
-      <button class="ghost-btn detail-intent-btn" data-intent="training" bindtap="onMarkIntent">训练线索</button>
-      <button class="ghost-btn detail-intent-btn" data-intent="rehearsal" bindtap="onMarkIntent">排练线索</button>
+      <view class="meta-pill detail-intent-chip" data-intent="training" catchtap="onMarkIntent">训练线索</view>
+      <view class="meta-pill detail-intent-chip" data-intent="rehearsal" catchtap="onMarkIntent">排练线索</view>
     </view>
     <view class="detail-action-row">
       <button class="ghost-btn detail-discard-btn" bindtap="onDiscard">不再整理</button>

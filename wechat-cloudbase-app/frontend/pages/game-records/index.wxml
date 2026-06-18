@@ -15,7 +15,9 @@
     <empty-state-panel wx:elif="{{!records.length}}" title="还没有练习记录" desc="这里会回看单次素材练习的 Keep、Try 和提醒。等你真的练过一次，再把它留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
 
     <view wx:else class="record-list">
-      <record-card wx:for="{{records}}" wx:key="id" itemId="{{item.id}}" miniTitle="{{item.dateLabel}}" title="{{item.title}}" desc="{{item.displayDesc}}" meta="{{item.displayMeta}}" pending="{{item.syncStatus === 'pending'}}" actionText="查看" bind:action="openRecord" />
+      <view wx:for="{{records}}" wx:key="id" class="record-item-wrap">
+        <record-card itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" eyebrow="{{item.cardView.eyebrow}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" primaryActionText="{{item.cardView.primaryActionText}}" secondaryActionText="{{item.cardView.secondaryActionText}}" bind:action="openRecord" bind:danger="onDeletePracticeRecord" />
+      </view>
     </view>
   </view>
 

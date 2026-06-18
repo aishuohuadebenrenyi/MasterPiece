@@ -1,4 +1,4 @@
-const { listGames } = require('../../services/game')
+const { listMaterials } = require('../../services/material')
 const { nextMaterialStatus, updateMaterialStatus, updateRehearsal } = require('../../services/rehearsal')
 const {
   addMaterialToCurrentRehearsal,
@@ -17,14 +17,14 @@ const { closeModal, openModal } = require('../../utils/modal')
 Page({
   data: {
     themeClass: 'theme-default',
-    games: [],
+    materials: [],
     rehearsalId: '',
     title: '',
     duration: '',
     desc: '',
     metaText: '',
-    planGames: [],
-    filteredGames: [],
+    planMaterials: [],
+    filteredMaterials: [],
     linkedInspirations: [],
     addVisible: false,
     planVisible: false,
@@ -35,37 +35,47 @@ Page({
     layoutStyle: ''
   },
 
+  onShareAppMessage() {
+    const state = getState()
+    const current = state.currentRehearsal
+    return {
+      title: current ? `排练进行中 — ${current.title}` : '排练进行中 — 即兴工具箱',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-rehearsal.png'
+    }
+  },
+
   onShow() {
     this.setData({ themeClass: getThemeClass() })
   },
   unsubscribeStore: null,
 
-  getPlanGames() {
+  getPlanMaterials() {
     const rehearsal = getState().currentRehearsal
     const plan = rehearsal && rehearsal.plan && rehearsal.plan.length
-      ? rehearsal.plan.map((item) => item.materialId || item.gameId)
+      ? rehearsal.plan.map((item) => item.materialId)
       : []
     return plan.map((id) => {
-      const game = this.data.games.find((item) => item.id === id)
-      if (!game) return null
-      const planItem = rehearsal && rehearsal.plan ? rehearsal.plan.find((item) => (item.materialId || item.gameId) === id) : null
-      return Object.assign({}, game, {
+      const material = this.data.materials.find((item) => item.id === id)
+      if (!material) return null
+      const planItem = rehearsal && rehearsal.plan ? rehearsal.plan.find((item) => item.materialId === id) : null
+      return Object.assign({}, material, {
         status: planItem ? planItem.status : '未开始',
-        metaText: game.meta[1],
-        tagText: game.tags[0],
+        metaText: material.meta[1],
+        tagText: material.tags[0],
         keepValue: planItem ? planItem.keep : '',
         tryValue: planItem ? planItem.try : ''
       })
     }).filter(Boolean)
   },
 
-  getFilteredGames() {
+  getFilteredMaterials() {
     const query = this.data.query.trim().toLowerCase()
-    const plannedIds = new Set(((getState().currentRehearsal && getState().currentRehearsal.plan) || []).map((item) => item.materialId || item.gameId))
-    return this.data.games.filter((game) => {
-      if (plannedIds.has(game.id)) return false
-      if (game.referenceOnly) return false
-      const text = `${game.title} ${game.desc} ${game.type || ''} ${game.tags.join(' ')} ${(game.abilities || []).join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+    const plannedIds = new Set(((getState().currentRehearsal && getState().currentRehearsal.plan) || []).map((item) => item.materialId))
+    return this.data.materials.filter((material) => {
+      if (plannedIds.has(material.id)) return false
+      if (material.referenceOnly) return false
+      const text = `${material.title} ${material.desc} ${material.type || ''} ${material.tags.join(' ')} ${(material.abilities || []).join(' ')} ${material.meta.join(' ')}`.toLowerCase()
       return !query || text.includes(query)
     })
   },
@@ -75,11 +85,11 @@ Page({
     const rehearsal = state.currentRehearsal
     const linkedInspirations = rehearsal ? state.todayInspirations.filter(i => i.linkedRehearsalId === rehearsal.id) : []
     
-    const planGames = this.getPlanGames()
-    const filteredGames = this.getFilteredGames()
-    const hasGameLibrary = this.data.games.length > 0
-    const availableGamesCount = hasGameLibrary
-      ? this.data.games.filter((game) => !planGames.some((item) => item.id === game.id)).length
+    const planMaterials = this.getPlanMaterials()
+    const filteredMaterials = this.getFilteredMaterials()
+    const hasMaterialLibrary = this.data.materials.length > 0
+    const availableMaterialsCount = hasMaterialLibrary
+      ? this.data.materials.filter((material) => !planMaterials.some((item) => item.id === material.id)).length
       : 0
     const hasQuery = !!this.data.query.trim()
     this.setData({
@@ -88,16 +98,16 @@ Page({
       duration: rehearsal ? rehearsal.duration : '',
       desc: rehearsal ? rehearsal.desc : '',
       metaText: rehearsal ? `${rehearsal.plan.length} 条素材 · ${rehearsal.status}` : '',
-      planGames,
-      filteredGames,
-      addEmptyTitle: availableGamesCount === 0
+      planMaterials,
+      filteredMaterials,
+      addEmptyTitle: availableMaterialsCount === 0
         ? '可加入的素材都已经在计划里了'
-        : hasGameLibrary
+        : hasMaterialLibrary
         ? (hasQuery ? '没有找到匹配的素材' : '暂时没有可加入的素材')
         : '还没有可加入的素材',
-      addEmptyDesc: availableGamesCount === 0
+      addEmptyDesc: availableMaterialsCount === 0
         ? '如果还想加新内容，先去发现页补充几个素材，再回来安排这次排练。'
-        : hasGameLibrary
+        : hasMaterialLibrary
         ? (hasQuery ? '换个关键词试试，或清空搜索继续浏览。' : '去发现页添加常用素材后，再回来安排这次排练。')
         : '先去发现页添加几个常用素材，再来安排这次排练。',
       linkedInspirations
@@ -118,8 +128,8 @@ Page({
     this.unsubscribeStore = subscribe(() => this.syncPlan())
     this.syncPlan()
     try {
-      const cloudGames = await listGames()
-      this.setData({ games: cloudGames }, () => this.syncPlan())
+      const cloudMaterials = await listMaterials()
+      this.setData({ materials: cloudMaterials }, () => this.syncPlan())
     } catch (error) {
       this.syncPlan()
     }
@@ -160,7 +170,7 @@ Page({
 
   addGame(event) {
     const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
-    if (this.data.planGames.some((item) => item.id === id)) {
+    if (this.data.planMaterials.some((item) => item.id === id)) {
       toast('这条素材已经在排练计划里')
       return
     }
@@ -185,7 +195,7 @@ Page({
 
   async toggleStatus(event) {
     const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
-    const target = this.data.planGames.find((item) => item.id === id)
+    const target = this.data.planMaterials.find((item) => item.id === id)
     const next = nextMaterialStatus(target ? target.status : '未开始')
     updateCurrentRehearsalPlan(id, {
       status: next,

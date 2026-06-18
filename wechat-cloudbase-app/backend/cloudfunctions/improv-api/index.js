@@ -7,6 +7,7 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 数据库集合名称
 const COLLECTIONS = {
   materials: 'improv_materials',
   userMaterialStates: 'improv_user_material_states',
@@ -15,6 +16,29 @@ const COLLECTIONS = {
   rehearsals: 'improv_rehearsals',
   practiceRecords: 'improv_practice_records',
   methodCards: 'improv_method_cards'
+}
+
+// 分页常量
+const DEFAULT_LIMIT = 50
+const MAX_LIMIT = 100
+const TODAY_LIMIT = 20
+const RECOMMEND_POOL_SIZE = 5
+
+// 各集合允许写入的字段白名单
+const FIELD_WHITELISTS = {
+  inspirations: ['id', 'title', 'desc', 'meta', 'linkedMaterialTitle', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
+  methodCards: ['id', 'type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
+  rehearsals: ['id', 'title', 'desc', 'plan', 'status', 'keep', 'try'],
+  practiceRecords: ['id', 'materialId', 'materialTitle', 'feedback', 'keep', 'try', 'duration', 'rating'],
+  profiles: ['id', 'displayName', 'avatarUrl', 'troupeName']
+}
+
+// 各集合允许更新的字段白名单
+const UPDATE_WHITELISTS = {
+  inspirations: ['title', 'desc', 'meta', 'linkedMaterialTitle', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
+  methodCards: ['type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
+  rehearsals: ['title', 'desc', 'plan', 'status', 'keep', 'try'],
+  practiceRecords: ['materialId', 'materialTitle', 'feedback', 'keep', 'try', 'duration', 'rating']
 }
 
 function ok(data = {}, requestId = '') {
@@ -40,6 +64,17 @@ function ownerWhere(extra = {}) {
   }, extra)
 }
 
+// 从 payload 中只提取白名单中的字段
+function pickFields(payload, whitelist) {
+  const result = {}
+  for (const key of whitelist) {
+    if (payload[key] !== undefined) {
+      result[key] = payload[key]
+    }
+  }
+  return result
+}
+
 function normalizeMaterialPayload(payload, ownerOpenId) {
   const type = payload.type || '游戏'
   return {
@@ -55,7 +90,7 @@ function normalizeMaterialPayload(payload, ownerOpenId) {
     tips: payload.tips || '',
     variant: payload.variant || '',
     issue: payload.issue || '',
-    relatedMaterialId: payload.relatedMaterialId || payload.relatedGameId || '',
+    relatedMaterialId: payload.relatedMaterialId || '',
     referenceOnly: typeof payload.referenceOnly === 'boolean' ? payload.referenceOnly : type === '路径',
     stripeTone: payload.stripeTone || 'orange',
     sortOrder: Number(payload.sortOrder) || 999,
@@ -66,13 +101,9 @@ function normalizeMaterialPayload(payload, ownerOpenId) {
   }
 }
 
-async function seedMaterials(requestId) {
-  return fail('已移除代码内 seed 数据，请改为手动导入仓库根目录 mock_data/improv_materials.json', requestId, 400)
-}
-
 async function listMaterials(payload, requestId) {
   const ownerOpenId = getOpenId()
-  const limit = Math.min(Number(payload.limit) || 50, 100)
+  const limit = Math.min(Number(payload.limit) || DEFAULT_LIMIT, MAX_LIMIT)
   const type = typeof payload.type === 'string' ? payload.type.trim() : ''
   const query = typeof payload.query === 'string' ? payload.query.trim().toLowerCase() : ''
   const ability = typeof payload.ability === 'string' ? payload.ability.trim() : ''
@@ -89,12 +120,11 @@ async function listMaterials(payload, requestId) {
     .limit(limit)
     .get()
 
-  // Public materials should remain readable even when OPENID is unavailable
-  // (for example in cloud console tests). In that case, skip per-user state merge.
+  // 无 OPENID 时（如云控制台测试）跳过用户状态合并
   const statesResult = ownerOpenId
     ? await db.collection(COLLECTIONS.userMaterialStates)
       .where({ ownerOpenId })
-      .limit(100)
+      .limit(MAX_LIMIT)
       .get()
     : { data: [] }
 
@@ -148,42 +178,35 @@ async function updateMaterial(payload, requestId) {
   if (!payload.id) return fail('缺少素材 ID', requestId, 400)
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
   const ownerOpenId = getOpenId()
-  
+
   const collection = db.collection(COLLECTIONS.materials)
   const existing = await collection.where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
   if (!existing.data.length) return fail('素材不存在或无权限修改', requestId, 404)
-  
+
   const doc = normalizeMaterialPayload(payload, ownerOpenId)
-  // 保持原有 ID 和创建时间
   delete doc.id
+  delete doc.createdAt
   doc.updatedAt = now()
-  
-  await collection.doc(existing.data[0]._id).update({
-    data: Object.assign({}, doc, {
-      fit: _.remove(),
-      lead: _.remove(),
-      avoid: _.remove(),
-      verdict: _.remove()
-    })
-  })
+
+  await collection.doc(existing.data[0]._id).update({ data: doc })
   return ok({ materialId: payload.id }, requestId)
 }
 
 async function deleteMaterial(payload, requestId) {
   if (!payload.id) return fail('缺少素材 ID', requestId, 400)
   const ownerOpenId = getOpenId()
-  
+
   const collection = db.collection(COLLECTIONS.materials)
   const existing = await collection.where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
   if (!existing.data.length) return fail('素材不存在或无权限删除', requestId, 404)
-  
+
   await collection.doc(existing.data[0]._id).update({ data: { deletedAt: now() } })
   return ok({ materialId: payload.id }, requestId)
 }
 
 async function updateMaterialState(payload, requestId) {
   const ownerOpenId = getOpenId()
-  const materialId = payload.materialId || payload.gameId
+  const materialId = payload.materialId
   if (!materialId) return fail('缺少 materialId', requestId, 400)
   const collection = db.collection(COLLECTIONS.userMaterialStates)
   const existing = await collection.where({ ownerOpenId, materialId }).limit(1).get()
@@ -219,7 +242,7 @@ async function updateMaterialState(payload, requestId) {
 }
 
 async function listOwned(collectionName, payload, requestId) {
-  const limit = Math.min(Number(payload.limit) || 50, 100)
+  const limit = Math.min(Number(payload.limit) || DEFAULT_LIMIT, MAX_LIMIT)
   const result = await db.collection(collectionName)
     .where(ownerWhere())
     .orderBy('updatedAt', 'desc')
@@ -229,8 +252,10 @@ async function listOwned(collectionName, payload, requestId) {
 }
 
 async function createOwned(collectionName, payload, requestId) {
+  const whitelist = FIELD_WHITELISTS[collectionName]
+  const safeData = whitelist ? pickFields(payload, whitelist) : payload
   const result = await db.collection(collectionName).add({
-    data: Object.assign({}, payload, {
+    data: Object.assign({}, safeData, {
       ownerOpenId: getOpenId(),
       createdAt: now(),
       updatedAt: now(),
@@ -240,12 +265,24 @@ async function createOwned(collectionName, payload, requestId) {
   return ok({ id: result._id }, requestId)
 }
 
+async function deleteOwned(collectionName, payload, requestId) {
+  if (!payload.id) return fail('缺少 id', requestId, 400)
+  const collection = db.collection(collectionName)
+  const result = await collection.where(ownerWhere({ id: payload.id })).limit(1).get()
+  if (!result.data.length) return fail('未找到记录', requestId, 404)
+  await collection.doc(result.data[0]._id).update({ data: { deletedAt: now() } })
+  return ok({ id: payload.id }, requestId)
+}
+
 async function updateOwned(collectionName, payload, requestId) {
   if (!payload.id) return fail('缺少 id', requestId, 400)
   const collection = db.collection(collectionName)
   const result = await collection.where(ownerWhere({ id: payload.id })).limit(1).get()
   if (!result.data.length) return fail('未找到记录', requestId, 404)
-  const patch = Object.assign({}, payload.patch || {}, { updatedAt: now() })
+  const whitelist = UPDATE_WHITELISTS[collectionName]
+  const rawPatch = payload.patch || {}
+  const safePatch = whitelist ? pickFields(rawPatch, whitelist) : rawPatch
+  const patch = Object.assign({}, safePatch, { updatedAt: now() })
   await collection.doc(result.data[0]._id).update({ data: patch })
   return ok({ id: payload.id }, requestId)
 }
@@ -289,17 +326,16 @@ async function updateProfile(payload, requestId) {
 }
 
 async function updateRehearsalMaterialStatus(payload, requestId) {
-  const materialId = payload.materialId || payload.gameId
+  const materialId = payload.materialId
   if (!payload.rehearsalId || !materialId) return fail('缺少 rehearsalId 或 materialId', requestId, 400)
   const collection = db.collection(COLLECTIONS.rehearsals)
   const result = await collection.where(ownerWhere({ id: payload.rehearsalId })).limit(1).get()
   if (!result.data.length) return fail('未找到排练记录', requestId, 404)
   const rehearsal = result.data[0]
   const currentPlan = Array.isArray(rehearsal.plan) ? rehearsal.plan : []
-  const plan = currentPlan.map((item) => (item.materialId || item.gameId) === materialId
+  const plan = currentPlan.map((item) => item.materialId === materialId
     ? Object.assign({}, item, {
         materialId,
-        gameId: _.remove(),
         status: payload.status || item.status,
         keep: typeof payload.keep === 'string' ? payload.keep : item.keep || '',
         try: typeof payload.try === 'string' ? payload.try : item.try || ''
@@ -319,23 +355,77 @@ async function todaySummary(requestId) {
   const ownerOpenId = getOpenId()
   const start = new Date()
   start.setHours(0, 0, 0, 0)
-  const [inspirations, rehearsals] = await Promise.all([
+  const [inspirations, rehearsals, unplayedMaterials] = await Promise.all([
     db.collection(COLLECTIONS.inspirations).where({
       ownerOpenId,
       deletedAt: null,
       createdAt: _.gte(start)
-    }).orderBy('createdAt', 'desc').limit(20).get(),
+    }).orderBy('createdAt', 'desc').limit(TODAY_LIMIT).get(),
     db.collection(COLLECTIONS.rehearsals).where({
       ownerOpenId,
       deletedAt: null,
       createdAt: _.gte(start)
-    }).orderBy('createdAt', 'desc').limit(20).get()
+    }).orderBy('createdAt', 'desc').limit(TODAY_LIMIT).get(),
+    ownerOpenId
+      ? db.collection(COLLECTIONS.materials).where({
+          deletedAt: null,
+          ownerOpenId: 'system',
+          referenceOnly: _.neq(true)
+        }).orderBy('sortOrder', 'asc').limit(TODAY_LIMIT).get()
+      : { data: [] }
   ])
+
+  let recommendMaterialId = ''
+  if (ownerOpenId && unplayedMaterials.data.length) {
+    const statesResult = await db.collection(COLLECTIONS.userMaterialStates)
+      .where({ ownerOpenId })
+      .limit(MAX_LIMIT)
+      .get()
+    const playedIds = new Set(statesResult.data.filter(s => s.playedCount > 0).map(s => s.materialId))
+    const unplayed = unplayedMaterials.data.filter(m => !playedIds.has(m.id))
+    if (unplayed.length) {
+      const idx = Math.floor(Math.random() * Math.min(unplayed.length, RECOMMEND_POOL_SIZE))
+      recommendMaterialId = unplayed[idx].id
+    }
+  }
+  if (!recommendMaterialId && unplayedMaterials.data.length) {
+    recommendMaterialId = unplayedMaterials.data[0].id
+  }
+
   return ok({
     inspirations: inspirations.data,
     rehearsals: rehearsals.data,
-    recommendMaterialId: 'status-swap'
+    recommendMaterialId
   }, requestId)
+}
+
+// 路由表
+const routes = {
+  'material.list': (payload, requestId) => listMaterials(payload, requestId),
+  'material.create': (payload, requestId) => createMaterial(payload, requestId),
+  'material.update': (payload, requestId) => updateMaterial(payload, requestId),
+  'material.delete': (payload, requestId) => deleteMaterial(payload, requestId),
+  'material.updateState': (payload, requestId) => updateMaterialState(payload, requestId),
+  'profile.get': (_payload, requestId) => getProfile(requestId),
+  'profile.update': (payload, requestId) => updateProfile(payload, requestId),
+  'today.summary': (_payload, requestId) => todaySummary(requestId),
+  'inspiration.list': (payload, requestId) => listOwned(COLLECTIONS.inspirations, payload, requestId),
+  'inspiration.create': (payload, requestId) => createOwned(COLLECTIONS.inspirations, payload, requestId),
+  'inspiration.update': (payload, requestId) => updateOwned(COLLECTIONS.inspirations, payload, requestId),
+  'inspiration.delete': (payload, requestId) => deleteOwned(COLLECTIONS.inspirations, payload, requestId),
+  'methodCard.list': (payload, requestId) => listOwned(COLLECTIONS.methodCards, payload, requestId),
+  'methodCard.create': (payload, requestId) => createOwned(COLLECTIONS.methodCards, payload, requestId),
+  'methodCard.update': (payload, requestId) => updateOwned(COLLECTIONS.methodCards, payload, requestId),
+  'methodCard.delete': (payload, requestId) => deleteOwned(COLLECTIONS.methodCards, payload, requestId),
+  'rehearsal.list': (payload, requestId) => listOwned(COLLECTIONS.rehearsals, payload, requestId),
+  'rehearsal.create': (payload, requestId) => createOwned(COLLECTIONS.rehearsals, payload, requestId),
+  'rehearsal.update': (payload, requestId) => updateOwned(COLLECTIONS.rehearsals, payload, requestId),
+  'rehearsal.delete': (payload, requestId) => deleteOwned(COLLECTIONS.rehearsals, payload, requestId),
+  'rehearsal.updateMaterialStatus': (payload, requestId) => updateRehearsalMaterialStatus(payload, requestId),
+  'practiceRecord.list': (payload, requestId) => listOwned(COLLECTIONS.practiceRecords, payload, requestId),
+  'practiceRecord.create': (payload, requestId) => createOwned(COLLECTIONS.practiceRecords, payload, requestId),
+  'practiceRecord.update': (payload, requestId) => updateOwned(COLLECTIONS.practiceRecords, payload, requestId),
+  'practiceRecord.delete': (payload, requestId) => deleteOwned(COLLECTIONS.practiceRecords, payload, requestId)
 }
 
 exports.main = async (event) => {
@@ -343,29 +433,18 @@ exports.main = async (event) => {
   const payload = event.payload || {}
   const requestId = event.requestId || ''
 
-  try {
-    if (action === 'material.seed' || action === 'game.seed' || action === 'seed.games') return seedMaterials(requestId)
-    if (action === 'material.list' || action === 'game.list') return listMaterials(payload, requestId)
-    if (action === 'material.create' || action === 'game.create') return createMaterial(payload, requestId)
-    if (action === 'material.update' || action === 'game.update') return updateMaterial(payload, requestId)
-    if (action === 'material.delete' || action === 'game.delete') return deleteMaterial(payload, requestId)
-    if (action === 'material.updateState' || action === 'game.updateState' || action === 'game.updateSaved' || action === 'game.updatePlayed') return updateMaterialState(payload, requestId)
-    if (action === 'profile.get') return getProfile(requestId)
-    if (action === 'profile.update') return updateProfile(payload, requestId)
-    if (action === 'today.summary') return todaySummary(requestId)
-    if (action === 'inspiration.list') return listOwned(COLLECTIONS.inspirations, payload, requestId)
-    if (action === 'inspiration.create') return createOwned(COLLECTIONS.inspirations, payload, requestId)
-    if (action === 'methodCard.list') return listOwned(COLLECTIONS.methodCards, payload, requestId)
-    if (action === 'methodCard.create') return createOwned(COLLECTIONS.methodCards, payload, requestId)
-    if (action === 'rehearsal.list') return listOwned(COLLECTIONS.rehearsals, payload, requestId)
-    if (action === 'rehearsal.create') return createOwned(COLLECTIONS.rehearsals, payload, requestId)
-    if (action === 'rehearsal.update') return updateOwned(COLLECTIONS.rehearsals, payload, requestId)
-    if (action === 'rehearsal.updateMaterialStatus' || action === 'rehearsal.updateGameStatus') return updateRehearsalMaterialStatus(payload, requestId)
-    if (action === 'practiceRecord.list' || action === 'gameRecord.list') return listOwned(COLLECTIONS.practiceRecords, payload, requestId)
-    if (action === 'practiceRecord.create' || action === 'gameRecord.create') return createOwned(COLLECTIONS.practiceRecords, payload, requestId)
+  const handler = routes[action]
+  if (!handler) {
     return fail(`未知 action: ${action}`, requestId, 404)
+  }
+
+  try {
+    return await handler(payload, requestId)
   } catch (error) {
     console.error('[improv-api:error]', action, error)
-    return fail('服务暂不可用，请稍后再试', requestId)
+    const message = error && error.errCode
+      ? `云开发错误: ${error.errCode}`
+      : '服务暂不可用，请稍后再试'
+    return fail(message, requestId, 500)
   }
 }

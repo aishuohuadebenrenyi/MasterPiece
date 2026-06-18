@@ -18,6 +18,15 @@ Page({
     selectedDirections: [],
     layoutStyle: ''
   },
+  onShareAppMessage() {
+    const current = getState().currentRehearsal
+    return {
+      title: current ? `排练复盘 — ${current.title}` : '排练复盘 — 即兴工具箱',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-rehearsal.png'
+    }
+  },
+
   onShow() {
     this.setData({ themeClass: getThemeClass() })
   },

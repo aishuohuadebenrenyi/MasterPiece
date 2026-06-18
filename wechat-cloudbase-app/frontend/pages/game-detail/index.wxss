@@ -14,11 +14,19 @@
 
 .header {
   position: relative;
-  padding-right: 168rpx;
+  padding-right: 32rpx;
 }
 
 .detail-heading {
   min-width: 0;
+  max-width: calc(100% - 240rpx);
+  overflow: hidden;
+}
+
+.header .kicker {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detail-title {
@@ -28,22 +36,36 @@
   font-weight: 900;
 }
 
-.card-action-btn {
+.card-action-group {
   position: absolute;
   top: 32rpx;
   right: 32rpx;
-  width: auto !important;
-  min-width: 120rpx;
-  margin: 0;
-  min-height: 64rpx;
-  padding: 0 32rpx;
-  border-radius: 32rpx;
-  background: var(--improv-bg-soft);
-  color: var(--improv-secondary-strong);
-  font-size: 26rpx;
-  font-weight: 900;
-  line-height: 64rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
   z-index: 10;
+}
+
+.card-action-group button.card-action-btn {
+  width: auto !important;
+  min-width: 96rpx;
+  margin: 0;
+  min-height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-strong, #ffffff) !important;
+  border: 2rpx solid var(--improv-line-soft, rgba(94, 114, 144, 0.12)) !important;
+  color: var(--improv-secondary-strong);
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 56rpx;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.card-action-group button.card-action-btn::after {
+  border: none;
 }
 
 .meta {
@@ -142,7 +164,25 @@
 
 .edit-form-block {
   padding-top: 36rpx;
-  padding-bottom: 40rpx;
+  padding-bottom: calc(40rpx + var(--fixed-action-clearance, 160rpx));
+}
+
+.edit-fixed-actions {
+  gap: 16rpx;
+}
+
+.edit-fixed-actions .delete-btn {
+  flex: 0 1 240rpx;
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  font-size: 26rpx;
+}
+
+.edit-fixed-actions .primary-btn {
+  flex: 1 1 0;
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  font-size: 26rpx;
 }
 
 /* 细节头部栏 */

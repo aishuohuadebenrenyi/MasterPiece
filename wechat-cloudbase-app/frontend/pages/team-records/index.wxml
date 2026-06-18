@@ -15,7 +15,9 @@
     <empty-state-panel wx:elif="{{!records.length}}" title="还没有排练记录" desc="这里会回看排练目标、素材计划和复盘结果。先开启一次排练，内容才值得留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
 
     <view wx:else class="record-list">
-      <record-card wx:for="{{records}}" wx:key="id" itemId="{{item.id}}" miniTitle="{{item.dateLabel}} · {{item.duration}} 分钟" title="{{item.displayTitle}}" desc="{{item.displayDesc}}" meta="{{item.displayMeta}}" pending="{{item.syncStatus === 'pending'}}" actionText="查看" bind:action="openRecord" />
+      <view class="record-item-wrap" wx:for="{{records}}" wx:key="id">
+        <record-card itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" eyebrow="{{item.cardView.eyebrow}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" primaryActionText="{{item.cardView.primaryActionText}}" secondaryActionText="{{item.cardView.secondaryActionText}}" bind:action="openRecord" bind:danger="onDeleteRehearsal" />
+      </view>
     </view>
   </view>
 

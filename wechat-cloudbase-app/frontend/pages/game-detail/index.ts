@@ -3,6 +3,7 @@ import { findLocalMaterial, listMaterials, updateMaterialState, updateMaterial, 
 import { getState, markPlayed, unmarkPlayed, setMaterials, toggleSaved, startMaterialSession, subscribe, updateMaterialSession, clearMaterialSession , getThemeClass } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
+import { SHARE_ABILITY_COUNT, CATEGORY_SUGGESTION_LIMIT } from '../../config/constants'
 
 const materialTypes: MaterialType[] = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
 const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
@@ -56,7 +57,7 @@ Page({
     isEditMode: false,
     editGame: {} as EditGameDraft,
     timer: null as number | null,
-    currentGameSession: null as any,
+    currentMaterialSession: null as any,
     historyCards: [] as HistoryCard[],
     typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
@@ -79,6 +80,49 @@ Page({
   },
 
   unsubscribeStore: null as null | (() => void),
+
+  onShareAppMessage() {
+    const material = this.data.game
+    if (material) {
+      const stripeMap: Record<string, string> = {
+        orange: '/assets/share/share-material-orange.png',
+        blue: '/assets/share/share-material-blue.png',
+        mint: '/assets/share/share-material-mint.png'
+      }
+      const abilities = (material.abilities || []).slice(0, SHARE_ABILITY_COUNT).join('·')
+      return {
+        title: `【${material.type}】${material.title}${abilities ? ' — ' + abilities : ''}`,
+        path: `/pages/game-detail/index?id=${material.id}`,
+        imageUrl: stripeMap[material.stripeTone] || '/assets/share/share-brand.png'
+      }
+    }
+    return {
+      title: '即兴素材 — 即兴工具箱',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
+  onShareTimeline() {
+    const material = this.data.game
+    if (material) {
+      const stripeMap: Record<string, string> = {
+        orange: '/assets/share/share-material-orange.png',
+        blue: '/assets/share/share-material-blue.png',
+        mint: '/assets/share/share-material-mint.png'
+      }
+      return {
+        title: `【${material.type}】${material.title}`,
+        query: `id=${material.id}`,
+        imageUrl: stripeMap[material.stripeTone] || '/assets/share/share-brand.png'
+      }
+    }
+    return {
+      title: '即兴素材 — 即兴工具箱',
+      query: '',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
 
   async onLoad(options: Record<string, string>) {
     this.setData({
@@ -103,7 +147,7 @@ Page({
     }
 
     this.unsubscribeStore = subscribe((state) => {
-      const currentGameSession = state.currentMaterial && state.currentMaterial.materialId === id ? state.currentMaterial : null
+      const currentMaterialSession = state.currentMaterial && state.currentMaterial.materialId === id ? state.currentMaterial : null
       const historyCards = state.methodCards
         .filter((card) => game && card.title === game.title)
         .map((card) => ({
@@ -114,7 +158,7 @@ Page({
           date: new Date(card.createdAt as number).toLocaleDateString()
         }))
 
-      this.setData({ currentGameSession, historyCards })
+      this.setData({ currentMaterialSession, historyCards })
     })
 
     // 2. 后台拉取最新数据，确保云端状态同步
@@ -253,7 +297,7 @@ Page({
 
   finishGame() {
     if (this.data.timer) clearInterval(this.data.timer)
-    const session = this.data.currentGameSession
+    const session = this.data.currentMaterialSession
     if (!session) return
     clearMaterialSession()
     wx.navigateTo({ url: `/pages/game-feedback/index?id=${session.materialId}&duration=${session.duration}` })
@@ -262,7 +306,7 @@ Page({
   startTimer() {
     if (this.data.timer) return
     const timer = setInterval(() => {
-      const session = this.data.currentGameSession
+      const session = this.data.currentMaterialSession
       if (session) {
         updateMaterialSession({ duration: session.duration + 1 })
       }
@@ -327,7 +371,7 @@ Page({
     if (!keyword) return []
     return this.getCategoryPool()
       .filter((item: string) => item.toLowerCase().includes(keyword))
-      .slice(0, 5)
+      .slice(0, CATEGORY_SUGGESTION_LIMIT)
       .map((value: string) => ({ value, label: value }))
   },
 
@@ -483,13 +527,13 @@ Page({
     const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
     if (!tags.length) tags.push('自定义')
 
-    const currentGame = { ...(this.data.game as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string; ownerOpenId?: string }) }
-    delete currentGame.fit
-    delete currentGame.lead
-    delete currentGame.avoid
-    delete currentGame.verdict
+    const currentMaterial = { ...(this.data.game as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string; ownerOpenId?: string }) }
+    delete currentMaterial.fit
+    delete currentMaterial.lead
+    delete currentMaterial.avoid
+    delete currentMaterial.verdict
 
-    const materialType = (materialTypes.find((item) => tags.includes(item)) || currentGame.type || '游戏') as MaterialType
+    const materialType = (materialTypes.find((item) => tags.includes(item)) || currentMaterial.type || '游戏') as MaterialType
     const abilities = abilityOptions.filter((item) => tags.includes(item))
     const scenes = sceneOptions.filter((item) => tags.includes(item))
     const steps = typeof this.data.editGame.steps === 'string' && this.data.editGame.steps.trim()
@@ -497,7 +541,7 @@ Page({
       : []
 
     const updatedGame: Material = {
-      ...currentGame,
+      ...currentMaterial,
       title,
       desc: this.data.editGame.desc || '',
       tags,
@@ -509,8 +553,8 @@ Page({
       tips: this.data.editGame.tips || '',
       variant: this.data.editGame.variant || '',
       issue: this.data.editGame.issue || '',
-      relatedMaterialId: currentGame.relatedMaterialId || '',
-      referenceOnly: materialType === '路径' ? true : currentGame.referenceOnly || false
+      relatedMaterialId: currentMaterial.relatedMaterialId || '',
+      referenceOnly: materialType === '路径' ? true : currentMaterial.referenceOnly || false
     }
 
     const updatePayload = { ...updatedGame }
@@ -544,7 +588,7 @@ Page({
         this.renderGame(game)
       }
     } catch (error) {
-      // The original action already told the user what failed; keep this refresh best-effort.
+      // 原操作已告知用户失败原因，刷新只做尽力而为
     }
   },
 

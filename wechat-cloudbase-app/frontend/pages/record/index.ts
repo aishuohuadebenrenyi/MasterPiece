@@ -20,6 +20,7 @@ import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
 import { getLayoutStyle } from '../../utils/layout'
+import { INSPIRATION_TITLE_MAX_LENGTH, REHEARSAL_PLAN_SIZE } from '../../config/constants'
 
 Page({
   data: {
@@ -27,7 +28,7 @@ Page({
     inspirationText: '',
     pausedRehearsal: null,
     currentRehearsal: null as RehearsalRecord | null,
-    currentGameSession: null as MaterialSession | null,
+    currentMaterialSession: null as MaterialSession | null,
     gameCard: null as any,
     rehearsalCard: null as null | {
       label: string
@@ -38,7 +39,7 @@ Page({
     recommendVisible: false,
     recommendDismissed: false,
     recommendClickable: false,
-    recommendGameId: '',
+    recommendMaterialId: '',
     recommendTitle: '',
     recommendDesc: '',
     todayVisible: false,
@@ -69,10 +70,12 @@ Page({
     sourceOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     savedSourceUnavailable: false,
     rehearsalSourceHint: '',
-    layoutStyle: ''
+    layoutStyle: '',
+    privacyVisible: false
   },
 
   unsubscribeStore: null as null | (() => void),
+  unsubscribePrivacy: null as null | (() => void),
 
   getMergedRehearsalGoals() {
     const customGoal = String(this.data.customGoalInput || '').trim()
@@ -87,9 +90,9 @@ Page({
   syncLocalState() {
     const state = getState()
     const currentRehearsal = state.currentRehearsal || state.pausedRehearsal
-    const recommendedGame = state.materials.find((material: Material) => material.id === state.recommendMaterialId) || state.materials.find((material: Material) => !material.referenceOnly) || null
-    const recommendClickable = !!recommendedGame
-    const recommendGameId = recommendedGame ? recommendedGame.id : ''
+    const recommendedMaterial = state.materials.find((material: Material) => material.id === state.recommendMaterialId) || state.materials.find((material: Material) => !material.referenceOnly) || null
+    const recommendClickable = !!recommendedMaterial
+    const recommendMaterialId = recommendedMaterial ? recommendedMaterial.id : ''
     const inspirationCount = state.todayInspirations.length
     const rehearsalCount = state.todayRehearsals.length
     const savedGamesCount = state.materials.filter((material: Material) => state.savedMaterialIds.includes(material.id) && !material.referenceOnly).length
@@ -99,49 +102,49 @@ Page({
       : ''
 
     const recommendTitle = recommendClickable
-      ? recommendedGame.title
+      ? recommendedMaterial.title
       : '慢下来，记录今天有触动的瞬间'
     const recommendDesc = recommendClickable
-      ? (recommendedGame.desc || '当前有一张推荐素材卡')
+      ? (recommendedMaterial.desc || '当前有一张推荐素材卡')
       : '今天如果没有想练的素材，也可以先想想发生过的一个瞬间，把感受记下来。'
     const buildPlanText = (materialId: string, status: string) => {
       const material = state.materials.find((item: Material) => item.id === materialId)
       return `${material ? material.title : '未命名素材'} · ${status}`
     }
     let gameCard: any = null
-    const currentGameSession = state.currentMaterial || null
-    if (currentGameSession) {
-      const d = currentGameSession.duration || 0
+    const currentMaterialSession = state.currentMaterial || null
+    if (currentMaterialSession) {
+      const d = currentMaterialSession.duration || 0
       const m = Math.floor(d / 60)
       const s = d % 60
       gameCard = {
-        label: currentGameSession.status || '进行中',
-        title: currentGameSession.title || '当前素材',
+        label: currentMaterialSession.status || '进行中',
+        title: currentMaterialSession.title || '当前素材',
         durationText: `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
       }
     }
 
     const pausedSource = currentRehearsal && (currentRehearsal as RehearsalRecord).status === '暂停中' ? currentRehearsal as RehearsalRecord : null
-    const rehearsalCard = !currentGameSession && pausedSource
+    const rehearsalCard = !currentMaterialSession && pausedSource
       ? {
           label: '暂停中的排练',
           title: pausedSource.title,
           desc: pausedSource.desc,
           items: (pausedSource.plan || []).slice(0, 3).map((item: any, index: number) => ({
             indexLabel: String(index + 1),
-            text: buildPlanText(item.materialId || item.gameId, item.status)
+            text: buildPlanText(item.materialId, item.status)
           }))
         }
       : null
     this.setData({
       pausedRehearsal: state.pausedRehearsal,
       currentRehearsal,
-      currentGameSession,
+      currentMaterialSession,
       gameCard,
       rehearsalCard,
       recommendVisible: !this.data.recommendDismissed,
       recommendClickable,
-      recommendGameId,
+      recommendMaterialId,
       recommendTitle,
       recommendDesc,
       inspirationCount,
@@ -175,12 +178,26 @@ Page({
     })
   },
 
+  onShareAppMessage() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
   async onLoad() {
     this.setData({
       layoutStyle: getLayoutStyle(),
       themeClass: getThemeClass()
     })
     this.unsubscribeStore = subscribe(() => this.syncLocalState())
+    const app = getApp()
+    if (app.subscribePrivacy) {
+      this.unsubscribePrivacy = app.subscribePrivacy(() => {
+        this.setData({ privacyVisible: true })
+      })
+    }
     await fetchTodaySummary()
     await this.refreshGames()
   },
@@ -197,6 +214,19 @@ Page({
 
   onUnload() {
     if (this.unsubscribeStore) this.unsubscribeStore()
+    if (this.unsubscribePrivacy) this.unsubscribePrivacy()
+  },
+
+  onPrivacyAgree() {
+    const app = getApp()
+    if (app.onPrivacyAgree) app.onPrivacyAgree()
+    this.setData({ privacyVisible: false })
+  },
+
+  onPrivacyRefuse() {
+    const app = getApp()
+    if (app.onPrivacyRefuse) app.onPrivacyRefuse()
+    this.setData({ privacyVisible: false })
   },
 
   async refreshGames() {
@@ -204,12 +234,12 @@ Page({
       const games = await listMaterials()
       setMaterials(games)
     } catch (error) {
-      // Keep the current-session game list when CloudBase is unavailable.
+      // 云端不可用时保留当前会话的素材列表
     }
   },
 
   resumeGameCard() {
-    const session = this.data.currentGameSession as any
+    const session = this.data.currentMaterialSession as any
     if (session) {
       wx.navigateTo({ url: `/pages/game-detail/index?id=${session.materialId || session.id}` })
     }
@@ -243,7 +273,7 @@ Page({
       return
     }
     const firstLine = text.split(/\n/).map((line) => line.trim()).find(Boolean) || text
-    const title = firstLine.length > 18 ? `${firstLine.slice(0, 18)}...` : firstLine
+    const title = firstLine.length > INSPIRATION_TITLE_MAX_LENGTH ? `${firstLine.slice(0, INSPIRATION_TITLE_MAX_LENGTH)}...` : firstLine
     const item: InspirationItem = {
       id: `inspiration-${Date.now()}`,
       type: '灵感',
@@ -464,13 +494,13 @@ Page({
       return arr
     }
     const trainableMaterials = state.materials.filter((material: Material) => !material.referenceOnly)
-    const recommendedPlan = shuffle(trainableMaterials).slice(0, 3).map((material) => material.id)
+    const recommendedPlan = shuffle(trainableMaterials).slice(0, REHEARSAL_PLAN_SIZE).map((material) => material.id)
     const savedGames = trainableMaterials.filter((material) => state.savedMaterialIds.includes(material.id))
     if (this.data.rehearsalSource === 'saved' && savedGames.length === 0) {
       toast('还没有收藏可训练素材，先去发现页收藏几个再开始')
       return
     }
-    const savedPlan = shuffle(savedGames).slice(0, 3).map((game) => game.id)
+    const savedPlan = shuffle(savedGames).slice(0, REHEARSAL_PLAN_SIZE).map((game) => game.id)
     const selectedPlan = this.data.rehearsalSource === 'saved'
       ? savedPlan
       : this.data.rehearsalSource === 'blank'
@@ -517,7 +547,7 @@ Page({
       setCurrentRehearsal(syncedRehearsal)
       upsertRehearsalHistory(syncedRehearsal)
     } catch (error) {
-      // Keep local rehearsal available even if cloud sync fails.
+      // 云端同步失败时保留本地排练可用
     }
     this.closeSheet()
     if (!synced) toast('排练已本地开启，待同步')
@@ -546,11 +576,11 @@ Page({
 
   openRecommend() {
     if (!this.data.recommendClickable) return
-    const recommendGameId = this.data.recommendGameId
-    if (!recommendGameId) {
+    const recommendMaterialId = this.data.recommendMaterialId
+    if (!recommendMaterialId) {
       toast('当前还没有可推荐的素材')
       return
     }
-    wx.navigateTo({ url: `/pages/game-detail/index?id=${recommendGameId}` })
+    wx.navigateTo({ url: `/pages/game-detail/index?id=${recommendMaterialId}` })
   }
 })

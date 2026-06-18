@@ -38,14 +38,15 @@
 
       <view wx:if="{{isCategoryDetail}}" class="category-toolbar">
         <view class="category-back" aria-label="返回分类" bindtap="backToCategoryGrid">←</view>
-        <view class="mini-action-btn filter-btn" bindtap="openFilter">筛选</view>
+        <button class="mini-action-btn filter-btn" bindtap="openFilter">筛选</button>
       </view>
 
       <view wx:else class="section-row result-section-row">
         <text class="section-title">{{view === 'category' ? '素材类别' : discoverTitle}}</text>
         <view class="actions-row">
-          <view wx:if="{{view === 'all'}}" class="mini-action-btn add-btn" bindtap="openAdd">新建</view>
-          <view wx:if="{{view === 'all'}}" class="mini-action-btn filter-btn" bindtap="openFilter">筛选</view>
+          <button class="mini-action-btn share-btn" open-type="share">分享</button>
+          <button wx:if="{{view === 'all'}}" class="mini-action-btn add-btn" bindtap="openAdd">新建</button>
+          <button wx:if="{{view === 'all'}}" class="mini-action-btn filter-btn" bindtap="openFilter">筛选</button>
         </view>
       </view>
 
@@ -89,7 +90,7 @@
                     <text wx:for="{{item.preview}}" wx:for-item="tag" wx:key="*this" class="path-summary-pill">{{tag}}</text>
                   </view>
                 </view>
-                <text class="path-card-toggle">查看</text>
+                <button class="small-btn path-card-toggle" data-key="{{item.key}}" catchtap="openPathSheet">查看</button>
               </view>
             </view>
           </view>
@@ -176,19 +177,18 @@
     </block>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{pathVisible}}" title="{{pathEditMode ? '编辑我的路径' : '路径详情'}}" maskVariant="medium" sheetClass="path-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{pathVisible}}" title="{{pathSheetTitle}}" maskVariant="medium" sheetClass="path-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
     <block wx:if="{{activePath}}">
       <block wx:if="{{!pathEditMode}}">
-        <view class="path-sheet-hero">
-          <text class="path-sheet-title">{{activePath.title}}</text>
+        <view class="path-sheet-desc-wrap" wx:if="{{activePath.desc}}">
           <text class="path-sheet-desc">{{activePath.desc}}</text>
         </view>
         <view class="path-sheet-steps">
           <view wx:for="{{activePath.steps}}" wx:for-item="stage" wx:key="title" class="path-step">
             <view class="path-step-index">{{index + 1}}</view>
             <view class="path-step-main">
-              <text class="path-step-title">{{stage.title}}</text>
-              <text wx:if="{{stage.desc}}" class="path-step-desc">{{stage.desc}}</text>
+              <view class="path-step-title">{{stage.title}}</view>
+              <view wx:if="{{stage.desc}}" class="path-step-desc">{{stage.desc}}</view>
             </view>
           </view>
         </view>
@@ -263,3 +263,5 @@
     <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
   </root-portal>
 </scroll-view>
+
+<privacy-popup visible="{{privacyVisible}}" bind:agree="onPrivacyAgree" bind:refuse="onPrivacyRefuse" />

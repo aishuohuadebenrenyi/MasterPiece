@@ -1,4 +1,4 @@
-const GAME_STATUS = ['未开始', '进行中', '已完成']
+const MATERIAL_STATUS = ['未开始', '进行中', '已完成']
 
 const STATUS_FILTERS = [
   { label: '全部', value: 'all' },
@@ -14,7 +14,7 @@ const VOICE_TARGETS = [
 ]
 
 module.exports = {
-  GAME_STATUS,
+  MATERIAL_STATUS,
   STATUS_FILTERS,
   VOICE_TARGETS
 }

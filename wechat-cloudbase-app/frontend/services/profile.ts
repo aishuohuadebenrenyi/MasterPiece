@@ -1,13 +1,19 @@
-const { callImprovAction } = require('./cloud')
-const { getState, setProfile } = require('../store/index')
+import { callImprovAction } from './cloud'
+import { getState, setProfile } from '../store/index'
 
-const DEFAULT_PROFILE = {
+interface ProfileData {
+  displayName: string
+  avatarUrl: string
+  troupeName: string
+}
+
+const DEFAULT_PROFILE: ProfileData = {
   displayName: '即兴主理人',
   avatarUrl: '',
   troupeName: ''
 }
 
-function normalizeProfile(raw = {}) {
+export function normalizeProfile(raw: Partial<ProfileData> = {}): ProfileData {
   return {
     displayName: typeof raw.displayName === 'string' && raw.displayName.trim()
       ? raw.displayName.trim()
@@ -17,8 +23,8 @@ function normalizeProfile(raw = {}) {
   }
 }
 
-async function getProfile() {
-  const response = await callImprovAction('profile.get')
+export async function getProfile(): Promise<ProfileData> {
+  const response = await callImprovAction<{ item: Partial<ProfileData> }>('profile.get')
   if (response.code === 0 && response.data) {
     const profile = normalizeProfile(response.data.item || {})
     setProfile(profile)
@@ -29,13 +35,10 @@ async function getProfile() {
   return normalizeProfile()
 }
 
-async function updateProfile(payload) {
-  const response = await callImprovAction('profile.update', payload)
-  // 如果云端环境未配置导致报错（如 -501000 Env Not Exists），作为离线体验依然返回成功，并保存到本地 store
-  if (response.code === 0 || response.code === -1) {
-    const updatedProfile = normalizeProfile(
-      (response.data && response.data.item) ? response.data.item : payload
-    )
+export async function updateProfile(payload: Partial<ProfileData>) {
+  const response = await callImprovAction<{ item: Partial<ProfileData> }>('profile.update', payload as Record<string, unknown>)
+  if (response.code === 0 && response.data && response.data.item) {
+    const updatedProfile = normalizeProfile(response.data.item)
     setProfile(updatedProfile)
     return {
       code: 0,
@@ -44,14 +47,9 @@ async function updateProfile(payload) {
   }
   return {
     code: response.code,
-    message: response.message,
+    message: response.message || '保存失败',
     item: null
   }
 }
 
-module.exports = {
-  DEFAULT_PROFILE,
-  normalizeProfile,
-  getProfile,
-  updateProfile
-}
+export { DEFAULT_PROFILE }

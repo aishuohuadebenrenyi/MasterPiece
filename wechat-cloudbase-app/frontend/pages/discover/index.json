@@ -6,6 +6,7 @@
     "game-form": "../../components/game-form/index",
     "form-field": "../../components/form-field/index",
     "empty-state-panel": "../../components/empty-state-panel/index",
-    "filter-section": "../../components/filter-section/index"
+    "filter-section": "../../components/filter-section/index",
+    "privacy-popup": "../../components/privacy-popup/index"
   }
 }

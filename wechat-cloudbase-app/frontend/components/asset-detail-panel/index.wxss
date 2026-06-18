@@ -98,8 +98,20 @@
   font-size: 28rpx;
 }
 
-.detail-intent-row button {
-  min-height: 76rpx;
+.detail-intent-row {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.detail-intent-chip {
+  flex: 0 0 auto;
+  min-height: 54rpx;
+  padding: 0 20rpx;
+  color: var(--improv-secondary-strong);
+  background: var(--improv-secondary-soft);
+  font-size: 24rpx;
+  line-height: 54rpx;
 }
 
 .detail-action-note {

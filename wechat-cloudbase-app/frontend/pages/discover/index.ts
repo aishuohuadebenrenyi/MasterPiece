@@ -5,6 +5,7 @@ import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
 import { getLayoutStyle } from '../../utils/layout'
+import { DEFAULT_PAGE_LIMIT, DEFAULT_SORT_ORDER, CATEGORY_SUGGESTION_LIMIT } from '../../config/constants'
 
 const materialTypes: MaterialType[] = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
 const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
@@ -159,7 +160,10 @@ function splitPathText(value: string) {
 
 function materialToPathSteps(material: Material | null, preset: PathPreset) {
   if (!material || !material.steps || !material.steps.length) return preset.steps
-  return material.steps.map((step) => ({ title: step, desc: '' }))
+  return material.steps.map((step, index) => ({
+    title: step,
+    desc: preset.steps[index]?.desc || ''
+  }))
 }
 
 function buildPathEntries(materials: Material[]): PathEntry[] {
@@ -185,6 +189,7 @@ Page({
     pathEntries: buildPathEntries([]) as PathEntry[],
     pathVisible: false,
     pathEditMode: false,
+    pathSheetTitle: '',
     activePath: null as PathSheetState | null,
     pathDraft: {} as PathDraft,
     view: 'all' as ViewMode,
@@ -230,15 +235,20 @@ Page({
     loadErrorText: '',
     showEmptyState: false,
     showLoadErrorState: false,
-    showFilterNoMatchState: false
+    showFilterNoMatchState: false,
+    hasMore: true,
+    pageLoading: false,
+    privacyVisible: false
   },
 
   unsubscribeStore: null as null | (() => void),
+  unsubscribePrivacy: null as null | (() => void),
   fabStartTouch: null as null | { x: number; y: number },
   fabTouchOffset: null as null | { x: number; y: number },
   fabWindow: null as null | { width: number; height: number; size: number },
   fabMoved: false,
   fabIgnoreTapUntil: 0,
+  currentLimit: DEFAULT_PAGE_LIMIT,
 
   getRandomCandidates() {
     const source = this.data.randomUseAllMaterials ? this.data.materials : this.data.filteredMaterials
@@ -363,14 +373,25 @@ Page({
     if (!keyword) return []
     return this.getCategoryPool()
       .filter((item) => item.toLowerCase().includes(keyword))
-      .slice(0, 5)
+      .slice(0, CATEGORY_SUGGESTION_LIMIT)
       .map((value) => ({ value, label: value }))
   },
 
-  async loadMaterials(showRetryToast = false) {
-    this.setData({ loadingMaterials: true, loadErrorText: '' }, () => this.syncFiltered())
+  async loadMaterials(showRetryToast = false, loadMore = false) {
+    if (loadMore) {
+      if (!this.data.hasMore || this.data.pageLoading) return
+      this.currentLimit += DEFAULT_PAGE_LIMIT
+      this.setData({ pageLoading: true })
+    } else {
+      this.currentLimit = DEFAULT_PAGE_LIMIT
+      this.setData({ loadingMaterials: true, loadErrorText: '', hasMore: true }, () => this.syncFiltered())
+    }
     try {
-      setMaterials(await listMaterials())
+      const items = await listMaterials({ limit: this.currentLimit })
+      setMaterials(items)
+      if (items.length < this.currentLimit) {
+        this.setData({ hasMore: false })
+      }
     } catch (error) {
       this.syncFromStore()
       const loadErrorText = getState().materials.length
@@ -379,7 +400,32 @@ Page({
       this.setData({ loadErrorText })
       if (showRetryToast) toast(loadErrorText)
     } finally {
-      this.setData({ loadingMaterials: false }, () => this.syncFiltered())
+      this.setData({ loadingMaterials: false, pageLoading: false }, () => this.syncFiltered())
+    }
+  },
+
+  async onPullDownRefresh() {
+    await this.loadMaterials()
+    wx.stopPullDownRefresh()
+  },
+
+  onReachBottom() {
+    this.loadMaterials(false, true)
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
+  onShareTimeline() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      query: '',
+      imageUrl: '/assets/share/share-brand.png'
     }
   },
 
@@ -390,6 +436,12 @@ Page({
     })
     this.resetFabPosition()
     this.unsubscribeStore = subscribe(() => this.syncFromStore())
+    const app = getApp()
+    if (app.subscribePrivacy) {
+      this.unsubscribePrivacy = app.subscribePrivacy(() => {
+        this.setData({ privacyVisible: true })
+      })
+    }
     await this.loadMaterials()
   },
 
@@ -401,6 +453,19 @@ Page({
 
   onUnload() {
     if (this.unsubscribeStore) this.unsubscribeStore()
+    if (this.unsubscribePrivacy) this.unsubscribePrivacy()
+  },
+
+  onPrivacyAgree() {
+    const app = getApp()
+    if (app.onPrivacyAgree) app.onPrivacyAgree()
+    this.setData({ privacyVisible: false })
+  },
+
+  onPrivacyRefuse() {
+    const app = getApp()
+    if (app.onPrivacyRefuse) app.onPrivacyRefuse()
+    this.setData({ privacyVisible: false })
   },
 
   onResize() {
@@ -498,6 +563,7 @@ Page({
       pathVisible: true,
       pathEditMode: false,
       activePath: this.buildActivePath(key),
+      pathSheetTitle: this.buildActivePath(key).title,
       pathDraft: {}
     })
   },
@@ -507,6 +573,7 @@ Page({
     if (!activePath) return
     this.setData({
       pathEditMode: true,
+      pathSheetTitle: '编辑 · ' + activePath.title,
       pathDraft: {
         title: activePath.title,
         desc: activePath.desc,
@@ -893,7 +960,7 @@ Page({
       relatedMaterialId: '',
       referenceOnly: materialType === '路径',
       stripeTone: 'orange',
-      sortOrder: 999
+      sortOrder: DEFAULT_SORT_ORDER
     }
     setMaterials([material].concat(getState().materials))
     closeModal(this, {

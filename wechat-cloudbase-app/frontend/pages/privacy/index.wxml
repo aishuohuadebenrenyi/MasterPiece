@@ -1,0 +1,35 @@
+<subpage-header title="隐私政策" bind:back="goBack" />
+<scroll-view scroll-y style="flex: 1; padding: 32rpx;">
+  <view class="privacy-content">
+    <text class="privacy-title">即兴工具箱隐私政策</text>
+    <text class="privacy-updated">更新日期：2026年6月</text>
+
+    <text class="privacy-section-title">一、我们收集的信息</text>
+    <text class="privacy-text">即兴工具箱是一款即兴训练辅助工具，我们仅收集为您提供服务所必需的信息：</text>
+    <text class="privacy-text">1. 微信登录标识（OpenID）：用于区分用户身份，保存您的个人数据。</text>
+    <text class="privacy-text">2. 您主动创建的内容：包括灵感记录、排练记录、练习复盘、方法卡、自定义素材等。</text>
+    <text class="privacy-text">3. 操作状态：包括素材收藏、练过标记等。</text>
+
+    <text class="privacy-section-title">二、信息存储</text>
+    <text class="privacy-text">您的数据存储在微信云开发（CloudBase）服务器上，通过您的微信 OpenID 隔离，其他用户无法访问您的私有数据。</text>
+
+    <text class="privacy-section-title">三、信息使用</text>
+    <text class="privacy-text">我们仅将收集的信息用于：提供即兴训练辅助功能、保存和展示您的记录与素材、改善产品体验。</text>
+    <text class="privacy-text">我们不会将您的个人信息出售、出租或以其他方式提供给第三方。</text>
+
+    <text class="privacy-section-title">四、信息安全</text>
+    <text class="privacy-text">我们采用微信云开发的安全机制保护您的数据，所有数据读写均通过云函数进行权限校验，前端不直接操作数据库。</text>
+
+    <text class="privacy-section-title">五、您的权利</text>
+    <text class="privacy-text">您可以随时在小程序内查看、编辑或删除您创建的所有内容。如需注销账户或删除所有数据，请通过小程序内反馈渠道联系我们。</text>
+
+    <text class="privacy-section-title">六、未成年人保护</text>
+    <text class="privacy-text">我们高度重视未成年人个人信息保护。若您是未满14周岁的未成年人，请在监护人指导下使用本小程序。</text>
+
+    <text class="privacy-section-title">七、政策更新</text>
+    <text class="privacy-text">我们可能会适时修订本政策。政策变更后，我们会通过小程序内通知或其他适当方式提醒您。</text>
+
+    <text class="privacy-section-title">八、联系我们</text>
+    <text class="privacy-text">如您对本隐私政策有任何疑问或建议，请通过小程序内反馈功能与我们联系。</text>
+  </view>
+</scroll-view>

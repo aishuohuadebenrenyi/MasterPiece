@@ -1,8 +1,11 @@
 <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page detail {{themeClass}}" style="{{layoutStyle}}" wx:if="{{game}}">
   <subpage-header customClass="detail-header-row" bind:back="back" />
   <view class="card header">
-    <button wx:if="{{canEditGame && !isEditMode}}" class="card-action-btn" bindtap="enterEditMode">编辑</button>
-    <button wx:if="{{isEditMode}}" class="card-action-btn" bindtap="cancelEdit">取消</button>
+    <view class="card-action-group">
+      <button wx:if="{{canEditGame && !isEditMode}}" class="card-action-btn" bindtap="enterEditMode">编辑</button>
+      <button wx:if="{{isEditMode}}" class="card-action-btn" bindtap="cancelEdit">取消</button>
+      <button wx:if="{{!isEditMode}}" class="card-action-btn share-btn" open-type="share">分享</button>
+    </view>
     <view class="detail-heading">
       <text class="kicker">{{tagText}}</text>
       <view class="detail-title">{{game.title}}</view>
@@ -63,20 +66,20 @@
   </root-portal>
 
   <root-portal>
-    <view class="fixed-actions" wx:if="{{isEditMode}}">
+    <view class="fixed-actions edit-fixed-actions" wx:if="{{isEditMode}}">
       <button class="ghost-btn delete-btn" bindtap="confirmDelete">删除素材</button>
-      <button class="primary-btn add-submit-btn" bindtap="saveGame">保存修改</button>
+      <button class="primary-btn" bindtap="saveGame">保存修改</button>
     </view>
-    <view class="fixed-actions" wx:else>
-      <block wx:if="{{!currentGameSession}}">
+    <view class="fixed-actions" wx:elif="{{!isEditMode}}">
+      <block wx:if="{{!currentMaterialSession}}">
         <button wx:if="{{!game.referenceOnly}}" class="small-btn" bindtap="togglePlayed">{{playedText}}</button>
         <button class="small-btn save-toggle-btn {{saved ? 'save-toggle-active' : 'save-toggle-idle'}}" bindtap="toggleSaved">{{savedText}}</button>
         <button wx:if="{{!game.referenceOnly}}" class="primary-btn" bindtap="startGame">开始训练</button>
         <button wx:else class="ghost-btn" disabled>路径只查看</button>
       </block>
       <block wx:else>
-        <button class="ghost-btn" bindtap="pauseGame" wx:if="{{currentGameSession.status === '进行中'}}">暂停</button>
-        <button class="ghost-btn" bindtap="resumeGame" wx:if="{{currentGameSession.status === '暂停中'}}">继续</button>
+        <button class="ghost-btn" bindtap="pauseGame" wx:if="{{currentMaterialSession.status === '进行中'}}">暂停</button>
+        <button class="ghost-btn" bindtap="resumeGame" wx:if="{{currentMaterialSession.status === '暂停中'}}">继续</button>
         <button class="primary-btn" bindtap="finishGame">结束并复盘</button>
       </block>
     </view>

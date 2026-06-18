@@ -1,8 +1,10 @@
 import type { CloudResponse } from '../types/domain'
 import { getMiniProgramEnvVersion } from '../config/env'
+import { showLoading, hideLoading } from '../utils/loading'
+import { REQUEST_TIMEOUT_MS } from '../config/constants'
 
 export const IMPROV_FUNCTION_NAME = 'improv-api'
-const DEFAULT_TIMEOUT_MS = 8000
+const DEFAULT_TIMEOUT_MS = REQUEST_TIMEOUT_MS
 
 function createRequestId(action: string) {
   return `improv_${action.replace(/\./g, '_')}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
@@ -18,10 +20,18 @@ function normalizeError(error: WechatMiniprogram.GeneralCallbackResult | unknown
 
 function callFunctionWithTimeout(options: WechatMiniprogram.Cloud.CallFunctionParam, timeoutMs = DEFAULT_TIMEOUT_MS) {
   let timer: number | null = null
-  const request = wx.cloud.callFunction(options)
+  let cancelled = false
+  const request = wx.cloud.callFunction(options).then((res) => {
+    if (cancelled) {
+      console.warn('[cloud] 请求已超时，忽略返回结果', options.data)
+      return { result: { code: -1, message: '请求已超时', data: null } } as { result?: any }
+    }
+    return res
+  })
   request.catch(() => {})
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
+      cancelled = true
       reject({ errMsg: `cloud.callFunction timeout after ${timeoutMs}ms` })
     }, timeoutMs) as unknown as number
   })
@@ -39,6 +49,7 @@ export async function callImprovAction<T = unknown>(
     return { code: -1, message: '云开发未初始化' }
   }
 
+  if (!options.silent) showLoading()
   try {
     const response = await callFunctionWithTimeout({
       name: IMPROV_FUNCTION_NAME,
@@ -56,6 +67,8 @@ export async function callImprovAction<T = unknown>(
       code: -1,
       message: normalizeError(error, action, options.silent)
     }
+  } finally {
+    if (!options.silent) hideLoading()
   }
 }
 

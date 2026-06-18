@@ -146,12 +146,16 @@
 }
 
 .category-toolbar {
+  align-self: stretch;
   width: 100%;
   min-height: 64rpx;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
   margin: 2rpx 0 20rpx;
+  padding: 0;
 }
 
 .category-back {
@@ -175,8 +179,13 @@
 }
 
 .category-toolbar .filter-btn {
+  flex: 0 0 auto;
+  width: auto;
   min-width: 112rpx;
+  max-width: none;
   min-height: 58rpx;
+  margin-left: auto;
+  margin-right: 0;
   padding: 0 24rpx;
 }
 
@@ -191,11 +200,20 @@
 .actions-row {
   flex: 0 0 auto;
   min-width: 0;
-  max-width: 228rpx;
+  max-width: 348rpx;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 12rpx;
+}
+
+.actions-row .share-btn {
+  width: 104rpx;
+  min-width: 104rpx;
+  max-width: 104rpx;
+  min-height: 54rpx;
+  padding: 0;
+  font-size: 24rpx;
 }
 
 .add-btn {
@@ -214,12 +232,7 @@
   max-width: 104rpx;
   min-height: 54rpx;
   padding: 0;
-  border: 2rpx solid rgba(79, 140, 255, 0.14);
-  border: 2rpx solid var(--improv-secondary-wash-soft, rgba(79, 140, 255, 0.14));
-  background: rgba(255, 255, 255, 0.94);
-  background: var(--improv-card, rgba(255, 255, 255, 0.94));
   color: var(--improv-secondary-strong);
-  box-shadow: none;
   font-size: 24rpx;
 }
 
@@ -521,7 +534,7 @@
 }
 
 .path-card-content {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -537,47 +550,61 @@
 }
 
 .path-card-title {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
   color: var(--improv-text);
   font-size: 28rpx;
   font-weight: 900;
   line-height: 1.25;
+  white-space: normal;
 }
 
 .path-custom-label {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
+  max-width: 180rpx;
   min-height: 34rpx;
   padding: 0 12rpx;
+  overflow: hidden;
   border-radius: 999rpx;
   background: var(--improv-secondary-soft);
   color: var(--improv-secondary-strong);
   font-size: 20rpx;
   font-weight: 900;
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .path-card-desc {
+  display: block;
+  width: 100%;
+  min-width: 0;
   color: var(--improv-muted);
   font-size: 24rpx;
   font-weight: 700;
   line-height: 1.45;
+  white-space: normal;
 }
 
 .path-card-toggle {
   flex: 0 0 auto;
-  min-width: 72rpx;
-  color: var(--improv-secondary-strong);
+  min-width: 96rpx;
+  max-width: 120rpx;
+  min-height: 54rpx;
+  padding: 0 20rpx;
   font-size: 24rpx;
-  font-weight: 900;
-  line-height: 1.25;
-  text-align: right;
 }
 
 .path-summary-row {
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 10rpx;
   padding-top: 4rpx;
 }
@@ -590,16 +617,17 @@
   min-height: 34rpx;
   margin: 0;
   padding: 0 12rpx;
+  overflow: hidden;
   border-radius: 999rpx;
   background: var(--improv-bg-soft);
   color: var(--improv-light);
   font-size: 20rpx;
   font-weight: 800;
   line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.path-sheet-hero,
 .path-edit-form {
   width: 100%;
   display: flex;
@@ -607,25 +635,29 @@
   gap: 14rpx;
 }
 
-.path-sheet-title {
-  color: var(--improv-text);
-  font-size: 46rpx;
-  font-weight: 900;
-  line-height: 1.18;
+.path-sheet-desc-wrap {
+  width: 100%;
+  margin-bottom: 8rpx;
 }
 
 .path-sheet-desc {
+  display: block;
+  width: 100%;
+  min-width: 0;
   color: var(--improv-muted);
   font-size: 28rpx;
   font-weight: 700;
   line-height: 1.55;
+  white-space: normal;
 }
 
 .path-sheet-tags {
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 10rpx;
 }
 
@@ -638,12 +670,14 @@
   min-height: 34rpx;
   margin: 0;
   padding: 0 12rpx;
+  overflow: hidden;
   border-radius: 999rpx;
   background: var(--improv-bg-soft);
   color: var(--improv-muted);
   font-size: 20rpx;
   font-weight: 800;
   line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -657,11 +691,12 @@
 
 .path-step {
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 18rpx;
-  padding: 24rpx 24rpx 24rpx 22rpx;
+  padding: 24rpx;
   border-radius: 28rpx;
   background: var(--improv-card-muted, rgba(255, 255, 255, 0.72));
   border: 2rpx solid var(--improv-line-subtle);
@@ -683,7 +718,7 @@
 }
 
 .path-step-main {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -691,17 +726,26 @@
 }
 
 .path-step-title {
+  display: block;
+  width: 100%;
+  min-width: 0;
   color: var(--improv-text);
   font-size: 31rpx;
   font-weight: 900;
   line-height: 1.28;
+  white-space: normal;
 }
 
 .path-step-desc {
+  display: block;
+  width: 100%;
+  min-width: 0;
   color: var(--improv-muted);
   font-size: 26rpx;
   font-weight: 700;
   line-height: 1.48;
+  white-space: normal;
+  word-break: break-all;
 }
 
 .path-sheet-meta {
@@ -710,6 +754,7 @@
   flex-direction: column;
   gap: 12rpx;
   margin-top: 22rpx;
+  padding-bottom: 148rpx;
 }
 
 .path-meta-label {
