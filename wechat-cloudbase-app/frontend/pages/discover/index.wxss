@@ -223,7 +223,6 @@
   min-height: 54rpx;
   padding: 0;
   font-size: 24rpx;
-  color: var(--improv-secondary-strong);
 }
 
 .filter-btn {
@@ -232,7 +231,6 @@
   max-width: 104rpx;
   min-height: 54rpx;
   padding: 0;
-  color: var(--improv-secondary-strong);
   font-size: 24rpx;
 }
 
@@ -301,7 +299,7 @@
   text-align: center;
 }
 
-.game-list {
+.material-list {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -309,7 +307,7 @@
   transition: opacity 0.16s ease;
 }
 
-.filter-open .game-list {
+.filter-open .material-list {
   opacity: 0;
   pointer-events: none;
 }
@@ -882,9 +880,34 @@
   padding-bottom: var(--fixed-action-clearance);
 }
 
-.random-game-sheet {
+.random-material-sheet {
   display: flex;
   flex-direction: column;
   height: 85vh;
   padding-bottom: 0;
+}
+
+.fab-btn {
+  position: fixed;
+  right: var(--page-side, 40rpx);
+  bottom: calc(140rpx + env(safe-area-inset-bottom));
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 56rpx;
+  background: linear-gradient(135deg, var(--improv-primary), var(--improv-secondary));
+  box-shadow: 0 8rpx 24rpx rgba(255, 122, 69, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab-btn:active {
+  transform: scale(0.92);
+}
+
+.fab-icon-text {
+  font-size: 56rpx;
+  line-height: 1;
 }

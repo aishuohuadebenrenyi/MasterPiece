@@ -164,11 +164,11 @@ Page({
     toast('排练计划已更新')
   },
 
-  searchGame(event) {
+  searchMaterial(event) {
     this.setData({ query: event.detail.value }, () => this.syncPlan())
   },
 
-  addGame(event) {
+  addMaterial(event) {
     const id = (event.detail && event.detail.id) || event.currentTarget.dataset.id
     if (this.data.planMaterials.some((item) => item.id === id)) {
       toast('这条素材已经在排练计划里')
@@ -218,8 +218,8 @@ Page({
     })
   },
 
-  openGame(event) {
-    wx.navigateTo({ url: `/pages/game-detail/index?id=${event.currentTarget.dataset.id}` })
+  openMaterial(event) {
+    wx.navigateTo({ url: `/pages/material-detail/index?id=${event.currentTarget.dataset.id}` })
   },
 
   pause() {

@@ -8,6 +8,8 @@ page,
   --improv-bg-field-soft: rgba(244, 246, 250, 0.8);
   --improv-bg-soft: #f4f6fb;
   --improv-bg-subtle: #f7f9fe;
+  --improv-card-glass: rgba(255, 255, 255, 0.4);
+  --improv-line-light: rgba(255, 255, 255, 0.3);
   --improv-card: rgba(255, 255, 255, 0.94);
   --improv-card-faint: rgba(255, 255, 255, 0.5);
   --improv-card-frost: rgba(255, 255, 255, 0.82);
@@ -45,6 +47,7 @@ page,
   --improv-warm-soft: #fff6f1;
   --improv-text: #24324a;
   --improv-text-soft: #5a6781;
+  --improv-text-muted: #96a1b4;
   --improv-muted: #667289;
   --improv-muted-strong: #7e8aa3;
   --improv-light: #96a1b4;
@@ -124,6 +127,9 @@ page,
   --improv-shadow-soft-color: rgba(36, 50, 74, 0.05);
   --improv-shadow-dark-color: rgba(36, 50, 74, 0.08);
   --improv-bg-subtle-glass: rgba(247, 249, 253, 0.94);
+  --improv-anim-fast: 0.16s;
+  --improv-anim-normal: 0.2s;
+  --improv-anim-slow: 0.3s;
   --improv-radius-card: 40rpx;
   --improv-radius-sheet: 44rpx;
   --improv-card-nav-bg: rgba(255, 255, 255, 0.9);
@@ -147,6 +153,33 @@ page,
   --improv-card-padding-md: 40rpx;
   --improv-card-gap-sm: 12rpx;
   --improv-card-gap-md: 18rpx;
+  --improv-btn-primary-bg: var(--improv-primary-gradient);
+  --improv-btn-primary-text: var(--improv-on-brand);
+  --improv-btn-primary-shadow: var(--improv-shadow-action);
+  --improv-btn-secondary-bg: var(--improv-primary-tint);
+  --improv-btn-secondary-text: var(--improv-primary-warm);
+  --improv-btn-secondary-border: var(--improv-primary-wash);
+  --improv-btn-secondary-shadow: none;
+  --improv-btn-tertiary-bg: rgba(255, 246, 241, 0.72);
+  --improv-btn-tertiary-text: var(--improv-text-soft);
+  --improv-btn-tertiary-border: rgba(255, 122, 69, 0.08);
+  --improv-btn-tertiary-shadow: none;
+  --improv-btn-toolbar-bg: rgba(255, 255, 255, 0.62);
+  --improv-btn-toolbar-text: var(--improv-muted);
+  --improv-btn-toolbar-border: rgba(94, 114, 144, 0.08);
+  --improv-btn-toolbar-shadow: none;
+  --improv-btn-toolbar-primary-bg: var(--improv-primary-tint);
+  --improv-btn-toolbar-primary-text: var(--improv-primary-warm);
+  --improv-btn-toolbar-primary-border: var(--improv-primary-wash);
+  --improv-btn-chip-bg: rgba(255, 255, 255, 0.84);
+  --improv-btn-chip-text: var(--improv-text-soft);
+  --improv-btn-chip-border: var(--improv-line-soft);
+  --improv-btn-chip-active-bg: var(--improv-primary-tint);
+  --improv-btn-chip-active-text: var(--improv-primary-warm);
+  --improv-btn-chip-active-border: var(--improv-primary-wash);
+  --improv-btn-danger-bg: rgba(255, 77, 79, 0.08);
+  --improv-btn-danger-text: #e85d48;
+  --improv-btn-danger-border: rgba(255, 77, 79, 0.12);
 }
 
 .theme-alt {
@@ -261,6 +294,27 @@ page,
   --improv-card-kicker: #cbd5e1;
   --improv-card-counter-bg: rgba(234, 179, 8, 0.16);
   --improv-card-counter-text: #fde68a;
+  --improv-btn-secondary-bg: rgba(225, 29, 72, 0.16);
+  --improv-btn-secondary-text: #fecdd3;
+  --improv-btn-secondary-border: rgba(225, 29, 72, 0.24);
+  --improv-btn-tertiary-bg: rgba(255, 255, 255, 0.08);
+  --improv-btn-tertiary-text: #cbd5e1;
+  --improv-btn-tertiary-border: rgba(255, 255, 255, 0.08);
+  --improv-btn-toolbar-bg: rgba(255, 255, 255, 0.08);
+  --improv-btn-toolbar-text: #cbd5e1;
+  --improv-btn-toolbar-border: rgba(255, 255, 255, 0.08);
+  --improv-btn-toolbar-primary-bg: rgba(225, 29, 72, 0.16);
+  --improv-btn-toolbar-primary-text: #fecdd3;
+  --improv-btn-toolbar-primary-border: rgba(225, 29, 72, 0.24);
+  --improv-btn-chip-bg: rgba(255, 255, 255, 0.08);
+  --improv-btn-chip-text: #cbd5e1;
+  --improv-btn-chip-border: rgba(255, 255, 255, 0.08);
+  --improv-btn-chip-active-bg: rgba(225, 29, 72, 0.16);
+  --improv-btn-chip-active-text: #fecdd3;
+  --improv-btn-chip-active-border: rgba(225, 29, 72, 0.24);
+  --improv-btn-danger-bg: rgba(244, 63, 94, 0.16);
+  --improv-btn-danger-text: #fecdd3;
+  --improv-btn-danger-border: rgba(244, 63, 94, 0.24);
 }
 
 .surface-card {

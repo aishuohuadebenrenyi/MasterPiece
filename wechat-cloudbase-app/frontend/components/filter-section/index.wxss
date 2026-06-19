@@ -18,7 +18,7 @@
   gap: 8rpx;
 }
 
-.filter-section.game-form-category-section {
+.filter-section.material-form-category-section {
   gap: 8rpx;
 }
 
@@ -37,7 +37,7 @@
   font-weight: 900;
 }
 
-.game-form-category-section .filter-label {
+.material-form-category-section .filter-label {
   font-size: 24rpx;
   line-height: 1.2;
 }
@@ -62,7 +62,7 @@
   height: 66rpx;
 }
 
-.game-form-category-section .chip-scroll {
+.material-form-category-section .chip-scroll {
   height: 74rpx;
   margin-top: 0;
 }
@@ -80,7 +80,7 @@
   padding: 0;
 }
 
-.game-form-category-section .chip-row {
+.material-form-category-section .chip-row {
   padding: 0;
 }
 
@@ -102,7 +102,7 @@
   padding: 0;
 }
 
-.game-form-category-section .filter-chip-track {
+.material-form-category-section .filter-chip-track {
   align-items: center;
   padding: 0;
 }

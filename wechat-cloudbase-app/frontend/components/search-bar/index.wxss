@@ -64,9 +64,9 @@
   margin: 0;
   padding: 0;
   border-radius: 999rpx;
-  background: var(--improv-bg-soft);
-  border: 2rpx solid var(--improv-line-soft);
-  color: var(--improv-muted);
+  background: var(--improv-btn-toolbar-bg);
+  border: 2rpx solid var(--improv-btn-toolbar-border);
+  color: var(--improv-btn-toolbar-text);
   font-size: 22rpx;
   font-weight: 800;
   line-height: 1;

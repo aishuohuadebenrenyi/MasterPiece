@@ -1,8 +1,8 @@
 # CloudBase 数据库与接口说明
 
-更新时间：2026-06-14
+更新时间：2026-06-19
 
-本小程序使用 `improv_` 前缀集合。当前版本采用重建策略，素材体系以 `Material` 为上位对象，不兼容旧 `Game` 集合数据。
+本小程序使用 `improv_` 前缀集合。当前版本采用重建策略，素材体系以 `Material` 为上位对象，不兼容旧游戏集合数据。
 
 ## 1. 集合
 
@@ -166,14 +166,21 @@
 | `today.summary` | 返回记录页今日聚合：`inspirations`、`rehearsals`、`recommendMaterialId`。 |
 | `inspiration.list` | 返回当前用户灵感记录。 |
 | `inspiration.create` | 创建灵感记录。 |
+| `inspiration.update` | 更新当前用户灵感记录。 |
+| `inspiration.delete` | 软删除当前用户灵感记录。 |
 | `methodCard.list` | 返回当前用户方法卡。 |
 | `methodCard.create` | 创建方法卡。 |
+| `methodCard.update` | 更新当前用户方法卡。 |
+| `methodCard.delete` | 软删除当前用户方法卡。 |
 | `rehearsal.list` | 返回当前用户排练记录。 |
 | `rehearsal.create` | 创建排练记录；`goals` 支持自定义字符串。 |
 | `rehearsal.update` | 更新排练记录，也承载暂停、完成与复盘字段写回。 |
+| `rehearsal.delete` | 软删除当前用户排练记录。 |
 | `rehearsal.updateMaterialStatus` | 更新排练计划中单个素材的状态、Keep、Try。 |
 | `practiceRecord.list` | 返回当前用户单次素材练习复盘。 |
 | `practiceRecord.create` | 创建单次素材练习复盘，不用于保存排练复盘。 |
+| `practiceRecord.update` | 更新当前用户单次素材练习复盘。 |
+| `practiceRecord.delete` | 软删除当前用户单次素材练习复盘。 |
 
 `material.list` 可选 `payload`：
 
@@ -189,12 +196,7 @@
 - `material.list` 只返回公共系统素材（`ownerOpenId: "system"`）和当前用户自己的自定义素材。
 - `saved`、`played`、`unplayed` 依赖当前用户状态，云函数会先合并 `improv_user_material_states` 再过滤。
 
-兼容别名：
-
-- `seed.games`、`game.seed` 会转到 `material.seed`。
-- `game.list/create/update/delete/updateState/updateSaved/updatePlayed` 会转到对应 `material.*` action。
-- `rehearsal.updateGameStatus` 会转到 `rehearsal.updateMaterialStatus`。
-- `gameRecord.list/create` 会转到 `practiceRecord.list/create`。
+说明：当前云函数 action 只以 `material.*`、`practiceRecord.*`、`rehearsal.updateMaterialStatus` 等素材语义作为正式入口；旧 `game.*`、`gameRecord.*` 和 `rehearsal.updateGameStatus` 不再作为当前工程口径。
 
 ## 6. 请求与返回结构
 

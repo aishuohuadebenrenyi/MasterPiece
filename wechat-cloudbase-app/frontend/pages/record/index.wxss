@@ -317,14 +317,14 @@
   pointer-events: none;
 }
 
-.start-game-picker {
+.start-practice-picker {
   display: flex;
   flex-direction: column;
   gap: 18rpx;
   width: 100%;
 }
 
-.start-game-search {
+.start-practice-search {
   width: 100%;
   min-height: 84rpx;
   display: flex;
@@ -338,11 +338,11 @@
   font-weight: 900;
 }
 
-.start-game-search-icon {
+.start-practice-search-icon {
   flex: 0 0 auto;
 }
 
-.start-game-search input {
+.start-practice-search input {
   flex: 1;
   min-width: 0;
   color: var(--improv-text);
@@ -350,7 +350,7 @@
   font-weight: 800;
 }
 
-.start-game-list {
+.start-material-list {
   width: 100%;
   height: 360rpx;
   max-height: 38vh;
@@ -360,7 +360,7 @@
   overflow: hidden;
 }
 
-.start-game-option {
+.start-practice-option {
   padding: 24rpx;
   margin: 0 0 18rpx;
   border: 2rpx solid transparent;
@@ -368,7 +368,7 @@
   box-shadow: 0 8rpx 18rpx var(--improv-shadow-xs-color);
 }
 
-.start-game-option .selection-card-title {
+.start-practice-option .selection-card-title {
   flex: 1 1 auto;
   min-width: 0;
   margin-top: 0;
@@ -376,11 +376,11 @@
   line-height: 1.3;
 }
 
-.start-game-meta {
+.start-practice-meta {
   margin-top: 16rpx;
 }
 
-.start-game-empty {
+.start-practice-empty {
   min-height: 240rpx;
   display: flex;
   align-items: center;

@@ -47,7 +47,7 @@
   box-sizing: border-box;
   overflow: hidden;
   transform: translateX(0);
-  transition: transform 0.18s ease;
+  transition: transform var(--improv-anim-normal) ease;
 }
 
 .record-card-swipe-open .record-card {
@@ -162,10 +162,10 @@
   height: 56rpx;
   padding: 0 18rpx;
   border-radius: 28rpx;
-  background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid var(--improv-line, rgba(94, 114, 144, 0.14));
-  color: var(--improv-muted, #667289);
-  box-shadow: var(--improv-shadow-xs, 0 8rpx 18rpx rgba(50, 68, 120, 0.05));
+  background: var(--improv-btn-tertiary-bg);
+  border: 2rpx solid var(--improv-btn-tertiary-border);
+  color: var(--improv-btn-tertiary-text);
+  box-shadow: var(--improv-btn-tertiary-shadow);
   box-sizing: border-box;
   font-size: 24rpx;
   font-weight: 900;

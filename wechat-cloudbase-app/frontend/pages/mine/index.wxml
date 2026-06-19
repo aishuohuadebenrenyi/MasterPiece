@@ -1,4 +1,4 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page mine {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" bindscroll="onScroll" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="page mine {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
   <view class="mine-content {{showIntroState ? 'mine-content-intro' : ''}}">
     <block wx:if="{{showIntroState}}">
       <view class="mine-intro-layout">
@@ -101,12 +101,12 @@
           <view class="small-btn mine-entry-action" data-kind="inspirations" catchtap="openList">查看</view>
         </view>
 
-        <view wx:if="{{showGameRecordsCard}}" class="card mine-entry-card" bindtap="openGameRecords">
+        <view wx:if="{{showPracticeRecordsCard}}" class="card mine-entry-card" bindtap="openPracticeRecords">
           <view class="mine-entry-main">
             <text class="kicker">练习记录</text>
-            <view class="mine-entry-title">{{gameRecordsCount}} 次素材练习</view>
+            <view class="mine-entry-title">{{practiceRecordsCount}} 次素材练习</view>
           </view>
-          <view class="small-btn mine-entry-action" catchtap="openGameRecords">查看</view>
+          <view class="small-btn mine-entry-action" catchtap="openPracticeRecords">查看</view>
         </view>
 
         <view wx:if="{{showRehearsalCard}}" class="card mine-entry-card" bindtap="openTeamRecords">
@@ -143,7 +143,7 @@
     <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '素材练习' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" canMarkIntent="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" loading="{{sedimentSaving}}" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" bind:markintent="markCurrentDetailIntent" />
   </floating-card>
 
-  <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" bind:close="closeSheet">
+  <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="profile-edit-sheet">
       <view class="profile-edit-avatar-container" bindtap="chooseProfileAvatar">
         <view class="avatar profile-editor-avatar">
@@ -177,7 +177,7 @@
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{showMethodCardEditSheet}}" title="编辑方法卡" bind:close="closeMethodCardEdit">
+  <bottom-sheet visible="{{showMethodCardEditSheet}}" title="编辑方法卡" closeOnMask="{{false}}" bind:close="closeMethodCardEdit">
     <view class="edit-form">
       <view class="edit-form-field">
         <text class="edit-form-label">标题</text>
@@ -187,7 +187,7 @@
         <text class="edit-form-label">内容</text>
         <textarea class="edit-form-textarea" value="{{methodCardDraftContent}}" bindinput="onMethodCardDraftContentInput" placeholder="方法卡内容" />
       </view>
-      <button class="edit-form-submit" bindtap="saveMethodCardEdit">保存</button>
+      <button class="primary-btn edit-form-submit" bindtap="saveMethodCardEdit">保存</button>
     </view>
   </bottom-sheet>
 

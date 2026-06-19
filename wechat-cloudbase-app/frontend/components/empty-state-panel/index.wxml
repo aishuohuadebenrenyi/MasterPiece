@@ -1,4 +1,4 @@
-<view class="state-note-card empty-state-card empty-state-panel {{customClass}}">
+<view class="state-note-card empty-state-card empty-state-panel state-panel state-panel-{{tone}} {{customClass}}">
   <text wx:if="{{kicker}}" class="pill {{kickerTone}} empty-state-kicker">{{kicker}}</text>
   <view class="section-title">{{title}}</view>
   <text class="muted">{{desc}}</text>

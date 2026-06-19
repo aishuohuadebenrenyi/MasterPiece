@@ -30,7 +30,7 @@
   min-height: 56rpx;
 }
 
-.game-title {
+.material-title {
   font-size: 32rpx;
   color: var(--improv-text);
   font-weight: 900;
@@ -73,7 +73,7 @@
   font-weight: 900;
 }
 
-.rehearsal-game {
+.rehearsal-material {
   padding: 28rpx;
   margin-top: 24rpx;
 }

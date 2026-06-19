@@ -13,10 +13,10 @@
   },
   {
     "id": "method-2",
-    "type": "游戏改造",
+    "type": "素材改造",
     "title": "一句话交换身份只推进一个信息",
     "desc": "每轮只确认一个关系点，现场会更稳，也更容易接住。",
-    "meta": ["关系", "游戏变体", "可复用"],
+    "meta": ["关系", "素材变体", "可复用"],
     "sourceType": "inspiration",
     "ownerOpenId": "__REPLACE_WITH_OPENID__",
     "createdAt": "2026-06-06T00:00:00.000Z",

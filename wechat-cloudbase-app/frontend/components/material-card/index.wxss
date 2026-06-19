@@ -1,0 +1,182 @@
+@import "../../app.wxss";
+@import "../../styles/theme.wxss";
+
+.material-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24rpx;
+  min-height: 196rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
+  border-radius: var(--improv-radius-card);
+  overflow: hidden;
+  transition: transform var(--improv-anim-normal) ease, box-shadow var(--improv-anim-normal) ease;
+}
+
+.material-card.large {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 640rpx;
+  padding: var(--improv-card-padding-md, 40rpx);
+  background:
+    linear-gradient(160deg, var(--improv-card-translucent, rgba(255, 255, 255, 0.92)), var(--improv-card-muted, rgba(255, 255, 255, 0.74))),
+    linear-gradient(135deg, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)), var(--improv-secondary-wash-soft, rgba(79, 140, 255, 0.14)));
+}
+
+.large .stripe {
+  display: none;
+}
+
+.large .material-main {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+
+.stripe,
+.stripe.orange {
+  flex: 0 0 10rpx;
+  width: 10rpx;
+  height: 108rpx;
+  margin-top: 4rpx;
+  border-radius: 999rpx;
+  background: var(--improv-stripe-orange);
+}
+
+.stripe.blue {
+  background: var(--improv-stripe-blue);
+}
+
+.stripe.mint {
+  background: var(--improv-stripe-mint);
+}
+
+.material-main {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 16rpx;
+}
+
+.material-head {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.material-head-text {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10rpx;
+  white-space: normal;
+}
+
+.material-tag-pill {
+  align-self: flex-start;
+  width: auto;
+  max-width: 100%;
+}
+
+.material-title {
+  color: var(--improv-text);
+  font-size: 34rpx;
+  font-weight: 900;
+  line-height: 1.22;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.large .material-title {
+  margin-top: 4rpx;
+  font-size: 52rpx;
+  line-height: 1.12;
+}
+
+.material-desc-block {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.material-desc {
+  color: var(--improv-text-soft, #5a6781);
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.2rpx;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.large .material-desc {
+  font-size: 30rpx;
+}
+
+.save {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 74rpx;
+  height: 74rpx;
+  min-width: 74rpx;
+  min-height: 74rpx;
+  max-width: 74rpx;
+  max-height: 74rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  color: var(--improv-muted-strong, #7b88a2);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "PingFang SC", sans-serif;
+  font-size: 40rpx;
+  font-weight: 500;
+  line-height: 1;
+  border: 0;
+  box-shadow: none;
+}
+
+.save-idle {
+  color: var(--improv-favorite-idle, #b7c5e6);
+  opacity: 0.96;
+}
+
+.save-active {
+  color: var(--improv-favorite-active, #f2aea4);
+  opacity: 0.98;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  white-space: normal;
+  margin-top: 2rpx;
+}
+
+.meta text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  padding: 6rpx 16rpx;
+  background: var(--improv-accent-soft, var(--improv-bg-soft));
+  color: var(--improv-muted);
+  font-size: 22rpx;
+  font-weight: 700;
+  border-radius: 999rpx;
+}
+
+.large .meta {
+  margin: 0;
+}

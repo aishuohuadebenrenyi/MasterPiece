@@ -14,7 +14,7 @@
       </view>
       <text class="record-intro muted">先留下原始片段，整理可以稍后再做。</text>
       <view class="record-actions">
-        <button class="small-btn record-action-btn" bindtap="openStartGame">记录练习</button>
+        <button class="small-btn record-action-btn" bindtap="openStartPractice">记录练习</button>
         <button class="small-btn record-action-btn" bindtap="openStartRehearsal">记录排练</button>
       </view>
       <view wx:if="{{showTodaySummary}}" class="record-footnote">
@@ -26,15 +26,15 @@
     </view>
 
     <view class="record-stack">
-      <view wx:if="{{gameCard}}" class="card record-hub-card game-card">
+      <view wx:if="{{materialSessionCard}}" class="card record-hub-card material-card">
         <view class="row">
           <view>
-            <text class="mini-title">{{gameCard.label}}</text>
-            <view class="card-title">{{gameCard.title}}</view>
+            <text class="mini-title">{{materialSessionCard.label}}</text>
+            <view class="card-title">{{materialSessionCard.title}}</view>
           </view>
-          <button class="small-btn" bindtap="resumeGameCard">去查看</button>
+          <button class="small-btn" bindtap="resumeMaterialSessionCard">去查看</button>
         </view>
-        <text class="muted">时长：{{gameCard.durationText}}</text>
+        <text class="muted">时长：{{materialSessionCard.durationText}}</text>
       </view>
 
       <view wx:elif="{{rehearsalCard}}" class="card record-hub-card rehearsal-card">
@@ -55,7 +55,7 @@
       </view>
 
       <view wx:if="{{recommendVisible && recommendTitle}}" class="card recommend-box {{recommendClickable ? '' : 'recommend-box-disabled'}}">
-        <button class="recommend-close" catchtap="closeRecommend">×</button>
+        <button class="icon-text icon-close recommend-close" catchtap="closeRecommend">×</button>
         <view wx:if="{{recommendClickable}}" class="recommend-main recommend-main-clickable" bindtap="openRecommend">
           <text class="mini-title">今日推荐</text>
           <view class="card-title">{{recommendTitle}}</view>
@@ -70,30 +70,30 @@
     </view>
   </view>
 
-  <bottom-sheet visible="{{startGameVisible}}" title="快速开始练习" maskVariant="light" sheetClass="start-game-sheet task-sheet" bodyMode="fit" bind:close="closeSheet">
-    <view class="start-game-picker">
-      <search-bar customClass="start-game-search" value="{{gameSearchQuery}}" placeholder="搜索素材、能力或目标" showClear="{{true}}" bind:focus="showStartGameList" bind:blur="onGameSearchInput" bind:confirm="onGameSearchInput" bind:clear="clearGameSearch" />
-      <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="start-game-list">
+  <bottom-sheet visible="{{startPracticeVisible}}" title="快速开始练习" maskVariant="light" sheetClass="start-practice-sheet task-sheet" bodyMode="fit" closeOnMask="{{false}}" bind:close="closeSheet">
+    <view class="start-practice-picker">
+      <search-bar customClass="start-practice-search" value="{{materialSearchQuery}}" placeholder="搜索素材、能力或目标" showClear="{{true}}" bind:focus="showStartPracticeList" bind:blur="onMaterialSearchInput" bind:confirm="onMaterialSearchInput" bind:clear="clearMaterialSearch" />
+      <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="start-material-list">
         <selection-card
-          wx:for="{{filteredGamesList}}"
+          wx:for="{{filteredMaterialsList}}"
           wx:key="id"
           itemId="{{item.id}}"
-          customClass="start-game-option"
+          customClass="start-practice-option"
           title="{{item.title}}"
           desc="{{item.desc}}"
-          selected="{{startGameSelectedId === item.id}}"
+          selected="{{startPracticeSelectedId === item.id}}"
           selectedText="已选"
-          bind:tapcard="selectGameToStart"
+          bind:tapcard="selectMaterialToStart"
         >
-          <view slot="extra" class="meta-row start-game-meta" wx:if="{{item.meta.length || item.tags.length}}">
+          <view slot="extra" class="meta-row start-practice-meta" wx:if="{{item.meta.length || item.tags.length}}">
             <text wx:for="{{item.meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
             <text wx:for="{{item.tags}}" wx:key="*this" class="meta-pill">{{item}}</text>
           </view>
         </selection-card>
-        <empty-state-panel wx:if="{{filteredGamesList.length === 0}}" customClass="start-game-empty" title="{{startGameEmptyTitle}}" desc="{{startGameEmptyDesc}}" />
+        <empty-state-panel wx:if="{{filteredMaterialsList.length === 0}}" customClass="start-practice-empty" title="{{startPracticeEmptyTitle}}" desc="{{startPracticeEmptyDesc}}" />
       </scroll-view>
     </view>
-    <button class="primary-btn start-btn {{!startGameSelectedId ? 'disabled-btn' : ''}}" bindtap="startGameFromRecord" disabled="{{!startGameSelectedId}}">开始练习</button>
+    <button class="primary-btn start-btn {{!startPracticeSelectedId ? 'disabled-btn' : ''}}" bindtap="startPracticeFromRecord" disabled="{{!startPracticeSelectedId}}">开始练习</button>
   </bottom-sheet>
 
   <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
@@ -109,7 +109,7 @@
     />
   </bottom-sheet>
 
-  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" sheetClass="start-rehearsal-sheet task-sheet" bind:close="closeSheet">
+  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" sheetClass="start-rehearsal-sheet task-sheet" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="start-rehearsal-form">
       <form-field class="start-rehearsal-section" label="团队">
         <input class="app-input" value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" />

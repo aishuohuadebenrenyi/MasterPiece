@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "material-form": "../../components/material-form/index",
+    "subpage-header": "../../components/subpage-header/index",
+    "empty-state-panel": "../../components/empty-state-panel/index"
+  }
+}

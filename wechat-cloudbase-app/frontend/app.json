@@ -3,13 +3,13 @@
     "pages/discover/index",
     "pages/record/index",
     "pages/mine/index",
-    "pages/game-detail/index",
+    "pages/material-detail/index",
     "pages/inspiration-edit/index",
-    "pages/game-feedback/index",
+    "pages/practice-feedback/index",
     "pages/rehearsal-record/index",
     "pages/rehearsal-review/index",
     "pages/team-records/index",
-    "pages/game-records/index",
+    "pages/practice-records/index",
     "pages/privacy/index"
   ],
   "window": {

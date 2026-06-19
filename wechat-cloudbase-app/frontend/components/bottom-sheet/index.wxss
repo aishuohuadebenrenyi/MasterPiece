@@ -72,7 +72,7 @@ text {
   box-shadow: 0 24rpx 60rpx rgba(27, 45, 87, 0.18);
   box-shadow: var(--improv-shadow-sheet, 0 24rpx 60rpx rgba(27, 45, 87, 0.18));
   transform: translateY(calc(100% + 40rpx));
-  transition: transform 0.24s ease;
+  transition: transform 0.24s ease; /* bottom sheet slide up usually slightly longer than normal 0.2s */
   pointer-events: auto;
 }
 
@@ -312,13 +312,10 @@ text {
 .small-btn {
   min-height: 58rpx;
   padding: 0 20rpx;
-  border: 2rpx solid rgba(94, 114, 144, 0.14);
-  border: 2rpx solid var(--improv-line, rgba(94, 114, 144, 0.14));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
   border-radius: 999rpx;
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  color: #667289;
-  color: var(--improv-muted, #667289);
+  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
+  color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   font-size: 24rpx;
   font-weight: 900;
 }

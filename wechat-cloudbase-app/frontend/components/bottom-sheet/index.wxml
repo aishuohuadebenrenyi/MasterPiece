@@ -6,7 +6,7 @@
         <view class="handle"></view>
         <view class="sheet-head">
           <text class="sheet-title">{{title}}</text>
-          <button class="icon-close-btn" catchtap="close">✕</button>
+          <button class="icon-text icon-close icon-close-btn" catchtap="close">✕</button>
         </view>
         <block wx:if="{{resolvedBodyMode === 'fit'}}">
           <view class="sheet-scroll-static">

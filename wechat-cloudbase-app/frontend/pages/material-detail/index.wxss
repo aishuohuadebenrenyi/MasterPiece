@@ -1,0 +1,237 @@
+.detail {
+  padding-bottom: var(--fixed-action-spacer);
+}
+
+.back {
+  margin-bottom: 24rpx;
+}
+
+.header,
+.block {
+  padding: 32rpx;
+  margin-bottom: 22rpx;
+}
+
+.header {
+  position: relative;
+  padding-right: 32rpx;
+}
+
+.detail-heading {
+  min-width: 0;
+  max-width: calc(100% - 240rpx);
+  overflow: hidden;
+}
+
+.header .kicker {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-title {
+  margin: 8rpx 0 18rpx;
+  color: var(--improv-text);
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.card-action-group {
+  position: absolute;
+  top: 32rpx;
+  right: 32rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  z-index: 10;
+}
+
+.card-action-group button.card-action-btn {
+  width: auto !important;
+  min-width: 96rpx;
+  margin: 0;
+  min-height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 28rpx;
+  background: var(--improv-btn-tertiary-bg) !important;
+  border: 2rpx solid var(--improv-btn-tertiary-border) !important;
+  color: var(--improv-btn-tertiary-text);
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 56rpx;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.card-action-group button.card-action-btn::after {
+  border: none;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin: 18rpx 0;
+}
+
+.meta text {
+  padding: 10rpx 18rpx;
+  background: var(--improv-bg-soft);
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.block-title {
+  margin-bottom: 20rpx;
+  color: var(--improv-text);
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.step {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 18rpx;
+  margin-top: 18rpx;
+  color: var(--improv-muted);
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.step text:first-child {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 26rpx;
+  background: var(--improv-primary-soft);
+  color: var(--improv-primary-strong);
+  text-align: center;
+  line-height: 52rpx;
+  font-weight: 900;
+}
+
+.issue {
+  display: block;
+  margin-top: 16rpx;
+  color: #ff4d4f;
+}
+
+.fixed-actions {
+  flex-direction: row;
+  justify-content: center;
+  gap: 14rpx;
+}
+
+.fixed-actions button {
+  flex: 0 1 176rpx;
+  min-width: 0;
+  max-width: 176rpx;
+}
+
+.fixed-actions button:last-child {
+  flex: 0 1 240rpx;
+  max-width: 240rpx;
+}
+
+.save-toggle-btn {
+  min-height: 58rpx;
+  padding: 0 10rpx;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "PingFang SC", sans-serif;
+  font-size: 25rpx;
+  font-weight: 500;
+}
+
+.save-toggle-idle {
+  color: var(--improv-favorite-idle, #b7c5e6);
+  opacity: 0.96;
+}
+
+.save-toggle-active {
+  color: var(--improv-favorite-active, #f2aea4);
+  opacity: 0.98;
+}
+
+.delete-btn {
+  color: var(--improv-btn-danger-text);
+  border-color: var(--improv-btn-danger-border);
+  background: var(--improv-btn-danger-bg);
+}
+
+.edit-form-block {
+  padding-top: 36rpx;
+  padding-bottom: calc(40rpx + var(--fixed-action-clearance, 160rpx));
+}
+
+.edit-fixed-actions {
+  gap: 16rpx;
+}
+
+.edit-fixed-actions .delete-btn {
+  flex: 0 1 240rpx;
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  font-size: 26rpx;
+}
+
+.edit-fixed-actions .primary-btn {
+  flex: 1 1 0;
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  font-size: 26rpx;
+}
+
+/* 细节头部栏 */
+.detail-header-row {
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+.detail-header-row .back {
+  margin-bottom: 0;
+}
+
+/* 更多操作菜单按钮 */
+.more-action {
+  display: none;
+}
+
+.add-submit-btn {
+  width: 100%;
+  min-height: 88rpx;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 32rpx;
+}
+
+.add-submit-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 0;
+  padding: 0;
+}
+
+.history-section {
+  margin-top: 32rpx;
+  padding-bottom: var(--fixed-action-clearance);
+}
+
+.history-card {
+  margin-bottom: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.detail-state-page {
+  min-height: 100vh;
+}
+
+.detail-state-card {
+  margin-top: 28rpx;
+}

@@ -34,6 +34,12 @@ Component({
   },
 
   methods: {
+    setHidden(hidden: boolean) {
+      if (this.data.hidden !== hidden) {
+        this.setData({ hidden })
+      }
+    },
+
     syncTabs(selected: number) {
       this.setData({
         tabs: this.data.tabs.map((item, index) => Object.assign({}, item, {

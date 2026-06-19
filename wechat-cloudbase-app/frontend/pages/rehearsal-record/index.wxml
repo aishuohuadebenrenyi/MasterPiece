@@ -8,14 +8,14 @@
 
   <form-card title="素材计划与反馈" kicker="素材计划" actionText="加素材" bind:action="openAdd">
     <empty-state-panel wx:if="{{!planMaterials.length}}" customClass="plan-empty-card" title="先加几个这次想练的素材" desc="没有计划时，不需要先把页面填满。先加入 1-3 条素材，排练会更容易开始。" primaryText="加素材" bind:primary="openAdd" />
-    <view wx:for="{{planMaterials}}" wx:key="id" class="card rehearsal-game">
+    <view wx:for="{{planMaterials}}" wx:key="id" class="card rehearsal-material">
       <view class="plan-item">
         <view class="index">{{index + 1}}</view>
         <view class="plan-main">
-          <view class="game-title">{{item.title}}</view>
+          <view class="material-title">{{item.title}}</view>
           <text class="muted">{{item.metaText}} · {{item.tagText}}</text>
         </view>
-        <button class="small-btn" data-id="{{item.id}}" bindtap="openGame">详情</button>
+        <button class="small-btn" data-id="{{item.id}}" bindtap="openMaterial">详情</button>
       </view>
       <view class="status-row">
         <button class="small-btn status-btn" data-id="{{item.id}}" bindtap="toggleStatus">{{item.status}}</button>
@@ -52,8 +52,8 @@
     </view>
   </root-portal>
 
-  <bottom-sheet visible="{{addVisible}}" title="添加到排练" bind:close="closeSheet">
-    <search-bar value="{{query}}" placeholder="搜索素材、能力或目标" showClear="{{true}}" bind:blur="searchGame" bind:confirm="searchGame" bind:clear="clearAddSearch" />
+  <bottom-sheet visible="{{addVisible}}" title="添加到排练" closeOnMask="{{false}}" bind:close="closeSheet">
+    <search-bar value="{{query}}" placeholder="搜索素材、能力或目标" showClear="{{true}}" bind:blur="searchMaterial" bind:confirm="searchMaterial" bind:clear="clearAddSearch" />
     <empty-state-panel wx:if="{{!filteredMaterials.length}}" customClass="add-empty-card" title="{{addEmptyTitle}}" desc="{{addEmptyDesc}}" primaryText="{{query ? '' : '去发现页添加'}}" secondaryText="{{query ? '清空搜索' : ''}}" bind:primary="goDiscover" bind:secondary="clearAddSearch" />
     <selection-card
       wx:for="{{filteredMaterials}}"
@@ -64,12 +64,12 @@
       desc="{{item.desc}}"
       meta="{{item.meta}}"
       actionText="加入"
-      bind:tapcard="addGame"
-      bind:action="addGame"
+      bind:tapcard="addMaterial"
+      bind:action="addMaterial"
     />
   </bottom-sheet>
 
-  <bottom-sheet visible="{{planVisible}}" title="调整排练计划" bind:close="closeSheet">
+  <bottom-sheet visible="{{planVisible}}" title="调整排练计划" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="card plan-sheet-summary">
       <text class="mini-title">当前排练</text>
       <view class="section-title">{{title}} · {{duration}} 分钟</view>

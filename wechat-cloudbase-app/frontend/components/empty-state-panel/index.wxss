@@ -13,3 +13,16 @@
   align-self: flex-start;
   margin-bottom: 16rpx;
 }
+
+.state-panel-loading {
+  background: var(--improv-card-light);
+}
+
+.state-panel-error {
+  background: var(--improv-primary-tint);
+  border-color: var(--improv-primary-soft);
+}
+
+.state-panel-notice {
+  background: var(--improv-card);
+}

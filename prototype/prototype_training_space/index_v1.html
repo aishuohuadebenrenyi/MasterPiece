@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>即兴工具箱 · 个人训练空间原型 v1</title>
+    <style>
+      :root {
+        --bg: #fff6f1;
+        --bg-blue: #eef5ff;
+        --card: rgba(255, 255, 255, 0.94);
+        --sheet: rgba(255, 252, 249, 0.98);
+        --field: #fff1ea;
+        --primary: #ff7a45;
+        --primary-strong: #ff5b2e;
+        --primary-soft: #ffe2d6;
+        --secondary: #4f8cff;
+        --secondary-strong: #2f6ff2;
+        --secondary-soft: #e7f0ff;
+        --mint-soft: #def8f1;
+        --rose-soft: #ffe5ec;
+        --violet-soft: #eeebff;
+        --warm-soft: #fff0cc;
+        --text: #24324a;
+        --muted: #667289;
+        --light: #96a1b4;
+        --shadow-sm: 0 10px 24px rgba(50, 68, 120, 0.08);
+        --shadow-md: 0 18px 40px rgba(55, 82, 150, 0.14);
+        --shadow-lg: 0 24px 56px rgba(27, 45, 87, 0.2);
+        --radius-lg: 22px;
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 14% 6%, rgba(255, 183, 143, 0.5), transparent 32%),
+          radial-gradient(circle at 86% 8%, rgba(79, 140, 255, 0.18), transparent 30%),
+          linear-gradient(180deg, #fff5ef 0%, #f7f8ff 58%, #eef4ff 100%);
+        color: var(--text);
+        font-family: var(--font);
+      }
+
+      button,
+      input,
+      textarea {
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        outline: none;
+      }
+
+      .phone {
+        width: min(100vw, 390px);
+        height: min(100vh, 844px);
+        position: relative;
+        overflow: hidden;
+        border-radius: 44px;
+        background:
+          linear-gradient(160deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.16)),
+          linear-gradient(180deg, var(--bg) 0%, #f7f9ff 54%, var(--bg-blue) 100%);
+        box-shadow: 0 30px 60px rgba(17, 24, 39, 0.25), 0 0 0 8px #1c1c1e, 0 0 0 10px #2c2c2e;
+      }
+
+      .app {
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .wx-capsule {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 50;
+        width: 88px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(110, 124, 148, 0.18);
+        box-shadow: var(--shadow-sm);
+        pointer-events: none;
+      }
+
+      .wx-capsule span {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #7d8798;
+        box-shadow: 8px 0 0 #7d8798, -8px 0 0 #7d8798;
+      }
+
+      .wx-capsule::after {
+        content: "";
+        width: 1px;
+        height: 18px;
+        background: rgba(110, 124, 148, 0.22);
+      }
+
+      .page {
+        position: absolute;
+        inset: 0;
+        display: none;
+        overflow-y: auto;
+        padding: 54px 20px 118px;
+        scrollbar-width: none;
+      }
+
+      .page::-webkit-scrollbar,
+      .segmented::-webkit-scrollbar,
+      .ability-filter::-webkit-scrollbar,
+      .quick-type-row::-webkit-scrollbar,
+      .sheet-body::-webkit-scrollbar {
+        display: none;
+      }
+
+      .page.active {
+        display: block;
+      }
+
+      .topbar,
+      .row,
+      .section-row,
+      .sheet-head,
+      .tabbar,
+      .segmented,
+      .asset-card-head,
+      .stats-grid,
+      .quick-type-row,
+      .ability-filter,
+      .tag-row,
+      .focus-actions {
+        display: flex;
+        align-items: center;
+      }
+
+      .topbar,
+      .row,
+      .section-row,
+      .sheet-head,
+      .asset-card-head {
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .topbar {
+        min-height: 42px;
+        padding-right: 98px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 29px;
+        line-height: 1.08;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      h3 {
+        font-size: 16px;
+      }
+
+      .kicker {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--light);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .tiny {
+        color: var(--light);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .card,
+      .hero-capture,
+      .asset-card,
+      .mini-card,
+      .sheet,
+      .focus-card,
+      .map-item,
+      .assessment-card {
+        border-radius: var(--radius-lg);
+        background: var(--card);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(14px);
+      }
+
+      .hero-capture {
+        margin-top: 22px;
+        padding: 26px 22px 24px;
+        text-align: center;
+        background:
+          linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 242, 0.9)),
+          linear-gradient(135deg, rgba(255, 122, 69, 0.16), rgba(79, 140, 255, 0.12));
+      }
+
+      .mic-button {
+        width: 132px;
+        height: 132px;
+        margin: 20px auto 18px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 36% 24%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.18) 34%, transparent 35%),
+          linear-gradient(145deg, var(--primary), var(--primary-strong));
+        box-shadow: 0 22px 42px rgba(255, 91, 46, 0.28), inset 0 -8px 20px rgba(122, 36, 14, 0.16);
+        color: white;
+      }
+
+      .mic-icon {
+        width: 38px;
+        height: 56px;
+        position: relative;
+        border-radius: 22px;
+        border: 5px solid currentColor;
+      }
+
+      .mic-icon::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -22px;
+        width: 42px;
+        height: 24px;
+        border: 5px solid currentColor;
+        border-top: 0;
+        border-radius: 0 0 24px 24px;
+        transform: translateX(-50%);
+      }
+
+      .mic-icon::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -35px;
+        width: 5px;
+        height: 18px;
+        border-radius: 999px;
+        background: currentColor;
+        transform: translateX(-50%);
+      }
+
+      .primary-button,
+      .secondary-button,
+      .ghost-button {
+        min-height: 44px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .primary-button {
+        padding: 0 20px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+        color: white;
+        box-shadow: 0 14px 24px rgba(255, 91, 46, 0.2);
+      }
+
+      .secondary-button {
+        padding: 0 18px;
+        background: var(--secondary-soft);
+        color: var(--secondary-strong);
+      }
+
+      .ghost-button {
+        padding: 0 16px;
+        background: rgba(255, 255, 255, 0.68);
+        color: var(--muted);
+      }
+
+      .section {
+        margin-top: 22px;
+      }
+
+      .section-row {
+        margin-bottom: 12px;
+      }
+
+      .quick-strip {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .mini-card {
+        padding: 14px;
+        text-align: left;
+      }
+
+      .mini-card strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+
+      .focus-card {
+        margin-top: 16px;
+        padding: 16px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 248, 242, 0.88)),
+          linear-gradient(135deg, rgba(255, 122, 69, 0.1), rgba(53, 191, 166, 0.1));
+      }
+
+      .focus-actions {
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .focus-actions .secondary-button {
+        flex: 1;
+      }
+
+      .pending-list,
+      .asset-list,
+      .history-list,
+      .map-list,
+      .detail-block-list,
+      .assessment-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .pending-item {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .type-dot {
+        flex: 0 0 auto;
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .type-dot.role {
+        background: var(--rose-soft);
+        color: #cf4f73;
+      }
+
+      .type-dot.talent {
+        background: var(--mint-soft);
+        color: #15957d;
+      }
+
+      .type-dot.format {
+        background: var(--violet-soft);
+        color: #6b58e8;
+      }
+
+      .type-dot.game {
+        background: var(--secondary-soft);
+        color: var(--secondary-strong);
+      }
+
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        margin-top: 18px;
+        padding: 0 15px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .search span {
+        color: var(--light);
+        font-weight: 900;
+      }
+
+      .search input {
+        font-size: 14px;
+      }
+
+      .segmented,
+      .ability-filter {
+        gap: 6px;
+        margin-top: 14px;
+        padding: 5px;
+        overflow-x: auto;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: var(--shadow-sm);
+        scrollbar-width: none;
+      }
+
+      .ability-filter {
+        border-radius: 22px;
+      }
+
+      .segmented button,
+      .ability-filter button,
+      .quick-type-row button {
+        flex: 0 0 auto;
+        min-height: 36px;
+        padding: 0 13px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .segmented button.active,
+      .ability-filter button.active,
+      .quick-type-row button.active {
+        background: var(--secondary-soft);
+        color: var(--secondary-strong);
+      }
+
+      .asset-card {
+        padding: 16px;
+      }
+
+      .asset-card-head {
+        margin-bottom: 10px;
+      }
+
+      .asset-card h3 {
+        font-size: 17px;
+        line-height: 1.25;
+      }
+
+      .badge,
+      .ability-pill {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .badge.role {
+        background: var(--rose-soft);
+        color: #cf4f73;
+      }
+
+      .badge.talent {
+        background: var(--mint-soft);
+        color: #15957d;
+      }
+
+      .badge.format,
+      .badge.host {
+        background: var(--violet-soft);
+        color: #6b58e8;
+      }
+
+      .badge.game {
+        background: var(--secondary-soft);
+        color: var(--secondary-strong);
+      }
+
+      .ability-pill {
+        background: rgba(79, 140, 255, 0.11);
+        color: var(--secondary-strong);
+        font-size: 11px;
+      }
+
+      .tag-row {
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .cue-grid {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .cue,
+      .detail-block {
+        padding: 11px 12px;
+        border-radius: 14px;
+        background: rgba(247, 249, 255, 0.76);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .cue strong,
+      .detail-block strong {
+        margin-right: 5px;
+        color: var(--text);
+      }
+
+      .next-practice {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 16px;
+        background: var(--warm-soft);
+        color: #8b5d10;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .float-action {
+        position: absolute;
+        right: 22px;
+        bottom: 96px;
+        z-index: 15;
+        min-height: 50px;
+        padding: 0 18px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--secondary), var(--secondary-strong));
+        color: white;
+        font-size: 14px;
+        font-weight: 900;
+        box-shadow: 0 18px 32px rgba(47, 111, 242, 0.25);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .stat {
+        padding: 16px 8px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.78);
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .stat strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 22px;
+      }
+
+      .profile-card {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: var(--radius-lg);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 246, 241, 0.82)),
+          linear-gradient(135deg, rgba(255, 122, 69, 0.12), rgba(79, 140, 255, 0.1));
+        box-shadow: var(--shadow-sm);
+      }
+
+      .avatar {
+        width: 54px;
+        height: 54px;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--primary-soft), var(--secondary-soft));
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .map-teaser {
+        width: 100%;
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: var(--shadow-sm);
+        text-align: left;
+      }
+
+      .map-bars {
+        display: grid;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .bar,
+      .progress {
+        height: 9px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(102, 114, 137, 0.12);
+      }
+
+      .bar span,
+      .progress span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+      }
+
+      .history-item {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .map-item {
+        width: 100%;
+        padding: 15px;
+        text-align: left;
+      }
+
+      .map-item .row {
+        align-items: flex-start;
+      }
+
+      .progress {
+        width: 78px;
+        margin-top: 7px;
+      }
+
+      .assessment-card {
+        padding: 15px;
+      }
+
+      .score-row {
+        display: grid;
+        grid-template-columns: 72px 1fr 36px;
+        gap: 10px;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .score-name {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .tabbar {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 18px;
+        z-index: 30;
+        justify-content: space-around;
+        min-height: 72px;
+        padding: 8px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--shadow-lg);
+        backdrop-filter: blur(18px);
+      }
+
+      .tabbar button {
+        min-width: 84px;
+        min-height: 54px;
+        display: grid;
+        place-items: center;
+        gap: 2px;
+        border-radius: 22px;
+        color: var(--light);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .tabbar b {
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .tabbar button.active {
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+      }
+
+      .mask {
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        display: none;
+        background: rgba(28, 36, 55, 0.32);
+        backdrop-filter: blur(5px);
+      }
+
+      .mask.active {
+        display: block;
+      }
+
+      .sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-height: 82vh;
+        z-index: 70;
+        display: none;
+        padding: 18px 20px 24px;
+        border-radius: 30px 30px 0 0;
+        background: var(--sheet);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+      }
+
+      .sheet.active {
+        display: block;
+      }
+
+      .sheet.full {
+        max-height: 90vh;
+        height: 90vh;
+      }
+
+      .sheet-body {
+        max-height: calc(82vh - 92px);
+        overflow-y: auto;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+      }
+
+      .sheet.full .sheet-body {
+        max-height: calc(90vh - 92px);
+      }
+
+      .close-button {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(102, 114, 137, 0.1);
+        color: var(--muted);
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .capture-mode {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 16px 0;
+        padding: 5px;
+        border-radius: 999px;
+        background: rgba(102, 114, 137, 0.08);
+      }
+
+      .capture-mode button {
+        min-height: 38px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .capture-mode button.active {
+        background: white;
+        color: var(--primary-strong);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .field {
+        margin-top: 14px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .field input,
+      .field textarea {
+        min-height: 48px;
+        padding: 14px 16px;
+        border-radius: 20px;
+        background: var(--field);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .field textarea {
+        min-height: 108px;
+        resize: none;
+      }
+
+      .quick-type-row {
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .quick-type-row button {
+        background: rgba(255, 255, 255, 0.76);
+      }
+
+      .type-fields {
+        display: none;
+      }
+
+      .type-fields.active {
+        display: block;
+      }
+
+      .sheet-action {
+        width: 100%;
+        margin-top: 18px;
+      }
+
+      .draw-result {
+        margin-top: 14px;
+        padding: 16px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 108px;
+        z-index: 90;
+        display: none;
+        min-width: 156px;
+        max-width: 280px;
+        padding: 12px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.94);
+        color: var(--text);
+        text-align: center;
+        font-size: 13px;
+        font-weight: 900;
+        box-shadow: var(--shadow-md);
+        transform: translateX(-50%);
+      }
+
+      .toast.active {
+        display: block;
+        animation: toast-in 1.6s ease both;
+      }
+
+      @keyframes toast-in {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        16%,
+        82% {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, 8px);
+        }
+      }
+
+      @media (max-width: 390px) {
+        .phone {
+          width: 100vw;
+          height: 100vh;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .page {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="即兴工具箱个人训练空间原型">
+      <div class="app">
+        <div class="wx-capsule" aria-hidden="true"><span></span></div>
+
+        <section class="page active" id="page-record">
+          <header class="topbar">
+            <div>
+              <span class="kicker">个人训练空间</span>
+              <h1>今天想留下什么？</h1>
+            </div>
+          </header>
+
+          <div class="hero-capture">
+            <p class="muted">排练中、演出后、灵感冒出来时，先别忘，之后再整理。</p>
+            <button class="mic-button" id="openCapture" aria-label="打开快速记录">
+              <span class="mic-icon" aria-hidden="true"></span>
+            </button>
+            <button class="primary-button" id="openCaptureText">快速记录</button>
+            <div class="quick-strip">
+              <button class="mini-card" data-capture-type="角色">
+                <strong>记一个角色</strong>
+                <span class="muted">动作、台词、神态</span>
+              </button>
+              <button class="mini-card" data-capture-type="才艺">
+                <strong>记一段才艺</strong>
+                <span class="muted">舞步、歌句、识别点</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="focus-card">
+            <div class="section-row">
+              <div>
+                <span class="kicker">本周练什么</span>
+                <h2 id="weeklyFocusTitle">角色塑造</h2>
+              </div>
+              <span class="badge role">能力焦点</span>
+            </div>
+            <div class="cue-grid" id="weeklyFocusCues"></div>
+            <div class="focus-actions">
+              <button class="secondary-button" id="continueFocus">继续练习</button>
+              <button class="ghost-button" id="openAssessment">轻测一下</button>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="section-row">
+              <div>
+                <span class="kicker">继续处理</span>
+                <h2>待整理</h2>
+              </div>
+              <button class="ghost-button" id="openPendingCapture">新增</button>
+            </div>
+            <div class="pending-list" id="pendingList"></div>
+          </section>
+        </section>
+
+        <section class="page" id="page-assets">
+          <header class="topbar">
+            <div>
+              <span class="kicker">素材速查</span>
+              <h1>上台前翻一张</h1>
+            </div>
+          </header>
+
+          <label class="search" for="assetSearch">
+            <span>⌕</span>
+            <input id="assetSearch" type="search" placeholder="搜索角色、才艺、格式、游戏、主持" />
+          </label>
+
+          <div class="segmented" id="assetFilter" role="tablist" aria-label="素材类型"></div>
+          <div class="ability-filter" id="abilityFilter" aria-label="训练能力筛选"></div>
+
+          <section class="section">
+            <div class="asset-list" id="assetList"></div>
+          </section>
+        </section>
+
+        <section class="page" id="page-mine">
+          <header class="topbar">
+            <div>
+              <span class="kicker">我的</span>
+              <h1>个人训练资产</h1>
+            </div>
+          </header>
+
+          <div class="profile-card">
+            <div class="row">
+              <div class="row" style="justify-content: flex-start">
+                <div class="avatar">即</div>
+                <div>
+                  <h2>即兴主理人</h2>
+                  <p class="muted">个人空间 · 轻量训练记录</p>
+                </div>
+              </div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat">
+                <strong id="statAssets">12</strong>
+                <span class="tiny">素材</span>
+              </div>
+              <div class="stat">
+                <strong id="statPending">3</strong>
+                <span class="tiny">待整理</span>
+              </div>
+              <div class="stat">
+                <strong id="statFocus">角色</strong>
+                <span class="tiny">能力焦点</span>
+              </div>
+            </div>
+            <button class="map-teaser" id="openMap">
+              <div class="row">
+                <div>
+                  <h3>训练地图</h3>
+                  <p class="muted">查看能力线、专项路线和下一次练习。</p>
+                </div>
+                <span class="badge format">查看</span>
+              </div>
+              <div class="map-bars">
+                <div class="bar"><span style="width: 78%"></span></div>
+                <div class="bar"><span style="width: 52%"></span></div>
+                <div class="bar"><span style="width: 64%"></span></div>
+              </div>
+            </button>
+          </div>
+
+          <section class="section">
+            <div class="section-row">
+              <div>
+                <span class="kicker">练习记录</span>
+                <h2>最近复盘</h2>
+              </div>
+            </div>
+            <div class="history-list" id="practiceHistory"></div>
+          </section>
+        </section>
+
+        <button class="float-action" id="drawButton">抽一张练习</button>
+
+        <nav class="tabbar" aria-label="主导航">
+          <button class="active" data-page="record"><b>●</b>记录</button>
+          <button data-page="assets"><b>◇</b>素材</button>
+          <button data-page="mine"><b>○</b>我的</button>
+        </nav>
+
+        <div class="mask" id="mask"></div>
+
+        <section class="sheet" id="captureSheet" aria-label="快速记录">
+          <div class="sheet-head">
+            <div>
+              <span class="kicker">快速记录</span>
+              <h2>先留下来</h2>
+            </div>
+            <button class="close-button" data-close="captureSheet">×</button>
+          </div>
+          <div class="sheet-body">
+            <div class="capture-mode">
+              <button class="active" data-mode="quick">一句话先存</button>
+              <button data-mode="typed">先选类型</button>
+            </div>
+
+            <div class="field">
+              <label for="captureText">内容</label>
+              <textarea id="captureText" placeholder="例如：招聘医生，一边戴听诊器一边说“下一位，把紧张放轻一点”。"></textarea>
+            </div>
+
+            <div class="field">
+              <label>训练能力（可选）</label>
+              <div class="quick-type-row" id="captureAbilities"></div>
+            </div>
+
+            <div class="type-fields" id="typedFields">
+              <div class="field">
+                <label>类型</label>
+                <div class="quick-type-row" id="captureTypes"></div>
+              </div>
+              <div class="field">
+                <label for="captureCue">可上台使用的提示</label>
+                <input id="captureCue" placeholder="动作 / 台词 / 识别点，先写一个就好" />
+              </div>
+            </div>
+
+            <button class="primary-button sheet-action" id="saveCapture">保存到待整理</button>
+          </div>
+        </section>
+
+        <section class="sheet" id="drawSheet" aria-label="抽卡结果">
+          <div class="sheet-head">
+            <div>
+              <span class="kicker">抽一张练习</span>
+              <h2>现在练这个</h2>
+            </div>
+            <button class="close-button" data-close="drawSheet">×</button>
+          </div>
+          <div class="sheet-body">
+            <div class="draw-result" id="drawResult"></div>
+            <button class="secondary-button sheet-action" id="drawAgain">再抽一张</button>
+          </div>
+        </section>
+
+        <section class="sheet full" id="mapSheet" aria-label="训练地图">
+          <div class="sheet-head">
+            <div>
+              <span class="kicker">训练地图</span>
+              <h2>能力线全貌</h2>
+            </div>
+            <button class="close-button" data-close="mapSheet">×</button>
+          </div>
+          <div class="sheet-body">
+            <div class="map-list" id="mapList"></div>
+          </div>
+        </section>
+
+        <section class="sheet full" id="abilityDetailSheet" aria-label="能力详情">
+          <div class="sheet-head">
+            <div>
+              <span class="kicker" id="abilityDetailKicker">能力详情</span>
+              <h2 id="abilityDetailTitle">能力线</h2>
+            </div>
+            <button class="close-button" data-close="abilityDetailSheet">×</button>
+          </div>
+          <div class="sheet-body" id="abilityDetailBody"></div>
+        </section>
+
+        <section class="sheet full" id="assessmentSheet" aria-label="轻测一下">
+          <div class="sheet-head">
+            <div>
+              <span class="kicker">轻测一下</span>
+              <h2>8 维能力自检</h2>
+            </div>
+            <button class="close-button" data-close="assessmentSheet">×</button>
+          </div>
+          <div class="sheet-body">
+            <p class="muted">不是正式测评，只帮助你快速判断这周该练什么。</p>
+            <div class="assessment-list" id="assessmentList" style="margin-top: 14px"></div>
+          </div>
+        </section>
+
+        <div class="toast" id="toast">已保存</div>
+      </div>
+    </main>
+
+    <script>
+      const abilities = [
+        { id: "spontaneity", name: "自发性", icon: "⚡", desc: "绕过内心评判者，先行动再发现。", progress: 76 },
+        { id: "yesand", name: "Yes And", icon: "＋", desc: "接纳伙伴给出的 offer，并继续添加。", progress: 82 },
+        { id: "listening", name: "聆听", icon: "耳", desc: "听见词、情绪、身体和意图。", progress: 64 },
+        { id: "character", name: "角色", icon: "角", desc: "用身体、声音、节奏快速建立人物。", progress: 48 },
+        { id: "emotion", name: "情绪", icon: "情", desc: "让情绪驱动场景，并能细腻转换。", progress: 54 },
+        { id: "space", name: "空间", icon: "空", desc: "用身体创造物件、地点和环境。", progress: 42 },
+        { id: "story", name: "叙事", icon: "事", desc: "建立 CROW，推进故事和回收伏笔。", progress: 58 },
+        { id: "failure", name: "失败复原", icon: "转", desc: "把错误变成礼物，快速继续。", progress: 70 },
+        { id: "status", name: "地位", icon: "位", desc: "用权力关系制造张力和变化。", progress: 46 },
+        { id: "music", name: "音乐/类型", icon: "乐", desc: "用曲风、类型和身体质感拓展表达。", progress: 34 },
+        { id: "longform", name: "长篇格式", icon: "长", desc: "opening、callback、tag out、结构回收。", progress: 39 },
+        { id: "hosting", name: "主持带领", icon: "主", desc: "解释规则、控场、串场和收集提示词。", progress: 62 }
+      ]
+
+      const trainingRoutes = {
+        spontaneity: { daily: "5 分钟自由联想：从眼前一个物品开始，不停说或写，不修改。", route: ["快速联想圈", "一句话开场", "新选择", "倒计时场景"], review: "今天哪一个选择是在大脑准备好之前发生的？" },
+        yesand: { daily: "找一个普通提议，用“好，而且……”连续接 5 次。", route: ["Yes And 接龙", "礼物传递", "否定对比", "超 YES"], review: "哪一次添加真的让伙伴更容易继续？" },
+        listening: { daily: "复述一个朋友刚说的话，先复述事实，再复述情绪。", route: ["Zip Zap Zop", "团体计数", "一词一句故事", "镜像"], review: "今天你听见了哪个非语言 offer？" },
+        character: { daily: "观察一个路人 30 秒，用三个身体词描述，再走成这个人。", route: ["名字+动作", "身体中心漫步", "角色旋转门", "角色热椅"], review: "角色是从身体、声音还是欲望里长出来的？" },
+        emotion: { daily: "随机播放一首歌，让身体从一种情绪渐变到另一种情绪。", route: ["能量传递", "情绪方格", "情绪传送带", "情绪过山车"], review: "情绪有没有推动行动，而不只是表情？" },
+        space: { daily: "无实物做一件小事：开门、倒水、刷牙，保持物件位置不变。", route: ["镜像", "我是树", "礼物传递", "道具袋"], review: "观众能否看见你创造的物件和空间？" },
+        story: { daily: "给一个日常物品编 3 句故事：过去、现在、接下来。", route: ["CROW 两人场景", "三幕人生", "画外音", "迷你 Harold"], review: "场景里的角色、关系、目标、地点是否够清楚？" },
+        failure: { daily: "故意说错一个词，然后把它合理化成新方向。", route: ["庆祝错误", "最差主意", "新选择", "观众干预场景"], review: "哪一个错误后来反而成了礼物？" },
+        status: { daily: "用 1-10 的地位走路各 10 秒，观察眼神和重心变化。", route: ["地位数字", "地位扑克牌", "地位翻转", "隐藏地位"], review: "地位变化有没有改变关系，而不是只改变姿势？" },
+        music: { daily: "用一种曲风唱一句普通台词，记录身体的第一反应。", route: ["音乐情绪反应", "即兴副歌", "类型开场", "即兴歌曲"], review: "观众能否在 10 秒内识别曲风或类型？" },
+        longform: { daily: "从一个词做 30 秒联想，挑出 3 个可回收主题。", route: ["Opening 联想", "三拍升番", "迷你 Harold", "La Ronde"], review: "有没有回收前面已经出现过的主题或角色？" },
+        hosting: { daily: "用 30 秒解释一个游戏：名称、看点、观众要做什么。", route: ["规则解释", "观众提示词", "自然串场", "演出能量曲线"], review: "你的主持有没有帮助演员和观众都更轻松？" }
+      }
+
+      const dailyPractices = [
+        "路人观察：30 秒观察，3 个词建立角色。",
+        "声音日记：换一种音高、语速或音色读一段文字。",
+        "自由联想：5 分钟不停笔，不修改。",
+        "音乐身体反应：让陌生音乐带动身体，不编舞。",
+        "无实物动作：固定一个隐形物件的位置并重复使用。"
+      ]
+
+      const typeFilters = ["全部", "游戏", "角色", "才艺", "格式", "主理"]
+      const captureTypes = ["灵感", "游戏", "角色", "才艺", "格式", "主理"]
+      const assessmentIds = ["spontaneity", "yesand", "listening", "character", "emotion", "space", "story", "failure"]
+      const weeklyFocusId = "character"
+
+      const assets = [
+        { type: "游戏", title: "Yes And 接龙", desc: "两人轮流用“好，而且……”推进对话，体验接纳的力量。", abilities: ["yesand", "spontaneity"], cues: ["人数：2 人以上", "玩法：每句先接纳，再添加一个具体信息", "带领：先慢，让添加真的能被用上"], nextPractice: "下一次把主题换成“最糟糕的生日派对”。", badge: "game" },
+        { type: "游戏", title: "一句话专家", desc: "每个人只能用一句话建立专家感，适合练状态和关系。", abilities: ["status", "character", "story"], cues: ["人数：3-6 人", "玩法：观众给领域，演员只用一句话回答", "带领：提醒大家少解释，多用确定感"], nextPractice: "给每个专家一个秘密地位数字。", badge: "game" },
+        { type: "角色", title: "经典招聘动作：侦探", desc: "观众要在 15 秒内认出职业或类型角色。", abilities: ["character", "space", "status"], cues: ["动作：蹲下看地面，捏起不存在的线索", "台词：“这里有人把真相踩得太平了。”", "神态/声音：慢半拍，眼神扫全场"], nextPractice: "用地位 2 和地位 8 各演一次同一个侦探。", badge: "role" },
+        { type: "角色", title: "厨师的 10 秒识别包", desc: "身体节奏偏快，手上永远在处理食材。", abilities: ["character", "space"], cues: ["动作：切、撒、闻、退半步看盘", "台词：“火候不是时间，是脾气。”", "神态/声音：热情但不看人，只看菜"], nextPractice: "把厨师放进一个亲子关系场景里。", badge: "role" },
+        { type: "才艺", title: "音乐剧开场三连", desc: "用短动作和两句词让观众识别音乐剧质感。", abilities: ["music", "emotion", "character"], cues: ["动作：右手开窗、左手扶心、向前一步定格", "词句：“今天的街灯，终于懂我名字。”", "识别点：尾音拉长，队形打开"], nextPractice: "同一句词分别唱成音乐剧、恐怖片和武侠。", badge: "talent" },
+        { type: "才艺", title: "情绪快速转换", desc: "同一段台词在喜悦、恐惧、愤怒、压抑之间切换。", abilities: ["emotion", "spontaneity"], cues: ["动作：先换呼吸，再换表情", "台词：我终于找到你了", "识别点：情绪改变行动目标"], nextPractice: "每 15 秒切一次情绪，但保持同一个场景目标。", badge: "talent" },
+        { type: "格式", title: "Armando 结构提醒", desc: "真实故事开场，后续场景从关键词、关系或情绪发散。", abilities: ["longform", "story", "listening"], cues: ["步骤：故事 -> 第一组场景 -> 回收主题", "适用：团队已有基础场景能力", "提醒：不要复述故事，要借力跳走"], nextPractice: "听一个 1 分钟故事，只提取 3 个意象。", badge: "format" },
+        { type: "格式", title: "迷你 Harold", desc: "压缩版长即兴结构，适合团队体验完整 longform。", abilities: ["longform", "story", "yesand"], cues: ["Opening：30 秒团体联想", "First Beat：3 个 90 秒场景", "回收：让第一轮场景变形回来"], nextPractice: "用一个词“雨”做 12 分钟迷你 Harold。", badge: "format" },
+        { type: "游戏", title: "情绪遥控器", desc: "练情绪切换和团队接收信号。", abilities: ["emotion", "listening"], cues: ["人数：2-5 人", "玩法：主持切换情绪，场景继续推进", "带领：先慢后快，避免只表演情绪标签"], nextPractice: "下一轮不喊情绪名，只用音乐提示切换。", badge: "game" },
+        { type: "游戏", title: "隐形厨房", desc: "在固定空间里做饭、避让、拿取道具，训练无实物一致性。", abilities: ["space", "listening"], cues: ["空间：灶台、冰箱、餐桌位置固定", "动作：每个物件被拿起后位置要持续", "观察：伙伴碰过的东西要被承认"], nextPractice: "把厨房换成凌晨便利店。", badge: "game" },
+        { type: "主理", title: "30 秒解释游戏规则", desc: "主持人先说游戏名，再说看点，再说观众需要给什么。", abilities: ["hosting", "listening"], cues: ["结构：名称 -> 看点 -> 观众任务", "提醒：规则说明不要比游戏本身更长", "救场：解释不清就示范一次"], nextPractice: "选一个常玩游戏，录一版 30 秒规则说明。", badge: "format" },
+        { type: "主理", title: "观众提示词提问法", desc: "把“给我一个词”变成更好用的场景燃料。", abilities: ["hosting", "story"], cues: ["地点：每天会去但不是家的地方", "关系：不一定好的关系", "物件：一件让人不安的小东西"], nextPractice: "为一个游戏写 3 个具体提问句。", badge: "format" },
+        { type: "主理", title: "60 分钟演出能量曲线", desc: "开场低门槛，中段角色/叙事，高潮互动，最后温暖收束。", abilities: ["hosting", "longform"], cues: ["暖场：5 分钟", "中段：角色/叙事类游戏", "收束：团体游戏 + 谢幕"], nextPractice: "把下一场排练的游戏按能量曲线排一次。", badge: "format" }
+      ]
+
+      const pending = [
+        { type: "灵感", title: "把迟到理由做成一组角色开场", desc: "每个人用一个职业解释迟到。", abilities: ["character", "spontaneity"], badge: "" },
+        { type: "角色", title: "招聘动作：牙医", desc: "灯光很亮，声音特别温柔但可怕。", abilities: ["character", "status"], badge: "role" },
+        { type: "才艺", title: "80 年代舞蹈识别点", desc: "肩膀、手腕、侧身定格。", abilities: ["music"], badge: "talent" }
+      ]
+
+      const practiceHistory = [
+        { ability: "角色", title: "角色识别包练习", desc: "招聘动作：医生、厨师、侦探，各 15 秒。", review: "侦探最清楚，牙医还缺一个声音钩子。" },
+        { ability: "长篇", title: "Opening 复盘", desc: "保留观众词联想，减少解释性铺垫。", review: "下一次把三个意象回收到第二拍。" },
+        { ability: "主持", title: "规则说明练习", desc: "用 30 秒解释一词一句故事。", review: "观众任务说清楚了，看点还可以更短。" }
+      ]
+
+      const pages = { record: document.getElementById("page-record"), assets: document.getElementById("page-assets"), mine: document.getElementById("page-mine") }
+      const tabButtons = Array.from(document.querySelectorAll(".tabbar button"))
+      const mask = document.getElementById("mask")
+      const toastEl = document.getElementById("toast")
+      const drawButton = document.getElementById("drawButton")
+      let currentCaptureMode = "quick"
+      let currentCaptureType = "灵感"
+      let currentCaptureAbility = ""
+      let currentAbilityFilter = "全部"
+      let toastTimer = null
+
+      function getAbility(id) { return abilities.find((ability) => ability.id === id) }
+      function abilityName(id) { return getAbility(id)?.name || id }
+      function typeSymbol(type) { return { 游戏: "游", 角色: "角", 才艺: "艺", 格式: "格", 灵感: "灵", 主理: "主" }[type] || "记" }
+      function badgeClass(type) { return { 游戏: "game", 角色: "role", 才艺: "talent", 格式: "format", 主理: "format" }[type] || "" }
+
+      function showToast(message) {
+        if (toastTimer) clearTimeout(toastTimer)
+        toastEl.textContent = message
+        toastEl.classList.remove("active")
+        void toastEl.offsetWidth
+        toastEl.classList.add("active")
+        toastTimer = setTimeout(() => toastEl.classList.remove("active"), 1700)
+      }
+
+      function openSheet(id) {
+        mask.classList.add("active")
+        document.getElementById(id).classList.add("active")
+      }
+
+      function closeSheets() {
+        mask.classList.remove("active")
+        document.querySelectorAll(".sheet.active").forEach((sheet) => sheet.classList.remove("active"))
+      }
+
+      function switchPage(pageName) {
+        Object.entries(pages).forEach(([name, el]) => el.classList.toggle("active", name === pageName))
+        tabButtons.forEach((button) => button.classList.toggle("active", button.dataset.page === pageName))
+        drawButton.style.display = pageName === "assets" ? "block" : "none"
+      }
+
+      function renderWeeklyFocus() {
+        const ability = getAbility(weeklyFocusId)
+        const route = trainingRoutes[weeklyFocusId]
+        document.getElementById("weeklyFocusTitle").textContent = ability.name
+        document.getElementById("statFocus").textContent = ability.name.slice(0, 2)
+        document.getElementById("weeklyFocusCues").innerHTML = `
+          <div class="cue"><strong>10 分钟：</strong>${route.daily}</div>
+          <div class="cue"><strong>下一步：</strong>${route.route.slice(0, 2).join(" -> ")}</div>
+        `
+      }
+
+      function renderPending() {
+        const list = document.getElementById("pendingList")
+        list.innerHTML = pending.map((item) => `
+          <article class="pending-item">
+            <div class="type-dot ${badgeClass(item.type)}">${typeSymbol(item.type)}</div>
+            <div>
+              <strong>${item.title}</strong>
+              <p class="muted">${item.desc}</p>
+              <div class="tag-row">${(item.abilities || []).map((id) => `<span class="ability-pill">${abilityName(id)}</span>`).join("")}</div>
+              <span class="tiny">${item.type} · 待整理</span>
+            </div>
+          </article>
+        `).join("")
+        document.getElementById("statPending").textContent = String(pending.length)
+      }
+
+      function renderTypeFilter() {
+        document.getElementById("assetFilter").innerHTML = typeFilters.map((type) => `
+          <button class="${type === "全部" ? "active" : ""}" data-filter="${type}">${type}</button>
+        `).join("")
+      }
+
+      function renderAbilityFilter() {
+        document.getElementById("abilityFilter").innerHTML = `
+          <button class="active" data-ability-filter="全部">全部能力</button>
+          ${abilities.map((ability) => `<button data-ability-filter="${ability.id}">${ability.name}</button>`).join("")}
+        `
+      }
+
+      function renderAbilityChips() {
+        document.getElementById("captureTypes").innerHTML = captureTypes.map((type) => `
+          <button class="${type === currentCaptureType ? "active" : ""}" data-type="${type}">${type}</button>
+        `).join("")
+        document.getElementById("captureAbilities").innerHTML = `
+          <button class="${currentCaptureAbility === "" ? "active" : ""}" data-capture-ability="">不标记</button>
+          ${abilities.slice(0, 11).map((ability) => `<button class="${currentCaptureAbility === ability.id ? "active" : ""}" data-capture-ability="${ability.id}">${ability.name}</button>`).join("")}
+        `
+      }
+
+      function filterAssets() {
+        const keyword = document.getElementById("assetSearch").value.trim().toLowerCase()
+        const typeFilter = document.querySelector("#assetFilter button.active").dataset.filter
+        return assets.filter((asset) => {
+          const typeMatch = typeFilter === "全部" || asset.type === typeFilter
+          const abilityMatch = currentAbilityFilter === "全部" || asset.abilities.includes(currentAbilityFilter)
+          const text = `${asset.title} ${asset.desc} ${asset.cues.join(" ")} ${asset.abilities.map(abilityName).join(" ")}`.toLowerCase()
+          return typeMatch && abilityMatch && (!keyword || text.includes(keyword))
+        })
+      }
+
+      function renderAssets() {
+        const visible = filterAssets()
+        document.getElementById("assetList").innerHTML = visible.map((asset) => `
+          <article class="asset-card">
+            <div class="asset-card-head">
+              <div>
+                <span class="kicker">${asset.type}</span>
+                <h3>${asset.title}</h3>
+              </div>
+              <span class="badge ${asset.badge}">${asset.type}</span>
+            </div>
+            <p class="muted">${asset.desc}</p>
+            <div class="tag-row">${asset.abilities.map((id) => `<span class="ability-pill">${abilityName(id)}</span>`).join("")}</div>
+            <div class="cue-grid">
+              ${asset.cues.map((cue) => {
+                const parts = cue.split("：")
+                return `<div class="cue"><strong>${parts[0]}：</strong>${parts.slice(1).join("：")}</div>`
+              }).join("")}
+            </div>
+            <div class="next-practice"><strong>下次练：</strong>${asset.nextPractice}</div>
+          </article>
+        `).join("") || `
+          <div class="mini-card">
+            <strong>没有匹配素材</strong>
+            <p class="muted">换个关键词，或先记录一条待整理素材。</p>
+          </div>
+        `
+        document.getElementById("statAssets").textContent = String(assets.length)
+      }
+
+      function renderMap() {
+        document.getElementById("mapList").innerHTML = abilities.map((ability) => `
+          <button class="map-item" data-ability-detail="${ability.id}">
+            <div class="row">
+              <div>
+                <h3>${ability.icon} ${ability.name}</h3>
+                <p class="muted">${ability.desc}</p>
+              </div>
+              <div>
+                <span class="tiny">${ability.progress}%</span>
+                <div class="progress"><span style="width: ${ability.progress}%"></span></div>
+              </div>
+            </div>
+          </button>
+        `).join("")
+      }
+
+      function renderMapDetail(abilityId) {
+        const ability = getAbility(abilityId)
+        const route = trainingRoutes[abilityId]
+        const relatedAssets = assets.filter((asset) => asset.abilities.includes(abilityId)).slice(0, 3)
+        document.getElementById("abilityDetailKicker").textContent = "训练地图"
+        document.getElementById("abilityDetailTitle").textContent = `${ability.icon} ${ability.name}`
+        document.getElementById("abilityDetailBody").innerHTML = `
+          <div class="detail-block-list">
+            <div class="detail-block"><strong>能力说明：</strong>${ability.desc}</div>
+            <div class="detail-block"><strong>今日 10 分钟：</strong>${route.daily}</div>
+            <div class="detail-block"><strong>推荐顺序：</strong>${route.route.join(" -> ")}</div>
+            <div class="detail-block"><strong>复盘问题：</strong>${route.review}</div>
+          </div>
+          <section class="section">
+            <div class="section-row"><div><span class="kicker">相关素材</span><h2>可以直接拿来练</h2></div></div>
+            <div class="asset-list">
+              ${relatedAssets.map((asset) => `
+                <article class="asset-card">
+                  <div class="asset-card-head"><h3>${asset.title}</h3><span class="badge ${asset.badge}">${asset.type}</span></div>
+                  <p class="muted">${asset.desc}</p>
+                  <div class="next-practice"><strong>下次练：</strong>${asset.nextPractice}</div>
+                </article>
+              `).join("")}
+            </div>
+          </section>
+          <section class="section">
+            <div class="section-row"><div><span class="kicker">单人练习</span><h2>不用等排练</h2></div></div>
+            <div class="detail-block-list">
+              ${dailyPractices.slice(0, 3).map((item) => `<div class="detail-block">${item}</div>`).join("")}
+            </div>
+          </section>
+        `
+        openSheet("abilityDetailSheet")
+      }
+
+      function renderAssessmentLite() {
+        document.getElementById("assessmentList").innerHTML = assessmentIds.map((id) => {
+          const ability = getAbility(id)
+          const level = ability.progress >= 72 ? "强项" : ability.progress >= 55 ? "发展中" : "本周可练"
+          return `
+            <article class="assessment-card">
+              <div class="row">
+                <div><h3>${ability.icon} ${ability.name}</h3><p class="muted">${ability.desc}</p></div>
+                <span class="badge ${ability.progress >= 72 ? "game" : ability.progress >= 55 ? "format" : "role"}">${level}</span>
+              </div>
+              <div class="score-row">
+                <span class="score-name">自检</span>
+                <div class="bar"><span style="width: ${ability.progress}%"></span></div>
+                <span class="tiny">${ability.progress}</span>
+              </div>
+            </article>
+          `
+        }).join("")
+      }
+
+      function renderPracticeHistory() {
+        document.getElementById("practiceHistory").innerHTML = practiceHistory.map((item) => `
+          <article class="history-item">
+            <span class="badge">${item.ability}</span>
+            <h3 style="margin-top: 8px">${item.title}</h3>
+            <p class="muted">${item.desc}</p>
+            <div class="next-practice"><strong>复盘：</strong>${item.review}</div>
+          </article>
+        `).join("")
+      }
+
+      function setCaptureMode(mode) {
+        currentCaptureMode = mode
+        document.querySelectorAll(".capture-mode button").forEach((button) => button.classList.toggle("active", button.dataset.mode === mode))
+        document.getElementById("typedFields").classList.toggle("active", mode === "typed")
+      }
+
+      function presetCapture(type) {
+        setCaptureMode("typed")
+        currentCaptureType = type
+        renderAbilityChips()
+        document.getElementById("captureText").focus()
+        openSheet("captureSheet")
+      }
+
+      function drawAsset() {
+        const pool = currentAbilityFilter === "全部" ? assets : assets.filter((asset) => asset.abilities.includes(currentAbilityFilter))
+        const asset = pool[Math.floor(Math.random() * pool.length)] || assets[0]
+        const abilityLabel = currentAbilityFilter === "全部" ? "全部能力" : abilityName(currentAbilityFilter)
+        document.getElementById("drawResult").innerHTML = `
+          <span class="badge ${asset.badge}">${asset.type}</span>
+          <h2 style="margin-top: 10px">${asset.title}</h2>
+          <p class="muted" style="margin-top: 6px">${asset.desc}</p>
+          <div class="tag-row">${asset.abilities.map((id) => `<span class="ability-pill">${abilityName(id)}</span>`).join("")}</div>
+          <div class="cue-grid">${asset.cues.slice(0, 2).map((cue) => `<div class="cue">${cue}</div>`).join("")}</div>
+          <div class="next-practice"><strong>${abilityLabel} · 下次练：</strong>${asset.nextPractice}</div>
+        `
+      }
+
+      tabButtons.forEach((button) => button.addEventListener("click", () => switchPage(button.dataset.page)))
+      document.getElementById("openCapture").addEventListener("click", () => openSheet("captureSheet"))
+      document.getElementById("openCaptureText").addEventListener("click", () => openSheet("captureSheet"))
+      document.getElementById("openPendingCapture").addEventListener("click", () => openSheet("captureSheet"))
+      document.getElementById("continueFocus").addEventListener("click", () => renderMapDetail(weeklyFocusId))
+      document.getElementById("openAssessment").addEventListener("click", () => openSheet("assessmentSheet"))
+      document.querySelectorAll("[data-capture-type]").forEach((button) => button.addEventListener("click", () => presetCapture(button.dataset.captureType)))
+      document.querySelectorAll(".capture-mode button").forEach((button) => button.addEventListener("click", () => setCaptureMode(button.dataset.mode)))
+
+      document.getElementById("captureTypes").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-type]")
+        if (!button) return
+        currentCaptureType = button.dataset.type
+        renderAbilityChips()
+      })
+
+      document.getElementById("captureAbilities").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-capture-ability]")
+        if (!button) return
+        currentCaptureAbility = button.dataset.captureAbility
+        renderAbilityChips()
+      })
+
+      document.getElementById("saveCapture").addEventListener("click", () => {
+        const text = document.getElementById("captureText").value.trim()
+        const cue = document.getElementById("captureCue").value.trim()
+        const type = currentCaptureMode === "typed" ? currentCaptureType : "灵感"
+        pending.unshift({
+          type,
+          title: text ? text.slice(0, 20) : `${type}草稿`,
+          desc: cue || text || "先保存，稍后再整理成可复用卡片。",
+          abilities: currentCaptureAbility ? [currentCaptureAbility] : [],
+          badge: badgeClass(type)
+        })
+        document.getElementById("captureText").value = ""
+        document.getElementById("captureCue").value = ""
+        currentCaptureAbility = ""
+        renderAbilityChips()
+        renderPending()
+        closeSheets()
+        switchPage("record")
+        showToast("已保存到待整理")
+      })
+
+      document.getElementById("assetSearch").addEventListener("input", renderAssets)
+      document.getElementById("assetFilter").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-filter]")
+        if (!button) return
+        document.querySelectorAll("#assetFilter button").forEach((item) => item.classList.remove("active"))
+        button.classList.add("active")
+        renderAssets()
+      })
+
+      document.getElementById("abilityFilter").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-ability-filter]")
+        if (!button) return
+        currentAbilityFilter = button.dataset.abilityFilter
+        document.querySelectorAll("#abilityFilter button").forEach((item) => item.classList.remove("active"))
+        button.classList.add("active")
+        renderAssets()
+      })
+
+      document.getElementById("mapList").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-ability-detail]")
+        if (!button) return
+        renderMapDetail(button.dataset.abilityDetail)
+      })
+
+      drawButton.addEventListener("click", () => { drawAsset(); openSheet("drawSheet") })
+      document.getElementById("drawAgain").addEventListener("click", drawAsset)
+      document.getElementById("openMap").addEventListener("click", () => openSheet("mapSheet"))
+      document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", closeSheets))
+      mask.addEventListener("click", closeSheets)
+
+      renderWeeklyFocus()
+      renderTypeFilter()
+      renderAbilityFilter()
+      renderAbilityChips()
+      renderPending()
+      renderAssets()
+      renderMap()
+      renderPracticeHistory()
+      renderAssessmentLite()
+      switchPage("record")
+    </script>
+  </body>
+</html>

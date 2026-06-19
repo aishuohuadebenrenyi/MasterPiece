@@ -46,13 +46,13 @@
   margin-top: 18rpx;
 }
 
-.detail-game {
+.detail-material {
   padding: 28rpx;
   border-radius: 28rpx;
   background: var(--improv-card-light);
 }
 
-.detail-game-head {
+.detail-material-head {
   display: flex;
   align-items: flex-start;
   gap: 18rpx;
@@ -70,7 +70,7 @@
   font-weight: 900;
 }
 
-.detail-game-title {
+.detail-material-title {
   color: var(--improv-text);
   font-size: 28rpx;
   font-weight: 900;

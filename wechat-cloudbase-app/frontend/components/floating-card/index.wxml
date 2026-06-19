@@ -4,7 +4,7 @@
     <view class="float-card card-surface-container" catchtap="noop" bindtouchstart="handleTouchStart" bindtouchend="handleTouchEnd">
       <view class="float-head">
         <text class="float-title">{{title}}</text>
-        <button class="icon-close-btn" catchtap="close">✕</button>
+        <button class="icon-text icon-close icon-close-btn" catchtap="close">✕</button>
       </view>
       <view class="float-scroll" bindtouchstart="handleTouchStart" bindtouchend="handleTouchEnd">
         <view class="float-scroll-content">

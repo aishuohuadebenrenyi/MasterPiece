@@ -1,5 +1,5 @@
 <view class="subpage-header safe-right {{customClass}}">
-  <view class="back" aria-label="返回" bindtap="onBack">←</view>
+  <view class="icon-text icon-back back" aria-label="返回" bindtap="onBack">←</view>
   <text wx:if="{{kicker}}" class="kicker">{{kicker}}</text>
   <view wx:if="{{title}}" class="page-title">{{title}}</view>
   <slot></slot>

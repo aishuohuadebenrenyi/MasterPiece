@@ -7,6 +7,7 @@ Component({
     kickerTone: { type: String, value: 'blue' },
     title: { type: String, value: '' },
     desc: { type: String, value: '' },
+    tone: { type: String, value: 'empty' },
     primaryText: { type: String, value: '' },
     secondaryText: { type: String, value: '' },
     customClass: { type: String, value: '' }

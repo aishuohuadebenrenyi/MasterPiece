@@ -10,9 +10,9 @@
     "source": "recommended",
     "goals": ["身体到场", "关系建立"],
     "plan": [
-      { "gameId": "name-chain", "status": "已完成", "keep": "开场进入很快", "try": "" },
-      { "gameId": "space-walk", "status": "进行中", "keep": "", "try": "口令少一点" },
-      { "gameId": "status-swap", "status": "未开始", "keep": "", "try": "" }
+      { "materialId": "name-chain", "status": "已完成", "keep": "开场进入很快", "try": "" },
+      { "materialId": "space-walk", "status": "进行中", "keep": "", "try": "口令少一点" },
+      { "materialId": "status-swap", "status": "未开始", "keep": "", "try": "" }
     ],
     "meta": ["8 人", "新手友好", "进行中"],
     "ownerOpenId": "__REPLACE_WITH_OPENID__",

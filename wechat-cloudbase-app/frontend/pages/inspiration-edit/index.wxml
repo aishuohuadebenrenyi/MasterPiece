@@ -23,7 +23,7 @@
     <view class="form-field-stack">
       <form-field label="关联素材">
         <view class="field-picker">
-          <input class="app-input" value="{{linkedGame}}" placeholder="选择关联素材" disabled />
+          <input class="app-input" value="{{linkedMaterial}}" placeholder="选择关联素材" disabled />
           <button class="small-btn" data-kind="material" bindtap="openLink">选择</button>
         </view>
       </form-field>
@@ -58,7 +58,7 @@
     />
   </bottom-sheet>
 
-  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" bind:close="closeSheet">
+  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="insight-list">
       <view class="card insight-card">
         <text class="pill orange">{{arrangementLabel}}</text>

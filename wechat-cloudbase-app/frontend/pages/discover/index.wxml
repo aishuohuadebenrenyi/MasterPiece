@@ -1,14 +1,15 @@
-<scroll-view scroll-y="{{!modalOpen}}" enable-flex="true" enhanced show-scrollbar="{{false}}" class="page discover {{modalOpen ? 'modal-open' : ''}} {{filterVisible ? 'filter-open' : ''}} {{showEmptyState ? 'empty-mode' : ''}} {{themeClass}}" style="{{layoutStyle}}">
+<scroll-view scroll-y="{{!modalOpen}}" enable-flex="true" enhanced show-scrollbar="{{false}}" bindscroll="onScroll" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="page discover {{modalOpen ? 'modal-open' : ''}} {{filterVisible ? 'filter-open' : ''}} {{showEmptyState ? 'empty-mode' : ''}} {{themeClass}}" style="{{layoutStyle}}">
   <view class="discover-content">
     <block wx:if="{{showLoadErrorState}}">
       <view class="empty-state-shell">
         <empty-state-panel
           customClass="discover-hero-empty discover-error-empty"
+          tone="error"
           title="同步失败"
           desc="{{loadErrorText}}"
           primaryText="重新同步"
           secondaryText="先添加素材"
-          bind:primary="retryLoadGames"
+          bind:primary="retryLoadMaterials"
           bind:secondary="openAdd"
         />
       </view>
@@ -38,15 +39,15 @@
 
       <view wx:if="{{isCategoryDetail}}" class="category-toolbar">
         <view class="category-back" aria-label="返回分类" bindtap="backToCategoryGrid">←</view>
-        <button class="mini-action-btn filter-btn" bindtap="openFilter">筛选</button>
+        <button class="mini-action-btn neutral filter-btn" bindtap="openFilter">筛选</button>
       </view>
 
       <view wx:else class="section-row result-section-row">
         <text class="section-title">{{view === 'category' ? '素材类别' : discoverTitle}}</text>
         <view class="actions-row">
-          <button class="mini-action-btn share-btn" open-type="share">分享</button>
-          <button wx:if="{{view === 'all'}}" class="mini-action-btn add-btn" bindtap="openAdd">新建</button>
-          <button wx:if="{{view === 'all'}}" class="mini-action-btn filter-btn" bindtap="openFilter">筛选</button>
+          <button class="mini-action-btn neutral share-btn" open-type="share">分享</button>
+          <button wx:if="{{view === 'all'}}" class="mini-action-btn primary-lite add-btn" bindtap="openAdd">新建</button>
+          <button wx:if="{{view === 'all'}}" class="mini-action-btn neutral filter-btn" bindtap="openFilter">筛选</button>
         </view>
       </view>
 
@@ -90,7 +91,7 @@
                     <text wx:for="{{item.preview}}" wx:for-item="tag" wx:key="*this" class="path-summary-pill">{{tag}}</text>
                   </view>
                 </view>
-                <button class="small-btn path-card-toggle" data-key="{{item.key}}" catchtap="openPathSheet">查看</button>
+                <button class="small-btn button-tertiary path-card-toggle" data-key="{{item.key}}" catchtap="openPathSheet">查看</button>
               </view>
             </view>
           </view>
@@ -100,14 +101,15 @@
       <empty-state-panel
         wx:elif="{{showFilterNoMatchState}}"
         customClass="matchless-card"
+        tone="notice"
         title="当前条件下没有匹配素材"
         desc="可以放宽筛选条件，或者先从全部素材里继续浏览。"
         secondaryText="清空条件"
         bind:secondary="clearFilters"
       />
 
-      <view wx:else class="game-list">
-        <game-card wx:for="{{filteredMaterials}}" wx:key="id" game="{{item}}" saved="{{item.saved}}" bind:open="openMaterial" bind:save="toggleSave" />
+      <view wx:else class="material-list">
+        <material-card wx:for="{{filteredMaterials}}" wx:key="id" material="{{item}}" saved="{{item.saved}}" bind:open="openMaterial" bind:save="toggleSave" />
       </view>
 
       <button
@@ -118,7 +120,9 @@
         bindtouchstart="onFabTouchStart"
         catchtouchmove="onFabTouchMove"
         bindtouchend="onFabTouchEnd"
-      >抽</button>
+      >
+        <text class="icon-text icon-random fab-icon-text">🎲</text>
+      </button>
     </block>
   </view>
 
@@ -177,7 +181,7 @@
     </block>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{pathVisible}}" title="{{pathSheetTitle}}" maskVariant="medium" sheetClass="path-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{pathVisible}}" title="{{pathSheetTitle}}" maskVariant="medium" sheetClass="path-sheet task-sheet" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
     <block wx:if="{{activePath}}">
       <block wx:if="{{!pathEditMode}}">
         <view class="path-sheet-desc-wrap" wx:if="{{activePath.desc}}">
@@ -231,8 +235,8 @@
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{addVisible}}" title="添加素材" maskVariant="medium" sheetClass="add-sheet task-sheet" showActions="{{true}}" bind:close="closeSheet">
-    <game-form
+  <bottom-sheet visible="{{addVisible}}" title="添加素材" maskVariant="medium" sheetClass="add-sheet task-sheet" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
+    <material-form
       value="{{newMaterial}}"
       typeOptions="{{typeCategoryOptions}}"
       abilityOptions="{{abilityCategoryOptions}}"
@@ -243,7 +247,7 @@
       categorySuggestions="{{categorySuggestions}}"
       showMoreOptions="{{showMoreOptions}}"
       moreOptionsToggleText="{{moreOptionsToggleText}}"
-      bind:fieldchange="handleGameFormFieldChange"
+      bind:fieldchange="handleMaterialFormFieldChange"
       bind:selecttype="setNewMaterialType"
       bind:selectability="toggleNewMaterialAbility"
       bind:selectscene="toggleNewMaterialScene"
@@ -255,7 +259,7 @@
       bind:togglemore="toggleMoreOptions"
     />
     <view slot="actions" class="add-submit-wrap">
-      <button class="primary-btn add-submit-btn" bindtap="addGame">加入素材库</button>
+      <button class="primary-btn add-submit-btn" bindtap="addMaterial">加入素材库</button>
     </view>
   </bottom-sheet>
 

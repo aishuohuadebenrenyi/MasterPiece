@@ -33,7 +33,7 @@
     </view>
   </root-portal>
 
-  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" bind:close="closeSheet">
+  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="card insight-card">
       <text class="pill orange">带领提醒</text>
       <view class="section-title insight-title">{{methodTitle}}</view>

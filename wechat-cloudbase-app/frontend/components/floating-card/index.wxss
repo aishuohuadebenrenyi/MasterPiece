@@ -84,13 +84,12 @@ text {
   min-height: 64rpx;
   padding: 0;
   border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.72);
-  background: var(--improv-card-soft, rgba(255, 255, 255, 0.72));
-  color: #667289;
-  color: var(--improv-muted, #667289);
+  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   font-size: 24rpx;
   font-weight: 900;
-  box-shadow: 0 10rpx 22rpx var(--improv-shadow-soft-color, rgba(50, 68, 120, 0.08));
+  box-shadow: var(--improv-btn-tertiary-shadow, none);
 }
 
 .detail-nav-count {

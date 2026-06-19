@@ -7,13 +7,13 @@ const { DEFAULT_PAGE_LIMIT } = require('../../config/constants')
 
 function normalizePlan(plan = []) {
   const games = getState().materials || []
-  const gameTitleMap = games.reduce((map, game) => {
-    map[game.id] = game.title
+  const materialTitleMap = games.reduce((map, material) => {
+    map[material.id] = material.title
     return map
   }, {})
   return plan.map((item, index) => ({
     ...item,
-    title: gameTitleMap[item.materialId] || item.materialId || `素材 ${index + 1}`,
+    title: materialTitleMap[item.materialId] || item.materialId || `素材 ${index + 1}`,
     status: item.status || '未开始',
     keep: item.keep || '',
     try: item.try || ''
@@ -212,15 +212,14 @@ Page({
     try {
       const result = await deleteRehearsal(id)
       if (result.code === 0) {
-        this.setData({
-          records: this.data.records.filter(item => item.id !== id)
-        })
-        wx.showToast({ title: '已删除', icon: 'none' })
+        const records = this.data.records.filter(item => item.id !== id)
+        this.setData({ records })
+        toast('已删除')
       } else {
-        wx.showToast({ title: result.message || '删除失败', icon: 'none' })
+        toast(result.message || '删除失败')
       }
     } catch (err) {
-      wx.showToast({ title: '删除失败', icon: 'none' })
+      toast('删除失败')
     }
   }
 })

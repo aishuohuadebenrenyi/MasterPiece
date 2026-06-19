@@ -1,0 +1,108 @@
+<scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page detail {{themeClass}}" style="{{layoutStyle}}" wx:if="{{material}}">
+  <subpage-header customClass="detail-header-row" bind:back="back" />
+  <view class="card header">
+    <view class="card-action-group">
+      <button wx:if="{{canEditMaterial && !isEditMode}}" class="card-action-btn" bindtap="enterEditMode">编辑</button>
+      <button wx:if="{{isEditMode}}" class="card-action-btn" bindtap="cancelEdit">取消</button>
+      <button wx:if="{{!isEditMode}}" class="card-action-btn share-btn" open-type="share">分享</button>
+    </view>
+    <view class="detail-heading">
+      <text class="kicker">{{tagText}}</text>
+      <view class="detail-title">{{material.title}}</view>
+    </view>
+    <text wx:if="{{material.desc}}" class="muted">{{material.desc}}</text>
+    <view wx:if="{{displayMeta.length}}" class="meta-row"><text wx:for="{{displayMeta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
+  </view>
+
+  <block wx:if="{{!isEditMode}}">
+    <view class="card block">
+      <view class="block-title">训练步骤</view>
+      <view wx:for="{{material.steps}}" wx:key="*this" class="step">
+        <text>{{index + 1}}</text>
+        <text>{{item}}</text>
+      </view>
+    </view>
+
+    <view class="card block">
+      <view class="block-title">使用提示</view>
+      <text class="muted">{{material.tips}}</text>
+    </view>
+
+    <view class="card block" wx:if="{{material.variant || material.issue}}">
+      <view class="block-title">变体与注意点</view>
+      <text class="muted" wx:if="{{material.variant}}">{{material.variant}}</text>
+      <text class="muted issue" wx:if="{{material.issue}}">{{material.issue}}</text>
+    </view>
+
+    <view class="card block" wx:if="{{related}}">
+      <view class="row">
+        <view class="block-title">相关素材</view>
+        <button class="small-btn" bindtap="openRelated">去看看</button>
+      </view>
+      <text class="muted">{{related.title}}：{{related.desc}}</text>
+    </view>
+
+    <view class="history-section" wx:if="{{historyCards && historyCards.length > 0}}">
+      <view class="block-title" style="margin-bottom: 24rpx; padding: 0 8rpx;">历史复盘</view>
+      <view wx:for="{{historyCards}}" wx:key="id" class="card history-card">
+        <view class="row">
+          <view class="card-title">{{item.title}}</view>
+          <text class="muted">{{item.date}}</text>
+        </view>
+        <text class="muted">{{item.desc}}</text>
+        <view class="meta-row" wx:if="{{item.meta && item.meta.length}}"><text wx:for="{{item.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:else>
+      <view class="card block edit-form-block">
+        <material-form value="{{editMaterial}}" typeOptions="{{typeCategoryOptions}}" abilityOptions="{{abilityCategoryOptions}}" sceneOptions="{{sceneCategoryOptions}}" customCategoryVisible="{{customCategoryVisible}}" customCategoryInput="{{customCategoryInput}}" customCategoryFocus="{{customCategoryFocus}}" categorySuggestions="{{categorySuggestions}}" showMoreOptions="{{showMoreOptions}}" moreOptionsToggleText="{{moreOptionsToggleText}}" bind:fieldchange="handleMaterialFormFieldChange" bind:selecttype="setEditMaterialType" bind:selectability="toggleEditMaterialAbility" bind:selectscene="toggleEditMaterialScene" bind:togglecustomcategory="toggleCustomCategory" bind:customcategoryfocus="handleCustomCategoryFocus" bind:customcategoryblur="updateCustomCategory" bind:customcategoryconfirm="confirmCustomCategory" bind:selectsuggestion="selectCategorySuggestion" bind:togglemore="toggleMoreOptions" />
+      </view>
+  </block>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+
+  <root-portal>
+    <view class="fixed-actions edit-fixed-actions" wx:if="{{isEditMode}}">
+      <button class="button-danger-quiet delete-btn" bindtap="confirmDelete">删除素材</button>
+      <button class="primary-btn" bindtap="saveMaterial">保存修改</button>
+    </view>
+    <view class="fixed-actions" wx:elif="{{!isEditMode}}">
+      <block wx:if="{{!currentMaterialSession}}">
+        <button wx:if="{{!material.referenceOnly}}" class="small-btn" bindtap="togglePlayed">{{playedText}}</button>
+        <button class="small-btn save-toggle-btn {{saved ? 'save-toggle-active' : 'save-toggle-idle'}}" bindtap="toggleSaved">{{savedText}}</button>
+        <button wx:if="{{!material.referenceOnly}}" class="primary-btn" bindtap="startPractice">开始训练</button>
+        <button wx:else class="ghost-btn" disabled>路径只查看</button>
+      </block>
+      <block wx:else>
+        <button class="ghost-btn" bindtap="pausePractice" wx:if="{{currentMaterialSession.status === '进行中'}}">暂停</button>
+        <button class="ghost-btn" bindtap="resumePractice" wx:if="{{currentMaterialSession.status === '暂停中'}}">继续</button>
+        <button class="primary-btn" bindtap="finishPractice">结束并复盘</button>
+      </block>
+    </view>
+  </root-portal>
+</scroll-view>
+
+<view wx:else class="page subpage-page detail detail-state-page {{themeClass}}" style="{{layoutStyle}}">
+  <subpage-header customClass="detail-header-row" bind:back="back" />
+  <view wx:if="{{detailLoading}}" class="state-note-card detail-state-card">
+    <view class="section-title">正在加载素材详情</view>
+    <text class="muted">如果云开发响应较慢，请稍等一下。</text>
+  </view>
+  <empty-state-panel
+    wx:else
+    customClass="detail-state-card"
+    title="{{detailErrorTitle}}"
+    desc="{{detailErrorDesc}}"
+    primaryText="重新加载"
+    secondaryText="返回"
+    bind:primary="retryLoad"
+    bind:secondary="back"
+  />
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</view>

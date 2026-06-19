@@ -18,30 +18,32 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--improv-mask-overlay, rgba(18, 20, 30, 0.5));
 }
 
 .privacy-dialog {
   position: relative;
   width: 600rpx;
-  background: #ffffff;
-  border-radius: 32rpx;
+  background: var(--improv-sheet-bg, var(--improv-card-strong, #ffffff));
+  border: 2rpx solid var(--improv-line-soft, rgba(255, 122, 69, 0.14));
+  border-radius: var(--improv-radius-xl, 40rpx);
   padding: 48rpx 40rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-shadow: var(--improv-shadow-lg, 0 24rpx 80rpx rgba(34, 27, 20, 0.18));
 }
 
 .privacy-dialog-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--improv-text, #1a1a2e);
   margin-bottom: 24rpx;
 }
 
 .privacy-dialog-desc {
   font-size: 26rpx;
-  color: #4a4a6a;
+  color: var(--improv-muted, #4a4a6a);
   line-height: 1.6;
   text-align: center;
 }
@@ -66,9 +68,6 @@
   line-height: 80rpx;
   font-size: 28rpx;
   border-radius: 40rpx;
-  background: #f4f6fb;
-  color: #4a4a6a;
-  border: none;
   text-align: center;
 }
 
@@ -78,8 +77,5 @@
   line-height: 80rpx;
   font-size: 28rpx;
   border-radius: 40rpx;
-  background: var(--improv-primary, #ff7a45);
-  color: #ffffff;
-  border: none;
   text-align: center;
 }

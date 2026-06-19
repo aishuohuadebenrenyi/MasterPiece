@@ -1,0 +1,31 @@
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="practice-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <view class="practice-records-page">
+    <subpage-header title="练习记录" bind:back="back" />
+
+    <form-card wx:if="{{showSummaryCard}}" title="素材练习" kicker="练习概览">
+      <view class="card-head">
+        <text class="muted">按时间回看单次素材练习复盘和经验。</text>
+        <text class="pill blue">{{records.length}} 条</text>
+      </view>
+    </form-card>
+
+    <view wx:if="{{errorText}}" class="notice-note-card">{{errorText}}</view>
+
+    <empty-state-panel wx:if="{{loading}}" tone="loading" title="正在同步练习记录" desc="稍等一下，正在拉取最近的素材练习复盘。" />
+    <empty-state-panel wx:elif="{{!records.length}}" title="还没有练习记录" desc="这里会回看单次素材练习的 Keep、Try 和提醒。等你真的练过一次，再把它留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
+
+    <view wx:else class="record-list">
+      <view wx:for="{{records}}" wx:key="id" class="record-item-wrap">
+        <record-card itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" eyebrow="{{item.cardView.eyebrow}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" primaryActionText="{{item.cardView.primaryActionText}}" secondaryActionText="{{item.cardView.secondaryActionText}}" bind:action="openRecord" bind:danger="onDeletePracticeRecord" />
+      </view>
+    </view>
+  </view>
+
+  <bottom-sheet visible="{{detailVisible}}" title="记录详情" sheetClass="record-detail-sheet" bind:close="closeSheet">
+    <record-detail-panel wx:if="{{selectedRecord}}" title="{{selectedRecord.title}}" meta="{{selectedRecord.displayMeta}}" pending="{{selectedRecord.syncStatus === 'pending'}}" sectionTitle="复盘详情" notes="{{selectedNotes}}" emptyText="无具体复盘内容。" readonlyNote="这是历史记录的只读回看。需要再次练这条素材时，可前往素材详情页开启。" />
+  </bottom-sheet>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>

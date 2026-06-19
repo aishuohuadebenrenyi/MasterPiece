@@ -29,7 +29,7 @@ Page({
     pausedRehearsal: null,
     currentRehearsal: null as RehearsalRecord | null,
     currentMaterialSession: null as MaterialSession | null,
-    gameCard: null as any,
+    materialSessionCard: null as any,
     rehearsalCard: null as null | {
       label: string
       title: string
@@ -44,13 +44,13 @@ Page({
     recommendDesc: '',
     todayVisible: false,
     startRehearsalVisible: false,
-    startGameVisible: false,
-    startGameSelectedId: '',
-    gameSearchQuery: '',
-    filteredGamesList: [] as Material[],
-    gamesList: [] as Material[],
-    startGameEmptyTitle: '还没有可开始的素材',
-    startGameEmptyDesc: '先去发现页添加几个常用素材，再回来快速开始。',
+    startPracticeVisible: false,
+    startPracticeSelectedId: '',
+    materialSearchQuery: '',
+    filteredMaterialsList: [] as Material[],
+    materialsList: [] as Material[],
+    startPracticeEmptyTitle: '还没有可开始的素材',
+    startPracticeEmptyDesc: '先去发现页添加几个常用素材，再回来快速开始。',
     modalOpen: false,
     todayTitle: '',
     todayItems: [] as TodayItem[],
@@ -95,8 +95,8 @@ Page({
     const recommendMaterialId = recommendedMaterial ? recommendedMaterial.id : ''
     const inspirationCount = state.todayInspirations.length
     const rehearsalCount = state.todayRehearsals.length
-    const savedGamesCount = state.materials.filter((material: Material) => state.savedMaterialIds.includes(material.id) && !material.referenceOnly).length
-    const savedSourceUnavailable = this.data.rehearsalSource === 'saved' && savedGamesCount === 0
+    const savedMaterialsCount = state.materials.filter((material: Material) => state.savedMaterialIds.includes(material.id) && !material.referenceOnly).length
+    const savedSourceUnavailable = this.data.rehearsalSource === 'saved' && savedMaterialsCount === 0
     const rehearsalSourceHint = savedSourceUnavailable
       ? '还没有收藏可训练素材，先去发现页点亮几个爱心，再回来随机开启。'
       : ''
@@ -111,13 +111,13 @@ Page({
       const material = state.materials.find((item: Material) => item.id === materialId)
       return `${material ? material.title : '未命名素材'} · ${status}`
     }
-    let gameCard: any = null
+    let materialSessionCard: any = null
     const currentMaterialSession = state.currentMaterial || null
     if (currentMaterialSession) {
       const d = currentMaterialSession.duration || 0
       const m = Math.floor(d / 60)
       const s = d % 60
-      gameCard = {
+      materialSessionCard = {
         label: currentMaterialSession.status || '进行中',
         title: currentMaterialSession.title || '当前素材',
         durationText: `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
@@ -140,7 +140,7 @@ Page({
       pausedRehearsal: state.pausedRehearsal,
       currentRehearsal,
       currentMaterialSession,
-      gameCard,
+      materialSessionCard,
       rehearsalCard,
       recommendVisible: !this.data.recommendDismissed,
       recommendClickable,
@@ -199,13 +199,25 @@ Page({
       })
     }
     await fetchTodaySummary()
-    await this.refreshGames()
+    await this.refreshMaterials()
   },
 
   onShow() {
     this.setData({ themeClass: getThemeClass() })
     syncTabBar(this, 1)
     this.syncLocalState()
+  },
+
+  onPageScroll(e: any) {
+    if (this._lastScrollTop === undefined) this._lastScrollTop = 0
+    const delta = e.scrollTop - this._lastScrollTop
+    this._lastScrollTop = e.scrollTop
+    if (Math.abs(delta) > 10) {
+      const tabbar = this.getTabBar()
+      if (tabbar && typeof (tabbar as any).setHidden === 'function') {
+        (tabbar as any).setHidden(delta > 0)
+      }
+    }
   },
 
   onResize() {
@@ -229,7 +241,7 @@ Page({
     this.setData({ privacyVisible: false })
   },
 
-  async refreshGames() {
+  async refreshMaterials() {
     try {
       const games = await listMaterials()
       setMaterials(games)
@@ -238,10 +250,10 @@ Page({
     }
   },
 
-  resumeGameCard() {
+  resumeMaterialSessionCard() {
     const session = this.data.currentMaterialSession as any
     if (session) {
-      wx.navigateTo({ url: `/pages/game-detail/index?id=${session.materialId || session.id}` })
+      wx.navigateTo({ url: `/pages/material-detail/index?id=${session.materialId || session.id}` })
     }
   },
 
@@ -253,10 +265,10 @@ Page({
     closeModal(this, {
       todayVisible: false,
       startRehearsalVisible: false,
-      startGameVisible: false,
-      startGameSelectedId: '',
-      gameSearchQuery: '',
-      filteredGamesList: [],
+      startPracticeVisible: false,
+      startPracticeSelectedId: '',
+      materialSearchQuery: '',
+      filteredMaterialsList: [],
       teamName: '',
       rehearsalDuration: '90',
       rehearsalGoals: [],
@@ -310,38 +322,38 @@ Page({
     })
   },
 
-  async openStartGame() {
+  async openStartPractice() {
     const mutexError = getTaskMutexError('material')
     if (mutexError) {
       toast(mutexError)
       return
     }
     
-    let gamesList = (getState().materials || []).filter((material: Material) => !material.referenceOnly)
-    const startGameEmptyState = this.getStartGameEmptyState('', gamesList, gamesList)
+    let materialsList = (getState().materials || []).filter((material: Material) => !material.referenceOnly)
+    const startPracticeEmptyState = this.getStartPracticeEmptyState('', materialsList, materialsList)
     openModal(this, {
-      startGameVisible: true,
-      startGameSelectedId: '',
-      gameSearchQuery: '',
-      gamesList: gamesList,
-      filteredGamesList: gamesList,
-      ...startGameEmptyState
+      startPracticeVisible: true,
+      startPracticeSelectedId: '',
+      materialSearchQuery: '',
+      materialsList: materialsList,
+      filteredMaterialsList: materialsList,
+      ...startPracticeEmptyState
     })
 
-    if (gamesList.length === 0) {
+    if (materialsList.length === 0) {
       try {
         const games = (await listMaterials()).filter((material: Material) => !material.referenceOnly)
         setMaterials(games)
-        const query = this.data.gameSearchQuery || ''
+        const query = this.data.materialSearchQuery || ''
         const lowerQuery = query.trim().toLowerCase()
-        const filteredGamesList = games.filter((game: Material) => {
-          const text = `${game.title} ${game.desc} ${game.type} ${game.tags.join(' ')} ${(game.abilities || []).join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+        const filteredMaterialsList = games.filter((material: Material) => {
+          const text = `${material.title} ${material.desc} ${material.type} ${material.tags.join(' ')} ${(material.abilities || []).join(' ')} ${material.meta.join(' ')}`.toLowerCase()
           return !lowerQuery || text.includes(lowerQuery)
         })
         this.setData({
-          gamesList: games,
-          filteredGamesList,
-          ...this.getStartGameEmptyState(query, games, filteredGamesList)
+          materialsList: games,
+          filteredMaterialsList,
+          ...this.getStartPracticeEmptyState(query, games, filteredMaterialsList)
         })
       } catch (e) {
         toast('加载素材失败')
@@ -349,94 +361,94 @@ Page({
     }
   },
 
-  filterStartGames(query: string) {
+  filterStartPractices(query: string) {
     const lowerQuery = query.trim().toLowerCase()
-    return this.data.gamesList.filter((game: Material) => {
-      const text = `${game.title} ${game.desc} ${game.type} ${game.tags.join(' ')} ${(game.abilities || []).join(' ')} ${game.meta.join(' ')}`.toLowerCase()
+    return this.data.materialsList.filter((material: Material) => {
+      const text = `${material.title} ${material.desc} ${material.type} ${material.tags.join(' ')} ${(material.abilities || []).join(' ')} ${material.meta.join(' ')}`.toLowerCase()
       return !lowerQuery || text.includes(lowerQuery)
     })
   },
 
-  getStartGameEmptyState(query: string, gamesList: Material[], filteredGamesList: Material[]) {
-    if (filteredGamesList.length > 0) return { startGameEmptyTitle: '', startGameEmptyDesc: '' }
-    if (!gamesList.length) {
+  getStartPracticeEmptyState(query: string, materialsList: Material[], filteredMaterialsList: Material[]) {
+    if (filteredMaterialsList.length > 0) return { startPracticeEmptyTitle: '', startPracticeEmptyDesc: '' }
+    if (!materialsList.length) {
       return {
-        startGameEmptyTitle: '还没有可开始的素材',
-        startGameEmptyDesc: '先去发现页添加几个常用素材，再回来快速开始。'
+        startPracticeEmptyTitle: '还没有可开始的素材',
+        startPracticeEmptyDesc: '先去发现页添加几个常用素材，再回来快速开始。'
       }
     }
     if (query.trim()) {
       return {
-        startGameEmptyTitle: '没有找到匹配的素材',
-        startGameEmptyDesc: '换个关键词试试，或清空搜索继续浏览当前素材库。'
+        startPracticeEmptyTitle: '没有找到匹配的素材',
+        startPracticeEmptyDesc: '换个关键词试试，或清空搜索继续浏览当前素材库。'
       }
     }
     return {
-      startGameEmptyTitle: '当前没有可显示的素材',
-      startGameEmptyDesc: '先清空筛选或回到发现页补充素材库，再回来开始。'
+      startPracticeEmptyTitle: '当前没有可显示的素材',
+      startPracticeEmptyDesc: '先清空筛选或回到发现页补充素材库，再回来开始。'
     }
   },
 
-  showStartGameList() {
-    if (!this.data.filteredGamesList.length && this.data.gamesList.length) {
-      const filteredGamesList = this.filterStartGames(this.data.gameSearchQuery || '')
+  showStartPracticeList() {
+    if (!this.data.filteredMaterialsList.length && this.data.materialsList.length) {
+      const filteredMaterialsList = this.filterStartPractices(this.data.materialSearchQuery || '')
       this.setData({
-        filteredGamesList,
-        ...this.getStartGameEmptyState(this.data.gameSearchQuery || '', this.data.gamesList, filteredGamesList)
+        filteredMaterialsList,
+        ...this.getStartPracticeEmptyState(this.data.materialSearchQuery || '', this.data.materialsList, filteredMaterialsList)
       })
     }
   },
 
-  onGameSearchInput(e: any) {
+  onMaterialSearchInput(e: any) {
     const query = e.detail.value || ''
-    const filtered = this.filterStartGames(query)
+    const filtered = this.filterStartPractices(query)
     this.setData({
-      gameSearchQuery: query,
-      filteredGamesList: filtered,
-      startGameSelectedId: filtered.some((game: Material) => game.id === this.data.startGameSelectedId) ? this.data.startGameSelectedId : '',
-      ...this.getStartGameEmptyState(query, this.data.gamesList, filtered)
+      materialSearchQuery: query,
+      filteredMaterialsList: filtered,
+      startPracticeSelectedId: filtered.some((material: Material) => material.id === this.data.startPracticeSelectedId) ? this.data.startPracticeSelectedId : '',
+      ...this.getStartPracticeEmptyState(query, this.data.materialsList, filtered)
     })
   },
 
-  clearGameSearch() {
-    const filteredGamesList = this.filterStartGames('')
+  clearMaterialSearch() {
+    const filteredMaterialsList = this.filterStartPractices('')
     this.setData({
-      gameSearchQuery: '',
-      filteredGamesList,
-      startGameSelectedId: '',
-      ...this.getStartGameEmptyState('', this.data.gamesList, filteredGamesList)
+      materialSearchQuery: '',
+      filteredMaterialsList,
+      startPracticeSelectedId: '',
+      ...this.getStartPracticeEmptyState('', this.data.materialsList, filteredMaterialsList)
     })
   },
 
-  selectGameToStart(e: any) {
+  selectMaterialToStart(e: any) {
     const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
-    const game = this.data.gamesList.find((g: Material) => g.id === id)
+    const material = this.data.materialsList.find((g: Material) => g.id === id)
     this.setData({ 
-      startGameSelectedId: id,
-      gameSearchQuery: game ? game.title : this.data.gameSearchQuery
+      startPracticeSelectedId: id,
+      materialSearchQuery: material ? material.title : this.data.materialSearchQuery
     })
   },
 
-  startGameFromRecord() {
-    const id = this.data.startGameSelectedId
+  startPracticeFromRecord() {
+    const id = this.data.startPracticeSelectedId
     if (!id) {
       toast('请先选择一条素材')
       return
     }
-    const game = this.data.gamesList.find((g: Material) => g.id === id)
-    if (!game) return
+    const material = this.data.materialsList.find((g: Material) => g.id === id)
+    if (!material) return
 
     try {
       startMaterialSession({
         id: `session-${Date.now()}`,
-        materialId: game.id,
-        title: game.title,
+        materialId: material.id,
+        title: material.title,
         startTime: Date.now(),
         duration: 0,
         status: '进行中'
       })
       this.closeSheet()
-      wx.navigateTo({ url: `/pages/game-detail/index?id=${game.id}` })
+      wx.navigateTo({ url: `/pages/material-detail/index?id=${material.id}` })
     } catch (e: any) {
       toast(e.message || '开启失败')
     }
@@ -495,12 +507,12 @@ Page({
     }
     const trainableMaterials = state.materials.filter((material: Material) => !material.referenceOnly)
     const recommendedPlan = shuffle(trainableMaterials).slice(0, REHEARSAL_PLAN_SIZE).map((material) => material.id)
-    const savedGames = trainableMaterials.filter((material) => state.savedMaterialIds.includes(material.id))
-    if (this.data.rehearsalSource === 'saved' && savedGames.length === 0) {
+    const savedMaterials = trainableMaterials.filter((material) => state.savedMaterialIds.includes(material.id))
+    if (this.data.rehearsalSource === 'saved' && savedMaterials.length === 0) {
       toast('还没有收藏可训练素材，先去发现页收藏几个再开始')
       return
     }
-    const savedPlan = shuffle(savedGames).slice(0, REHEARSAL_PLAN_SIZE).map((game) => game.id)
+    const savedPlan = shuffle(savedMaterials).slice(0, REHEARSAL_PLAN_SIZE).map((material) => material.id)
     const selectedPlan = this.data.rehearsalSource === 'saved'
       ? savedPlan
       : this.data.rehearsalSource === 'blank'
@@ -581,6 +593,6 @@ Page({
       toast('当前还没有可推荐的素材')
       return
     }
-    wx.navigateTo({ url: `/pages/game-detail/index?id=${recommendMaterialId}` })
+    wx.navigateTo({ url: `/pages/material-detail/index?id=${recommendMaterialId}` })
   }
 })

@@ -1,0 +1,20 @@
+<view class="material-card card card-surface-content {{modeClass}}" hover-class="card-hover" bindtap="open">
+  <view class="stripe {{stripeClass}}"></view>
+  <view class="material-main">
+    <view class="row material-head">
+      <view class="material-head-text">
+        <text wx:if="{{isCard}}" class="pill blue material-tag-pill">{{primaryTag}}</text>
+        <view class="material-title">{{material.title}}</view>
+      </view>
+      <button class="icon-text icon-favorite save {{saved || material.saved ? 'save-active' : 'save-idle'}}" catchtap="save">{{saveIcon}}</button>
+    </view>
+
+    <view wx:if="{{material.desc}}" class="material-desc-block">
+      <text class="material-desc">{{material.desc}}</text>
+    </view>
+
+    <view wx:if="{{isCard && displayMeta && displayMeta.length}}" class="meta">
+      <text wx:for="{{displayMeta}}" wx:key="*this">{{item}}</text>
+    </view>
+  </view>
+</view>

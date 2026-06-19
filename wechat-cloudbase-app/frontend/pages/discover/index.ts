@@ -238,7 +238,8 @@ Page({
     showFilterNoMatchState: false,
     hasMore: true,
     pageLoading: false,
-    privacyVisible: false
+    privacyVisible: false,
+    isRefreshing: false
   },
 
   unsubscribeStore: null as null | (() => void),
@@ -404,8 +405,19 @@ Page({
     }
   },
 
+  onScroll(e: any) {
+    const deltaY = e.detail.deltaY
+    if (Math.abs(deltaY) > 10) {
+      const tabbar = this.getTabBar()
+      if (tabbar && typeof tabbar.setHidden === 'function') {
+        tabbar.setHidden(deltaY > 0)
+      }
+    }
+  },
+
   async onPullDownRefresh() {
     await this.loadMaterials()
+    this.setData({ isRefreshing: false })
     wx.stopPullDownRefresh()
   },
 
@@ -677,12 +689,12 @@ Page({
   },
 
   openMaterial(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
-    wx.navigateTo({ url: `/pages/game-detail/index?id=${event.detail.id}` })
+    wx.navigateTo({ url: `/pages/material-detail/index?id=${event.detail.id}` })
   },
 
   openMaterialFromTap(event: WechatMiniprogram.TouchEvent) {
     const id = String(event.currentTarget.dataset.id || '')
-    if (id) wx.navigateTo({ url: `/pages/game-detail/index?id=${id}` })
+    if (id) wx.navigateTo({ url: `/pages/material-detail/index?id=${id}` })
   },
 
   async toggleSave(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
@@ -753,7 +765,7 @@ Page({
     const material = this.data.currentRandomMaterial
     if (!material) return
     this.closeSheet()
-    wx.navigateTo({ url: `/pages/game-detail/index?id=${material.id}` })
+    wx.navigateTo({ url: `/pages/material-detail/index?id=${material.id}` })
   },
 
   openFilter() {
@@ -792,7 +804,7 @@ Page({
     }, () => this.syncFiltered())
   },
 
-  retryLoadGames() {
+  retryLoadMaterials() {
     this.loadMaterials(true)
   },
 
@@ -825,7 +837,7 @@ Page({
     })
   },
 
-  handleGameFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
+  handleMaterialFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
     const { field, value } = event.detail || { field: '', value: '' }
     if (!field) return
     this.setData({ [`newMaterial.${field}`]: value })
@@ -931,7 +943,7 @@ Page({
     })
   },
 
-  async addGame() {
+  async addMaterial() {
     const title = this.data.newMaterial.title
     if (!title) {
       toast('先写素材名称')

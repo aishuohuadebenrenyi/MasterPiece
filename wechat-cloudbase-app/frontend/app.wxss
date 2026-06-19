@@ -4,7 +4,7 @@ page {
   --nav-row-top: 108rpx;
   --content-safe-top: 172rpx;
   --page-side: 40rpx;
-  --page-bottom: 128rpx;
+  --page-bottom: calc(128rpx + env(safe-area-inset-bottom));
   --fixed-action-bottom: calc(24rpx + env(safe-area-inset-bottom));
   --fixed-action-padding: 14rpx;
   --fixed-action-button-height: 76rpx;
@@ -151,7 +151,7 @@ button::after {
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+  transition: transform var(--improv-anim-fast) ease, box-shadow var(--improv-anim-fast) ease, opacity var(--improv-anim-fast) ease;
 }
 
 .primary-btn[disabled],
@@ -172,38 +172,38 @@ button::after {
   min-height: 76rpx;
   padding: 0 28rpx;
   background: linear-gradient(135deg, #ff7a45, #ff5b2e);
-  background: linear-gradient(135deg, var(--improv-primary, #ff7a45), var(--improv-primary-strong, #ff5b2e));
+  background: var(--improv-btn-primary-bg, linear-gradient(135deg, var(--improv-primary, #ff7a45), var(--improv-primary-strong, #ff5b2e)));
   color: #ffffff;
-  color: var(--improv-on-brand, #ffffff);
+  color: var(--improv-btn-primary-text, var(--improv-on-brand, #ffffff));
   box-shadow: 0 20rpx 40rpx rgba(255, 91, 46, 0.2);
-  box-shadow: 0 20rpx 40rpx var(--improv-shadow-action-color, rgba(255, 91, 46, 0.2));
+  box-shadow: var(--improv-btn-primary-shadow, 0 20rpx 40rpx var(--improv-shadow-action-color, rgba(255, 91, 46, 0.2)));
 }
 
 .ghost-btn {
   min-height: 74rpx;
   padding: 0 26rpx;
-  background: #e8f0ff;
-  background: var(--improv-secondary-soft, #e8f0ff);
-  color: #2f6ff2;
-  color: var(--improv-secondary-strong, #2f6ff2);
-  border: 2rpx solid rgba(79, 140, 255, 0.08);
-  border: 2rpx solid var(--improv-blue-line, rgba(79, 140, 255, 0.08));
+  background: #fff6f1;
+  background: var(--improv-btn-secondary-bg, var(--improv-primary-tint, #fff6f1));
+  color: #ff6b3d;
+  color: var(--improv-btn-secondary-text, var(--improv-primary-warm, #ff6b3d));
+  border: 2rpx solid rgba(255, 122, 69, 0.14);
+  border: 2rpx solid var(--improv-btn-secondary-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
+  box-shadow: var(--improv-btn-secondary-shadow, none);
 }
 
 .small-btn {
   flex: 0 0 auto;
-  min-height: 58rpx;
-  min-width: 96rpx;
-  padding: 0 22rpx;
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid rgba(94, 114, 144, 0.14);
-  border: 2rpx solid var(--improv-line, rgba(94, 114, 144, 0.14));
-  color: #667289;
-  color: var(--improv-muted, #667289);
+  min-height: 54rpx;
+  min-width: 88rpx;
+  padding: 0 20rpx;
+  background: rgba(255, 246, 241, 0.72);
+  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
+  border: 2rpx solid rgba(255, 122, 69, 0.08);
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  color: #5a6781;
+  color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   font-size: 24rpx;
-  box-shadow: 0 8rpx 18rpx rgba(50, 68, 120, 0.05);
-  box-shadow: var(--improv-shadow-xs, 0 8rpx 18rpx rgba(50, 68, 120, 0.05));
+  box-shadow: var(--improv-btn-tertiary-shadow, none);
 }
 
 .mini-action-btn {
@@ -211,15 +211,48 @@ button::after {
   min-width: 96rpx;
   min-height: 54rpx;
   padding: 0 20rpx;
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid rgba(94, 114, 144, 0.12);
-  border: 2rpx solid var(--improv-line-soft, rgba(94, 114, 144, 0.12));
+  background: rgba(255, 255, 255, 0.62);
+  background: var(--improv-btn-toolbar-bg, rgba(255, 255, 255, 0.62));
+  border: 2rpx solid rgba(94, 114, 144, 0.08);
+  border: 2rpx solid var(--improv-btn-toolbar-border, rgba(94, 114, 144, 0.08));
   color: #667289;
-  color: var(--improv-muted, #667289);
+  color: var(--improv-btn-toolbar-text, var(--improv-muted, #667289));
   font-size: 24rpx;
-  box-shadow: 0 8rpx 18rpx rgba(50, 68, 120, 0.05);
-  box-shadow: var(--improv-shadow-xs, 0 8rpx 18rpx rgba(50, 68, 120, 0.05));
+  box-shadow: var(--improv-btn-toolbar-shadow, none);
+}
+
+.mini-action-btn.primary-lite {
+  background: var(--improv-btn-toolbar-primary-bg, var(--improv-primary-tint, #fff6f1));
+  border-color: var(--improv-btn-toolbar-primary-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
+  color: var(--improv-btn-toolbar-primary-text, var(--improv-primary-warm, #ff6b3d));
+}
+
+.mini-action-btn.neutral {
+  background: var(--improv-btn-toolbar-bg, rgba(255, 255, 255, 0.62));
+  border-color: var(--improv-btn-toolbar-border, rgba(94, 114, 144, 0.08));
+  color: var(--improv-btn-toolbar-text, var(--improv-muted, #667289));
+}
+
+.mini-action-btn.quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--improv-btn-toolbar-text, var(--improv-muted, #667289));
+  box-shadow: none;
+}
+
+.button-tertiary {
+  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
+  box-shadow: var(--improv-btn-tertiary-shadow, none);
+}
+
+.danger-btn,
+.button-danger-quiet {
+  background: var(--improv-btn-danger-bg, rgba(255, 77, 79, 0.08));
+  border: 2rpx solid var(--improv-btn-danger-border, rgba(255, 77, 79, 0.12));
+  color: var(--improv-btn-danger-text, #e85d48);
+  box-shadow: none;
 }
 
 button.share-btn {
@@ -235,28 +268,20 @@ button.share-btn::after {
 }
 
 .small-btn.share-btn {
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid rgba(94, 114, 144, 0.14);
-  border: 2rpx solid var(--improv-line, rgba(94, 114, 144, 0.14));
-  color: #667289;
-  color: var(--improv-muted, #667289);
+  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
 }
 
 .mini-action-btn.share-btn {
-  background: #ffffff;
-  background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid rgba(94, 114, 144, 0.12);
-  border: 2rpx solid var(--improv-line-soft, rgba(94, 114, 144, 0.12));
-  color: #667289;
-  color: var(--improv-muted, #667289);
+  background: var(--improv-btn-toolbar-bg, rgba(255, 255, 255, 0.62));
+  border: 2rpx solid var(--improv-btn-toolbar-border, rgba(94, 114, 144, 0.08));
+  color: var(--improv-btn-toolbar-text, var(--improv-muted, #667289));
 }
 
 .ghost-btn.share-btn {
-  background: #e8f0ff;
-  background: var(--improv-secondary-soft, #e8f0ff);
-  color: #2f6ff2;
-  color: var(--improv-secondary-strong, #2f6ff2);
+  background: var(--improv-btn-secondary-bg, var(--improv-primary-tint, #fff6f1));
+  color: var(--improv-btn-secondary-text, var(--improv-primary-warm, #ff6b3d));
 }
 
 .chip {
@@ -265,20 +290,21 @@ button.share-btn::after {
   min-width: 0;
   min-height: 70rpx;
   padding: 0 28rpx;
-  background: rgba(255, 255, 255, 0.92);
-  background: var(--improv-card-translucent, rgba(255, 255, 255, 0.92));
-  color: #24324a;
-  color: var(--improv-text, #24324a);
-  box-shadow: 0 12rpx 24rpx rgba(50, 68, 120, 0.06);
-  box-shadow: 0 12rpx 24rpx var(--improv-shadow-chip-color, rgba(50, 68, 120, 0.06));
+  background: rgba(255, 255, 255, 0.84);
+  background: var(--improv-btn-chip-bg, rgba(255, 255, 255, 0.84));
+  border: 2rpx solid var(--improv-btn-chip-border, rgba(94, 114, 144, 0.12));
+  color: #5a6781;
+  color: var(--improv-btn-chip-text, var(--improv-text-soft, #5a6781));
+  box-shadow: none;
   white-space: nowrap;
 }
 
 .chip.active {
-  background: #e8f0ff;
-  background: var(--improv-secondary-soft, #e8f0ff);
-  color: #2f6ff2;
-  color: var(--improv-secondary-strong, #2f6ff2);
+  background: #fff6f1;
+  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff6f1));
+  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
+  color: #ff6b3d;
+  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #ff6b3d));
 }
 
 .main-filter-chip {
@@ -300,13 +326,10 @@ button.share-btn::after {
 }
 
 .main-filter-chip.active {
-  border-color: rgba(79, 140, 255, 0.06);
-  background: linear-gradient(135deg, #4f8cff, #ff7a45);
-  background: linear-gradient(135deg, var(--improv-secondary, #4f8cff), var(--improv-primary, #ff7a45));
-  color: #ffffff;
-  color: var(--improv-on-brand, #ffffff);
-  box-shadow: 0 18rpx 34rpx rgba(82, 107, 209, 0.2);
-  box-shadow: 0 18rpx 34rpx var(--improv-shadow-secondary-color, rgba(82, 107, 209, 0.2));
+  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
+  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff6f1));
+  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #ff6b3d));
+  box-shadow: none;
 }
 
 .compact-filter-chip {
@@ -326,17 +349,14 @@ button.share-btn::after {
 }
 
 .compact-filter-chip.active {
-  border-color: rgba(79, 140, 255, 0.12);
-  border-color: var(--improv-secondary-wash-soft, rgba(79, 140, 255, 0.12));
-  background: rgba(232, 240, 255, 0.78);
-  background: var(--improv-secondary-soft, rgba(232, 240, 255, 0.78));
-  color: #2f6ff2;
-  color: var(--improv-secondary-strong, #2f6ff2);
+  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
+  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff6f1));
+  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #ff6b3d));
   box-shadow: none;
 }
 
 .chip-scroll {
-  width: 100%;
+  width: 100vw;
   min-width: 0;
   height: 104rpx;
   margin: 0;
@@ -344,18 +364,22 @@ button.share-btn::after {
   overflow: hidden;
   flex-shrink: 0;
   display: flex;
+  box-sizing: border-box;
 }
 
 .chip-row {
-  width: auto;
+  width: 100vw;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 2rpx 0 14rpx;
+  padding: 2rpx var(--page-side, 40rpx) 14rpx 0;
+  box-sizing: border-box;
   gap: 14rpx;
   white-space: nowrap;
   height: 100%;
 }
+
+/* 移除伪元素 */
 
 .chip-row .chip {
   flex: 0 0 auto !important;
@@ -563,9 +587,13 @@ form-field {
   gap: 18rpx;
   overflow-x: auto;
   padding-bottom: 12rpx;
+  padding-right: var(--page-side, 40rpx);
+  box-sizing: border-box;
   white-space: nowrap;
-  width: 100%;
+  width: 100vw;
 }
+
+/* 移除伪元素，改用 padding-right 配合 border-box */
 
 .form-chip-row,
 .sheet-chip-row {
@@ -670,6 +698,27 @@ form-field {
   font-size: 22rpx;
   line-height: 44rpx;
   font-weight: 900;
+}
+
+.icon-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.icon-back,
+.icon-close {
+  min-width: 44rpx;
+  min-height: 44rpx;
+}
+
+.icon-search,
+.icon-random,
+.icon-favorite {
+  min-width: 32rpx;
+  min-height: 32rpx;
 }
 
 .state-note-card,

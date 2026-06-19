@@ -88,11 +88,11 @@ function normalizePendingItem(item, sourceType) {
   })
 }
 
-function buildPendingItems({ inspirations = [], rehearsals = [], gameRecords = [], sediments = [] } = {}) {
+function buildPendingItems({ inspirations = [], rehearsals = [], practiceRecords = [], sediments = [] } = {}) {
   const existing = new Set(sediments.map(getSourceKey))
   const candidates = []
     .concat(inspirations.map((item) => normalizePendingItem(item, 'inspiration')))
-    .concat(gameRecords.map((item) => normalizePendingItem(item, 'practiceRecord')))
+    .concat(practiceRecords.map((item) => normalizePendingItem(item, 'practiceRecord')))
     .concat(rehearsals
       .filter((item) => item.status === '已完成' || item.reviewKeep || item.reviewTry || item.reviewReminder)
       .map((item) => normalizePendingItem(item, 'rehearsalReview')))
@@ -163,7 +163,7 @@ function normalizeDetailIndex(index, items = []) {
   return numericIndex
 }
 
-function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], gameRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', inspirationFilter = 'all', discardedPendingKeys = [], pendingIntentMarks = [] } = {}) {
+function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [], practiceRecords = [], playedCount = 0, layoutStyle = '', profile, methodFilter = 'all', inspirationFilter = 'all', discardedPendingKeys = [], pendingIntentMarks = [] } = {}) {
   const mappedSediments = sediments.map(item => attachSummaryCardView(Object.assign({}, item, {
     sourceType: normalizeMethodSourceType(item.sourceType),
     type: item.type || getSourceLabel(item.sourceType),
@@ -180,21 +180,21 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
   })))
   const discarded = new Set(discardedPendingKeys)
   const intentMarked = new Set((pendingIntentMarks || []).map((item) => item.key).filter(Boolean))
-  const pendingItems = buildPendingItems({ inspirations: mappedInspirations, rehearsals, gameRecords, sediments: mappedSediments })
+  const pendingItems = buildPendingItems({ inspirations: mappedInspirations, rehearsals, practiceRecords, sediments: mappedSediments })
     .filter((item) => {
       const key = getSourceKey(item)
       return !discarded.has(key) && !intentMarked.has(key)
     })
     .map((item) => attachSummaryCardView(item))
-  const totalRecords = mappedInspirations.length + getRehearsalCount(rehearsals) + mappedSediments.length + (gameRecords.length || 0)
+  const totalRecords = mappedInspirations.length + getRehearsalCount(rehearsals) + mappedSediments.length + (practiceRecords.length || 0)
   const methodCount = mappedSediments.length
   const rehearsalCount = getRehearsalCount(rehearsals)
-  const gameRecordsCount = gameRecords.length || 0
-  const showIntroState = methodCount === 0 && mappedInspirations.length === 0 && rehearsalCount === 0 && gameRecordsCount === 0
+  const practiceRecordsCount = practiceRecords.length || 0
+  const showIntroState = methodCount === 0 && mappedInspirations.length === 0 && rehearsalCount === 0 && practiceRecordsCount === 0
   const showPendingCard = pendingItems.length > 0
   const showSedimentsCard = methodCount > 0
   const showInspirationsCard = mappedInspirations.length > 0
-  const showGameRecordsCard = gameRecordsCount > 0
+  const showPracticeRecordsCard = practiceRecordsCount > 0
   const showRehearsalCard = rehearsalCount > 0
   const showStatsCard = !showIntroState && (totalRecords > 1 || playedCount > 0 || methodCount > 0)
   const nextProfile = normalizeProfile(profile || DEFAULT_PROFILE)
@@ -202,19 +202,19 @@ function buildMineViewData({ sediments = [], inspirations = [], rehearsals = [],
     sediments: mappedSediments,
     inspirations: mappedInspirations,
     rehearsals,
-    gameRecords,
+    practiceRecords,
     pendingItems,
     pendingCount: pendingItems.length,
     totalRecords,
     playedCount,
     methodCount,
     rehearsalCount,
-    gameRecordsCount,
+    practiceRecordsCount,
     showIntroState,
     showPendingCard,
     showSedimentsCard,
     showInspirationsCard,
-    showGameRecordsCard,
+    showPracticeRecordsCard,
     showRehearsalCard,
     showStatsCard,
     layoutStyle,
@@ -246,7 +246,7 @@ Page({
     sediments: [],
     inspirations: [],
     rehearsals: [],
-    gameRecords: [],
+    practiceRecords: [],
     pendingItems: [],
     pendingCount: 0,
     discardedPendingKeys: [],
@@ -255,7 +255,7 @@ Page({
     playedCount: 0,
     methodCount: 0,
     rehearsalCount: 0,
-    gameRecordsCount: 0,
+    practiceRecordsCount: 0,
     listVisible: false,
     detailVisible: false,
     listTitle: '',
@@ -292,14 +292,15 @@ Page({
     showPendingCard: false,
     showSedimentsCard: false,
     showInspirationsCard: false,
-    showGameRecordsCard: false,
+    showPracticeRecordsCard: false,
     showRehearsalCard: false,
     showStatsCard: false,
     privacyVisible: false,
     editingMethodCardId: '',
     methodCardDraftTitle: '',
     methodCardDraftContent: '',
-    showMethodCardEditSheet: false
+    showMethodCardEditSheet: false,
+    isRefreshing: false
   },
 
   unsubscribePrivacy: null,
@@ -347,12 +348,12 @@ Page({
     const localSediments = state.methodCards || []
     const localInspirations = state.todayInspirations || []
     const localRehearsals = state.rehearsalHistory || []
-    const localGameRecords = state.practiceRecordsHistory || []
+    const localPracticeRecords = state.practiceRecordsHistory || []
     this.setData(Object.assign({}, buildMineViewData({
       sediments: localSediments,
       inspirations: localInspirations,
       rehearsals: localRehearsals,
-      gameRecords: localGameRecords,
+      practiceRecords: localPracticeRecords,
       playedCount: (state.playedMaterialIds || []).length,
       layoutStyle: getLayoutStyle(),
       profile: state.profile || DEFAULT_PROFILE,
@@ -363,7 +364,7 @@ Page({
     }), {
       themeClass: getThemeClass()
     }))
-    const [sedimentsResult, inspirationsResult, rehearsalsResult, gameRecordsResult, profileResult] = await Promise.allSettled([
+    const [sedimentsResult, inspirationsResult, rehearsalsResult, practiceRecordsResult, profileResult] = await Promise.allSettled([
       listMethodCards(),
       listInspirations(),
       listRehearsals(),
@@ -374,7 +375,7 @@ Page({
       sediments: sedimentsResult.status === 'fulfilled' ? sedimentsResult.value : localSediments,
       inspirations: inspirationsResult.status === 'fulfilled' ? inspirationsResult.value : localInspirations,
       rehearsals: rehearsalsResult.status === 'fulfilled' ? rehearsalsResult.value : localRehearsals,
-      gameRecords: gameRecordsResult.status === 'fulfilled' ? gameRecordsResult.value : localGameRecords,
+      practiceRecords: practiceRecordsResult.status === 'fulfilled' ? practiceRecordsResult.value : localPracticeRecords,
       playedCount: (state.playedMaterialIds || []).length,
       layoutStyle: getLayoutStyle(),
       profile: profileResult.status === 'fulfilled' ? profileResult.value : (state.profile || DEFAULT_PROFILE),
@@ -389,8 +390,19 @@ Page({
     await this.loadAllData()
   },
 
+  onScroll(e) {
+    const deltaY = e.detail.deltaY
+    if (Math.abs(deltaY) > 10) {
+      const tabbar = this.getTabBar()
+      if (tabbar && typeof tabbar.setHidden === 'function') {
+        tabbar.setHidden(deltaY > 0)
+      }
+    }
+  },
+
   async onPullDownRefresh() {
     await this.loadAllData()
+    this.setData({ isRefreshing: false })
     wx.stopPullDownRefresh()
   },
 
@@ -399,7 +411,7 @@ Page({
     const nextSediments = hasOwn('sediments') ? overrides.sediments : this.data.sediments
     const nextInspirations = hasOwn('inspirations') ? overrides.inspirations : this.data.inspirations
     const nextRehearsals = hasOwn('rehearsals') ? overrides.rehearsals : this.data.rehearsals
-    const nextGameRecords = hasOwn('gameRecords') ? overrides.gameRecords : this.data.gameRecords
+    const nextPracticeRecords = hasOwn('practiceRecords') ? overrides.practiceRecords : this.data.practiceRecords
     const nextMethodFilter = hasOwn('methodFilter') ? overrides.methodFilter : this.data.methodFilter
     const nextInspirationFilter = hasOwn('inspirationFilter') ? overrides.inspirationFilter : this.data.inspirationFilter
     const nextDiscardedPendingKeys = hasOwn('discardedPendingKeys') ? overrides.discardedPendingKeys : this.data.discardedPendingKeys
@@ -413,7 +425,7 @@ Page({
       sediments: nextSediments,
       inspirations: nextInspirations,
       rehearsals: nextRehearsals,
-      gameRecords: nextGameRecords,
+      practiceRecords: nextPracticeRecords,
       playedCount: this.data.playedCount,
       layoutStyle: this.data.layoutStyle,
       profile: nextProfile,
@@ -661,8 +673,8 @@ Page({
     wx.navigateTo({ url: '/pages/team-records/index' })
   },
 
-  openGameRecords() {
-    wx.navigateTo({ url: '/pages/game-records/index' })
+  openPracticeRecords() {
+    wx.navigateTo({ url: '/pages/practice-records/index' })
   },
 
   openEditProfile() {
@@ -833,12 +845,12 @@ Page({
       if (result.code === 0) {
         const sediments = this.data.sediments.filter(item => item.id !== id)
         this.refreshMineView({ sediments })
-        wx.showToast({ title: '已删除', icon: 'none' })
+        toast('已删除')
       } else {
-        wx.showToast({ title: result.message || '删除失败', icon: 'none' })
+        toast(result.message || '删除失败')
       }
     } catch (err) {
-      wx.showToast({ title: '删除失败', icon: 'none' })
+      toast('删除失败')
     }
   },
 
@@ -869,7 +881,7 @@ Page({
     const title = String(this.data.methodCardDraftTitle || '').trim()
     const content = String(this.data.methodCardDraftContent || '').trim()
     if (!title || !content) {
-      wx.showToast({ title: '请填写完整', icon: 'none' })
+      toast('请填写完整')
       return
     }
     updateMethodCard(id, { title, content }).then((result) => {
@@ -879,12 +891,12 @@ Page({
         )
         this.setData({ showMethodCardEditSheet: false })
         this.refreshMineView({ sediments })
-        wx.showToast({ title: '已保存', icon: 'none' })
+        toast('已保存')
       } else {
-        wx.showToast({ title: result.message || '保存失败', icon: 'none' })
+        toast(result.message || '保存失败')
       }
     }).catch(() => {
-      wx.showToast({ title: '保存失败', icon: 'none' })
+      toast('保存失败')
     })
   },
 

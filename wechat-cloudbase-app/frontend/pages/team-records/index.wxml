@@ -11,7 +11,7 @@
 
     <view wx:if="{{errorText}}" class="notice-note-card">{{errorText}}</view>
 
-    <view wx:if="{{loading}}" class="state-note-card">正在同步排练记录...</view>
+    <empty-state-panel wx:if="{{loading}}" tone="loading" title="正在同步排练记录" desc="稍等一下，正在拉取最近的排练目标、素材计划和复盘结果。" />
     <empty-state-panel wx:elif="{{!records.length}}" title="还没有排练记录" desc="这里会回看排练目标、素材计划和复盘结果。先开启一次排练，内容才值得留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
 
     <view wx:else class="record-list">

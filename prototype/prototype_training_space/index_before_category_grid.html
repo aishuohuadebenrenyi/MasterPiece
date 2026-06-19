@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>私密训练空间原型 v6</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --paper: #fffaf2;
+      --paper-2: #fbf4e8;
+      --ink: #2d2922;
+      --muted: #817667;
+      --line: rgba(54, 42, 28, 0.13);
+      --brand: #1e7563;
+      --brand-soft: #dcefe8;
+      --amber: #d48636;
+      --amber-soft: #f5e4cf;
+      --rose: #c85b62;
+      --shadow: 0 18px 42px rgba(59, 44, 26, 0.13);
+      --tabbar: 82px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(30, 117, 99, 0.13), transparent 32%),
+        linear-gradient(145deg, #eadfce 0%, #f7f0e7 50%, #ece1d5 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    }
+    button, input, textarea { font: inherit; }
+    button { border: 0; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+    .phone {
+      width: min(100vw, 430px);
+      height: min(100vh, 920px);
+      min-height: 760px;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid rgba(65, 48, 30, 0.18);
+      border-radius: 34px;
+      box-shadow: 0 30px 80px rgba(51, 37, 22, 0.22);
+    }
+    .statusbar {
+      height: 46px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 0 22px 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .capsule {
+      width: 78px;
+      height: 27px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+      background: rgba(255, 255, 255, 0.48);
+    }
+    .capsule span { width: 4px; height: 4px; border-radius: 99px; background: currentColor; }
+    .screen { height: calc(100% - 46px); position: relative; }
+
+    .page, .subpage {
+      position: absolute;
+      inset: 0;
+      display: none;
+      overflow-y: auto;
+      padding: 14px 18px calc(var(--tabbar) + 26px);
+      scrollbar-width: none;
+      background: var(--bg);
+    }
+    .page::-webkit-scrollbar, .subpage::-webkit-scrollbar, .h-scroll::-webkit-scrollbar { display: none; }
+    .page.active, .subpage.active { display: block; }
+    .subpage { z-index: 22; padding-bottom: 112px; }
+
+    .sub-head, .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .sub-head h1 { margin: 0; font-size: 25px; line-height: 1.15; letter-spacing: 0; }
+    .sub-head p { margin: 5px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .sub-head { margin-bottom: 14px; }
+    .section { margin-top: 18px; }
+    .section-head { min-height: 34px; margin-bottom: 10px; }
+    .section-head h2 { margin: 0; font-size: 17px; }
+
+    .pill, .tag, .meta {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .pill { color: var(--brand); background: rgba(30, 117, 99, 0.1); }
+    .tag { color: #665642; background: rgba(255, 255, 255, 0.62); }
+    .meta { color: #665642; background: rgba(245, 241, 234, 0.8); }
+    .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 250, 242, 0.93);
+      box-shadow: 0 12px 28px rgba(64, 48, 30, 0.08);
+    }
+    .soft-card { padding: 15px; }
+    .card-kicker { color: var(--brand); font-size: 12px; font-weight: 900; }
+    .card h2, .card h3 { margin: 7px 0 7px; line-height: 1.25; letter-spacing: 0; }
+    .card h2 { font-size: 20px; }
+    .card h3 { font-size: 17px; }
+    .card-copy, .muted { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .card-copy { margin: 0; }
+
+    .search {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 250, 242, 0.88);
+      box-shadow: 0 10px 24px rgba(64, 48, 30, 0.07);
+    }
+    .search .mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 99px;
+      border: 2px solid var(--brand);
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .search .mark::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 2px;
+      right: -5px;
+      bottom: 0;
+      border-radius: 99px;
+      background: var(--brand);
+      transform: rotate(45deg);
+    }
+    .search input, .field input, .field textarea {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+    .field {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(245, 241, 234, 0.72);
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .field label { display: block; color: var(--muted); font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+    .field textarea { min-height: 86px; resize: none; line-height: 1.5; }
+
+    .primary-btn, .ghost-btn, .danger-btn, .icon-btn {
+      min-height: 38px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .primary-btn { padding: 0 15px; color: #fff; background: var(--brand); box-shadow: 0 12px 20px rgba(30, 117, 99, 0.18); }
+    .ghost-btn { padding: 0 12px; color: var(--muted); background: rgba(255, 250, 242, 0.78); border: 1px solid var(--line); }
+    .danger-btn { padding: 0 13px; color: #fff; background: var(--rose); }
+    .icon-btn { width: 38px; display: grid; place-items: center; color: var(--muted); background: rgba(255, 250, 242, 0.78); border: 1px solid var(--line); }
+    .inline-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; }
+    .button-row { display: flex; gap: 9px; flex-wrap: wrap; }
+    .button-row > button { flex: 1; }
+
+    .path-top { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+    .path-summary, .ability-strip, .h-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 7px;
+      scrollbar-width: none;
+    }
+    .path-summary { margin-top: 12px; flex-wrap: wrap; overflow: visible; }
+    .path-summary span, .ability-chip {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: #665642;
+      background: rgba(255, 255, 255, 0.64);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .ability-chip { border: 1px solid var(--line); background: rgba(255, 250, 242, 0.92); min-height: 34px; padding: 0 12px; }
+    .ability-chip.is-core { color: var(--brand); background: var(--brand-soft); border-color: rgba(30, 117, 99, 0.18); }
+    .path-expanded { display: none; }
+    .expanded .path-expanded { display: block; }
+    .expanded .path-summary { display: none; }
+    .path-steps { display: grid; gap: 8px; margin-top: 15px; }
+    .path-step {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+    .path-step i {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--brand);
+      font-style: normal;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .path-step strong { display: block; margin-bottom: 3px; font-size: 14px; }
+    .path-step span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .path-option {
+      width: 100%;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 13px;
+      text-align: left;
+      background: rgba(255, 250, 242, 0.9);
+    }
+    .path-option + .path-option { margin-top: 9px; }
+    .path-option strong { display: block; font-size: 16px; }
+    .path-option span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .learning-card {
+      padding: 14px;
+      background: linear-gradient(135deg, rgba(212, 134, 54, 0.14), rgba(255, 250, 242, 0.86)), var(--paper);
+    }
+    .training-card {
+      padding: 14px;
+      background: linear-gradient(135deg, rgba(30, 117, 99, 0.12), rgba(255, 250, 242, 0.84)), var(--paper);
+    }
+
+    .category-wrap.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .category-wrap.h-scroll { display: flex; gap: 9px; overflow-x: auto; padding: 2px 0 7px; scrollbar-width: none; }
+    .category-card, .asset-card, .material-row, .entry-card, .action-card, .plan-card {
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 250, 242, 0.92);
+      box-shadow: 0 10px 22px rgba(64, 48, 30, 0.06);
+    }
+      .category-card {
+        height: 80px;
+        min-height: 0;
+      padding: 9px 7px;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 5px;
+      text-align: center;
+    }
+    .h-scroll .category-card { min-width: 78px; }
+    .category-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--brand);
+      background: var(--brand-soft);
+      font-size: 15px;
+      font-weight: 900;
+    }
+    .category-card strong, .asset-card strong, .entry-card strong, .action-card strong, .plan-card strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 16px;
+    }
+    .category-card strong { margin: 0; font-size: 13px; line-height: 1.15; }
+    .category-card span, .asset-card span, .entry-card span, .action-card span, .plan-card span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .category-count { color: var(--muted); font-size: 11px; font-weight: 900; }
+    .asset-card { min-width: 166px; padding: 13px; scroll-snap-align: start; }
+    .asset-card small { display: inline-block; margin-top: 11px; color: var(--brand); font-size: 12px; font-weight: 900; }
+    #recentWrap {
+      gap: 12px;
+      scroll-snap-type: x mandatory;
+      scroll-padding-left: 0;
+      padding: 2px 22px 8px 0;
+    }
+    #recentWrap .asset-card {
+      min-width: 88%;
+      min-height: 126px;
+      padding: 16px;
+      display: grid;
+      align-content: start;
+    }
+    #recentWrap .asset-card strong { font-size: 18px; }
+    #recentWrap .asset-card span { font-size: 13px; line-height: 1.55; }
+    #recentWrap .asset-card small { margin-top: 14px; }
+    .material-row { padding: 15px; }
+    .collection { display: none; margin-top: 14px; }
+    .collection.active { display: block; }
+    .collection-list, .stack { display: grid; gap: 10px; }
+
+    .record-hero { display: grid; place-items: center; padding: 18px 0 12px; }
+    .record-button {
+      width: 188px;
+      height: 188px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.62), transparent 34%), linear-gradient(145deg, #1e7563, #165646);
+      box-shadow: 0 24px 42px rgba(30, 117, 99, 0.26);
+    }
+    .record-button strong { display: block; font-size: 25px; }
+    .record-button span span { display: block; margin-top: 7px; font-size: 13px; opacity: 0.78; }
+    .action-pair, .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .action-card { min-height: 86px; padding: 14px; }
+    .profile-card { display: flex; align-items: center; gap: 13px; padding: 16px; }
+    .profile-main { flex: 1; min-width: 0; }
+    .profile-main h2 { margin-right: 88px; }
+    .profile-status { position: absolute; top: 14px; right: 14px; min-height: 26px; padding: 5px 9px; font-size: 11px; }
+    .avatar { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; color: #fff; background: var(--brand); font-size: 24px; font-weight: 900; }
+    .stats-card { padding: 16px; }
+    .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stat { padding: 13px 8px; border-radius: 14px; background: rgba(245, 241, 234, 0.82); text-align: center; }
+    .stat strong { display: block; font-size: 22px; line-height: 1.1; }
+    .stat span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .entry-list { display: grid; gap: 10px; }
+    .entry-card { min-height: 74px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 14px 15px; }
+    .badge { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 999px; color: var(--brand); background: var(--brand-soft); font-size: 12px; font-weight: 900; }
+
+    .detail-hero { padding: 18px; background: linear-gradient(135deg, rgba(30, 117, 99, 0.12), rgba(255, 250, 242, 0.9)); }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .detail-cell { min-height: 64px; padding: 10px; border-radius: 13px; background: rgba(245, 241, 234, 0.78); }
+    .detail-cell b { display: block; margin-bottom: 4px; color: var(--brand); font-size: 11px; }
+    .detail-cell span { color: #665642; font-size: 12px; line-height: 1.45; }
+    .bottom-actions {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 12px;
+      z-index: 28;
+      max-width: 398px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 250, 242, 0.94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .bottom-actions.three { grid-template-columns: 1fr 1fr 1.2fr; }
+
+    .plan-card { padding: 14px; }
+    .plan-card.done { opacity: 0.72; }
+    .plan-status { color: var(--brand); font-size: 12px; font-weight: 900; }
+    .timeline { display: grid; gap: 9px; margin-top: 10px; }
+    .timeline-row { display: grid; grid-template-columns: 62px 1fr; gap: 10px; padding: 10px; border-radius: 13px; background: rgba(245, 241, 234, 0.78); }
+    .timeline-row b { font-size: 12px; color: var(--brand); }
+
+    .tabbar {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+      z-index: 30;
+      height: 66px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255, 250, 242, 0.92);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+    .tab { border-radius: 18px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 900; }
+    .tab.active { color: #fff; background: var(--brand); box-shadow: 0 10px 18px rgba(30, 117, 99, 0.16); }
+
+    .fab {
+      position: absolute;
+      right: 22px;
+      bottom: calc(var(--tabbar) + 18px);
+      z-index: 10;
+      min-width: 86px;
+      height: 48px;
+      padding: 0 17px;
+      border-radius: 999px;
+      color: #fff;
+      background: #2b2a25;
+      font-size: 14px;
+      font-weight: 900;
+      box-shadow: 0 14px 28px rgba(35, 31, 25, 0.24);
+    }
+
+    .sheet-mask { position: absolute; inset: 0; z-index: 40; display: none; background: rgba(33, 28, 21, 0.28); }
+    .sheet-mask.active { display: block; }
+    .sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 82%;
+      overflow-y: auto;
+      padding: 10px 18px 22px;
+      border-radius: 28px 28px 0 0;
+      background: #fffaf2;
+      box-shadow: 0 -20px 54px rgba(35, 31, 25, 0.2);
+      transform: translateY(102%);
+      transition: transform 0.24s ease;
+    }
+    .sheet-mask.active .sheet { transform: translateY(0); }
+    .sheet-handle { width: 42px; height: 5px; margin: 0 auto 15px; border-radius: 99px; background: rgba(46, 41, 34, 0.2); }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .sheet-head h2 { margin: 0; font-size: 20px; }
+    .close { width: 34px; height: 34px; border-radius: 99px; background: rgba(46, 41, 34, 0.08); color: var(--muted); font-size: 20px; line-height: 1; }
+    .choice-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .choice { min-height: 32px; padding: 0 11px; border-radius: 999px; background: rgba(46, 41, 34, 0.07); color: #695d4e; font-size: 12px; font-weight: 900; }
+    .choice.active { color: #fff; background: var(--brand); }
+    .sheet-list { display: grid; gap: 9px; }
+    .sheet-item { padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(245, 241, 234, 0.72); text-align: left; }
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 96px;
+      z-index: 80;
+      max-width: 78%;
+      padding: 10px 13px;
+      border-radius: 999px;
+      background: rgba(34, 31, 27, 0.88);
+      color: #fff;
+      font-size: 13px;
+      opacity: 0;
+      transform: translate(-50%, 14px);
+      transition: 0.2s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 520px) {
+      body { display: block; background: var(--bg); }
+      .phone { width: 100vw; height: 100vh; min-height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="私密训练空间完整原型">
+    <div class="statusbar">
+      <span>9:41</span>
+      <div class="capsule" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+
+    <div class="screen">
+      <section class="page active" id="page-assets" data-page="assets">
+        <label class="search" for="assetSearch">
+          <span class="mark" aria-hidden="true"></span>
+          <input id="assetSearch" type="search" placeholder="搜游戏、角色、才艺、格式、主理、技巧、复盘" autocomplete="off" />
+        </label>
+
+        <div id="assetHome">
+          <section class="section">
+            <div class="section-head">
+              <h2>素材类别</h2>
+              <button class="ghost-btn" id="openAssetFilter">筛选</button>
+            </div>
+            <div class="category-wrap grid" id="categoryWrap"></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>最近使用</h2>
+              <button class="ghost-btn" id="recentAll">查看全部</button>
+            </div>
+            <div class="h-scroll" id="recentWrap"></div>
+          </section>
+        </div>
+
+        <section class="collection" id="assetCollection">
+          <div class="section-head">
+            <button class="ghost-btn" id="backToAssets">返回</button>
+            <h2 id="collectionTitle">游戏</h2>
+            <button class="ghost-btn" id="openAbilityFilter">筛选</button>
+          </div>
+          <div class="collection-list" id="collectionList"></div>
+        </section>
+      </section>
+
+      <section class="page" id="page-record" data-page="record">
+        <div class="record-hero">
+          <button class="record-button" id="recordMomentButton" aria-label="记录瞬间">
+            <span><strong>记录瞬间</strong><span>一句话先存</span></span>
+          </button>
+        </div>
+
+        <div class="action-pair">
+          <button class="action-card" id="practiceEntry"><strong>记录练习</strong><span>先筛选素材，再进入训练详情页。</span></button>
+          <button class="action-card" id="rehearsalEntry"><strong>记录排练</strong><span>填写基本信息，开始编排排练步骤。</span></button>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>今日推荐</h2>
+            <button class="ghost-btn" id="recordRefresh">换一张</button>
+          </div>
+          <button class="card soft-card" id="recordRecommend"></button>
+        </section>
+
+        <section class="section" id="pausedSection">
+          <div class="section-head">
+            <h2>暂停中</h2>
+            <span class="pill" id="pausedCount">0 项</span>
+          </div>
+          <div class="stack" id="pausedStack"></div>
+        </section>
+      </section>
+
+      <section class="page" id="page-mine" data-page="mine">
+        <article class="card profile-card">
+          <div class="avatar" aria-hidden="true">即</div>
+          <div class="profile-main">
+            <span class="pill profile-status">本机私密</span>
+            <h2>即兴主理人</h2>
+            <p>短篇游戏收藏者 / 长篇格式练习中 / 本周练角色识别。</p>
+          </div>
+        </article>
+
+        <section class="section">
+          <article class="card stats-card">
+            <div class="stats-grid">
+              <div class="stat"><strong id="practiceCount">28</strong><span>练习次数</span></div>
+              <div class="stat"><strong>7</strong><span>素材类型</span></div>
+              <div class="stat"><strong id="rehearsalCount">12</strong><span>排练次数</span></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-head"><h2>训练资产</h2></div>
+          <div class="entry-list">
+            <button class="card entry-card" data-mine="pending"><div><strong>待整理</strong><span>快速记录、练习复盘和排练观察。</span></div><span class="badge">3</span></button>
+            <button class="card entry-card" data-mine="inspiration"><div><strong>灵感记录</strong><span>角色、台词、开场、观众互动的零散想法。</span></div><span class="badge">16</span></button>
+            <button class="card entry-card" data-mine="practice"><div><strong>素材练习记录</strong><span>每张素材的训练次数、复盘和下次练法。</span></div><span class="badge">28</span></button>
+            <button class="card entry-card" data-mine="rehearsal"><div><strong>排练记录</strong><span>排练单、素材组合、排练后复盘。</span></div><span class="badge">12</span></button>
+          </div>
+        </section>
+      </section>
+
+      <section class="subpage" id="materialDetailPage"></section>
+      <section class="subpage" id="trainingPage"></section>
+      <section class="subpage" id="trainingReviewPage"></section>
+      <section class="subpage" id="rehearsalPage"></section>
+      <section class="subpage" id="rehearsalReviewPage"></section>
+
+      <button class="fab" id="drawButton">抽一张</button>
+
+      <nav class="tabbar" aria-label="底部导航">
+        <button class="tab active" data-tab="assets">素材</button>
+        <button class="tab" data-tab="record">记录</button>
+        <button class="tab" data-tab="mine">我的</button>
+      </nav>
+
+      <div class="sheet-mask" id="sheetMask" aria-hidden="true">
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+          <div class="sheet-handle"></div>
+          <div class="sheet-head">
+            <h2 id="sheetTitle">记录瞬间</h2>
+            <button class="close" id="closeSheet" aria-label="关闭">×</button>
+          </div>
+          <div id="sheetBody"></div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+  </main>
+
+  <script>
+    const categories = [
+      { key: "游戏", title: "游戏", icon: "戏", desc: "热身、短篇、限制、关系、叙事和音乐游戏", count: 42 },
+      { key: "角色", title: "角色", icon: "人", desc: "职业、身份、关系、状态和经典类型人物", count: 31 },
+      { key: "才艺", title: "才艺", icon: "艺", desc: "舞蹈、歌曲、口音、模仿、运动和仪式动作", count: 18 },
+      { key: "格式", title: "格式", icon: "式", desc: "开场、转场、回收、蒙太奇和长篇结构", count: 12 },
+      { key: "主理", title: "主理", icon: "主", desc: "主持词、规则讲法、控场话术和复盘问题", count: 26 },
+      { key: "技巧", title: "技巧", icon: "技", desc: "Yes And、聆听、平台、关系、情绪和失败复原", count: 34 },
+      { key: "复盘", title: "复盘", icon: "复", desc: "Keep、Try、观众反馈、团队观察和成功模式", count: 21 },
+      { key: "路径", title: "路径", icon: "路", desc: "学习地图、训练路线和素材管理框架", count: 2 }
+    ];
+
+    const materials = [
+      { id: "detective", type: "角色", title: "经典招聘动作：侦探", ability: ["角色塑造", "身体空间", "台词"], summary: "停步观察、掀开外套、低声确认线索，让观众先认出身份。", action: "停步扫视，弯腰看地面，手指轻敲下巴。", line: "这里不对，脚印比故事诚实。", expression: "眼神收窄，语速放慢，像在和证据对话。", next: "下次只练 30 秒登场，不解释身份。", liked: false, played: false },
+      { id: "one-word", type: "游戏", title: "一字一句", ability: ["Yes And", "积极聆听", "台词"], summary: "两人轮流每次只说一个字，共同完成一句话并推进关系。", action: "身体保持对方方向，避免只盯语言。", line: "把每个字当作共同选择，不抢结论。", expression: "听到转折时先接纳，再微调情绪。", next: "加一个明确关系目标再练。", liked: true, played: true },
+      { id: "tango", type: "才艺", title: "三拍识别：探戈", ability: ["身体空间", "节奏", "角色塑造"], summary: "短短三拍里让观众认出探戈：停顿、转头、拉近。", action: "一停、二转头、三压低重心。", line: "今晚，不要踩错我的节奏。", expression: "强控制感，目光坚定，嘴角轻收。", next: "练习从日常角色自然切入三拍。", liked: false, played: false },
+      { id: "montage", type: "格式", title: "蒙太奇过场", ability: ["叙事构建", "结构", "关系"], summary: "用主题、动作或台词把多个短场景串成一个长篇段落。", action: "保持清晰切场，重复一个可识别元素。", line: "同一句台词在不同场景里变意义。", expression: "每次切换只改变一个核心变量。", next: "排练三组不同回收方式。", liked: true, played: false },
+      { id: "host-accept", type: "主理", title: "热身提示：只接不评", ability: ["主持", "Yes And", "团队协作"], summary: "带大家从评价脑切回共创脑，降低开场压力。", action: "给出短规则，马上开始第一轮。", line: "先接住对方，再让它变得更具体。", expression: "语气轻，节奏快，少解释。", next: "把提示压缩到 20 秒以内。", liked: false, played: true },
+      { id: "doctor", type: "角色", title: "识别姿态：医生", ability: ["角色塑造", "身体空间", "关系"], summary: "听诊、记录、安抚，三个动作建立专业感和照顾关系。", action: "侧身听诊，快速记录，轻拍肩膀。", line: "先别急，我们一项一项排除。", expression: "稳定、专注，眼神先看人再看记录。", next: "练习急诊和家庭医生两种节奏。", liked: false, played: false },
+      { id: "yes-and", type: "技巧", title: "Yes And 三连", ability: ["Yes And", "自发性", "积极聆听"], summary: "连续三次接住对方信息，每次只增加一个具体细节。", action: "先复述对方给出的事实，再补地点、关系或目标。", line: "好，而且我们已经答应校长今晚前完成。", expression: "不要急着翻转，先让对方感到被接住。", next: "和任意角色素材组合，练 2 分钟关系推进。", liked: true, played: true },
+      { id: "keep-try", type: "复盘", title: "Keep / Try 复盘卡", ability: ["失败复原", "观察", "团队协作"], summary: "把一次练习拆成保留什么、下次尝试什么、提醒自己什么。", action: "先写一个具体有效行为，再写一个可执行尝试。", line: "Keep：关系先行。Try：下一轮减少解释性台词。", expression: "只记录可观察行为，不评价演员好坏。", next: "从今天的暂停练习里挑一条沉淀为方法卡。", liked: false, played: false },
+      { id: "callback-line", type: "格式", title: "角色回收：同一句台词", ability: ["叙事构建", "角色塑造", "结构"], summary: "让同一句台词在不同场景里反复出现，每次改变意义。", action: "第一次建立含义，第二次错位，第三次完成回收。", line: "你还是来了。", expression: "每次回收只改变关系或处境中的一个变量。", next: "放进 20 分钟长篇练习，记录哪次回收最清楚。", liked: false, played: false }
+    ];
+    const pathMaterials = [
+      { id: "learning", type: "路径", title: "演员学习路径地图", ability: ["自发性", "角色塑造", "叙事构建"], summary: "从敢上场到能驾驭：底盘、关系、角色、情绪、叙事和演出整合。", referenceOnly: true },
+      { id: "training", type: "路径", title: "完整训练路径", ability: ["观察", "结构", "团队协作"], summary: "从素材收集、归类、速查、短练，到组合进排练和复盘成资产。", referenceOnly: true }
+    ];
+    const allMaterials = [...materials, ...pathMaterials];
+
+    const abilityGroups = ["自发性", "Yes And", "积极聆听", "角色塑造", "情绪表达", "身体空间", "叙事构建", "失败复原", "主持", "团队协作"];
+    const abilities = ["全部", ...abilityGroups, "身体", "声音", "台词", "关系", "节奏", "结构", "观察", "反应", "观众互动"];
+    const recents = ["yes-and", "keep-try", "montage", "tango", "one-word"];
+    const mineData = {
+      pending: [{ title: "待整理：探戈三拍", desc: "需要补充识别点和下次练法。", type: "待整理" }, { title: "待整理：排练复盘", desc: "团队反馈里有一条可沉淀为方法卡。", type: "待整理" }],
+      inspiration: [{ title: "开场台词灵感", desc: "把观众给的地点变成角色的秘密。", type: "灵感" }, { title: "医生角色反差", desc: "越专业越害怕自己的诊断。", type: "灵感" }],
+      practice: [{ title: "Yes And 三连", desc: "Keep：复述清楚。Try：少解释。", type: "素材练习" }, { title: "蒙太奇过场", desc: "下次练三种回收方式。", type: "素材练习" }],
+      rehearsal: [{ title: "周三长篇排练", desc: "热身、主练、蒙太奇、复盘。", type: "排练" }, { title: "开放麦前排练", desc: "重点练角色识别和转场。", type: "排练" }]
+    };
+
+    let currentCategory = "";
+    let currentAbility = "全部";
+    let categoryMode = "grid";
+    let recommendIndex = 0;
+    let currentMaterialId = "yes-and";
+    let activeSession = null;
+    let currentRehearsal = null;
+    let reviewTarget = null;
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+    const materialById = (id) => materials.find((item) => item.id === id) || materials[0];
+    const materialByTitle = (title) => materials.find((item) => item.title === title) || materials[0];
+
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    function openSheet(title, html) {
+      $("#sheetTitle").textContent = title;
+      $("#sheetBody").innerHTML = html;
+      $("#sheetMask").classList.add("active");
+      $("#sheetMask").setAttribute("aria-hidden", "false");
+      bindSheetChoices();
+    }
+    function closeSheet() {
+      $("#sheetMask").classList.remove("active");
+      $("#sheetMask").setAttribute("aria-hidden", "true");
+    }
+
+    function switchPage(name) {
+      $$(".page").forEach((page) => page.classList.toggle("active", page.dataset.page === name));
+      $$(".subpage").forEach((page) => page.classList.remove("active"));
+      $$(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === name));
+      $("#drawButton").style.display = name === "assets" ? "" : "none";
+      $(".tabbar").style.display = "";
+      closeSheet();
+    }
+    function showSubpage(id) {
+      $$(".page").forEach((page) => page.classList.remove("active"));
+      $$(".subpage").forEach((page) => page.classList.toggle("active", page.id === id));
+      $("#drawButton").style.display = "none";
+      $(".tabbar").style.display = "none";
+      closeSheet();
+    }
+    function backToRecord() {
+      switchPage("record");
+      renderPaused();
+    }
+    function backToAssetsHome() {
+      switchPage("assets");
+      $("#assetHome").style.display = "";
+      $("#assetCollection").classList.remove("active");
+      $("#assetSearch").value = "";
+      currentCategory = "";
+      currentAbility = "全部";
+    }
+
+    function setExpandable(cardId, toggleId, expanded) {
+      const card = $(cardId);
+      const toggle = $(toggleId);
+      card.classList.toggle("expanded", expanded);
+      card.setAttribute("aria-expanded", String(expanded));
+      toggle.setAttribute("aria-expanded", String(expanded));
+      toggle.textContent = expanded ? "收起" : "展开";
+    }
+
+    function renderCategories() {
+      const wrap = $("#categoryWrap");
+      wrap.className = `category-wrap ${categoryMode}`;
+      wrap.innerHTML = categories.map((category) => `
+        <button class="category-card" data-category="${category.key}">
+          <i class="category-icon" aria-hidden="true">${category.icon}</i>
+          <strong>${category.title}</strong>
+          <em class="category-count">${category.count}</em>
+        </button>
+      `).join("");
+      $$(".category-card").forEach((button) => button.addEventListener("click", () => openCategory(button.dataset.category)));
+    }
+    function renderRecents() {
+      $("#recentWrap").innerHTML = recents.map((id) => {
+        const item = materialById(id);
+        return `<button class="card asset-card" data-id="${item.id}">
+          <strong>${item.title}</strong><span>${item.summary}</span><small>${item.type} / ${item.ability.slice(0, 2).join(" / ")}</small>
+        </button>`;
+      }).join("");
+      $$("#recentWrap .asset-card").forEach((button) => button.addEventListener("click", () => openMaterialDetail(button.dataset.id, "assets")));
+    }
+    function filteredMaterials() {
+      return allMaterials.filter((item) => {
+        const matchCategory = !currentCategory || item.type === currentCategory;
+        const matchAbility = currentAbility === "全部" || item.ability.includes(currentAbility);
+        return matchCategory && matchAbility;
+      });
+    }
+    function renderCollection(list = allMaterials) {
+      $("#collectionList").innerHTML = list.map((item) => `
+        <button class="material-row" data-id="${item.id}" data-reference="${item.referenceOnly ? "true" : "false"}">
+          <h3>${item.title}</h3>
+          <p class="card-copy">${item.summary}</p>
+          <div class="meta-row"><span class="meta">${item.referenceOnly ? "参考" : item.type}</span>${item.ability.slice(0, 3).map((ability) => `<span class="meta">${ability}</span>`).join("")}</div>
+        </button>
+      `).join("");
+      $$(".material-row").forEach((button) => button.addEventListener("click", () => {
+        button.dataset.reference === "true" ? openPathDetail(button.dataset.id) : openMaterialDetail(button.dataset.id, "assets");
+      }));
+    }
+    function openCategory(category) {
+      currentCategory = category;
+      currentAbility = "全部";
+      $("#assetHome").style.display = "none";
+      $("#assetCollection").classList.add("active");
+      $("#collectionTitle").textContent = category;
+      renderCollection(filteredMaterials());
+    }
+    function openAbilityResults(ability) {
+      currentCategory = "";
+      currentAbility = ability;
+      $("#assetHome").style.display = "none";
+      $("#assetCollection").classList.add("active");
+      $("#collectionTitle").textContent = `能力：${ability}`;
+      renderCollection(filteredMaterials());
+    }
+    function openSearchResults(query) {
+      const normalized = query.trim().toLowerCase();
+      if (!normalized) {
+        $("#assetHome").style.display = "";
+        $("#assetCollection").classList.remove("active");
+        return;
+      }
+      const list = allMaterials.filter((item) => `${item.type}${item.title}${item.summary}${item.action || ""}${item.line || ""}${item.ability.join("")}`.toLowerCase().includes(normalized));
+      $("#assetHome").style.display = "none";
+      $("#assetCollection").classList.add("active");
+      $("#collectionTitle").textContent = `搜索：${query}`;
+      renderCollection(list);
+    }
+
+    function renderRecommend() {
+      const item = materials[recommendIndex % materials.length];
+      $("#recordRecommend").innerHTML = `
+        <div class="card-kicker">${item.type} / ${item.ability.join(" / ")}</div>
+        <h2>${item.title}</h2>
+        <p class="card-copy">${item.summary}</p>
+        <div class="meta-row"><span class="meta">可开始训练</span><span class="meta">点击查看详情</span></div>
+      `;
+      $("#recordRecommend").onclick = () => openMaterialDetail(item.id, "record");
+    }
+
+    function renderMaterialDetail(item, backTarget) {
+      const likeText = item.liked ? "已点赞" : "点赞";
+      const playedText = item.played ? "已玩过" : "标记玩过";
+      $("#materialDetailPage").innerHTML = `
+        <div class="sub-head">
+          <button class="icon-btn" data-back="${backTarget}">‹</button>
+          <div><h1>素材详情</h1><p>${item.type} / ${item.ability.join(" / ")}</p></div>
+          <span class="pill">私密</span>
+        </div>
+        <article class="card detail-hero">
+          <div class="card-kicker">${item.type}</div>
+          <h2>${item.title}</h2>
+          <p class="card-copy">${item.summary}</p>
+          <div class="meta-row">${item.ability.map((ability) => `<span class="meta">${ability}</span>`).join("")}</div>
+        </article>
+        <section class="section">
+          <div class="detail-grid">
+            <div class="detail-cell"><b>临场用法</b><span>${item.action}</span></div>
+            <div class="detail-cell"><b>提示</b><span>${item.line}</span></div>
+            <div class="detail-cell"><b>观察点</b><span>${item.expression}</span></div>
+            <div class="detail-cell"><b>下次练法</b><span>${item.next}</span></div>
+          </div>
+        </section>
+        <section class="section">
+          <article class="card soft-card">
+            <div class="card-kicker">历史复盘</div>
+            <h3>${item.played ? "已有 2 次练习记录" : "还没有练习记录"}</h3>
+            <p class="card-copy">${item.played ? "最近一次 Keep：先建立关系。Try：减少解释性台词。" : "开始一次训练后，这里会回看 Keep、Try 和下次提醒。"}</p>
+          </article>
+        </section>
+        <div class="bottom-actions three">
+          <button class="ghost-btn" id="likeMaterial">${likeText}</button>
+          <button class="ghost-btn" id="playedMaterial">${playedText}</button>
+          <button class="primary-btn" id="startTraining">开始训练</button>
+        </div>
+      `;
+      $("#materialDetailPage [data-back]").addEventListener("click", () => backTarget === "record" ? switchPage("record") : backToAssetsHome());
+      $("#likeMaterial").addEventListener("click", () => {
+        item.liked = !item.liked;
+        renderMaterialDetail(item, backTarget);
+        showToast(item.liked ? "已点赞" : "已取消点赞");
+      });
+      $("#playedMaterial").addEventListener("click", () => {
+        item.played = !item.played;
+        renderMaterialDetail(item, backTarget);
+        showToast(item.played ? "已标记玩过" : "已取消玩过");
+      });
+      $("#startTraining").addEventListener("click", () => startTraining(item.id));
+    }
+    function openMaterialDetail(id, backTarget = "assets") {
+      currentMaterialId = id;
+      renderMaterialDetail(materialById(id), backTarget);
+      showSubpage("materialDetailPage");
+    }
+
+    function canStartNew(kind) {
+      if (!activeSession) return true;
+      const text = activeSession.kind === "rehearsal" ? "当前已有暂停中的排练" : "当前已有暂停中的素材训练";
+      showToast(`${text}，请先继续或结束`);
+      return false;
+    }
+    function startTraining(id) {
+      if (!canStartNew("training")) return;
+      const item = materialById(id);
+      activeSession = { kind: "training", status: "进行中", materialId: id, title: item.title, elapsed: 0, keep: "", try: "" };
+      renderTrainingPage();
+      showSubpage("trainingPage");
+    }
+    function renderTrainingPage() {
+      const item = materialById(activeSession.materialId);
+      $("#trainingPage").innerHTML = `
+        <div class="sub-head">
+          <button class="icon-btn" id="trainingBack">‹</button>
+          <div><h1>开始训练</h1><p>${activeSession.status} / ${item.type}</p></div>
+          <span class="pill">${activeSession.status}</span>
+        </div>
+        <article class="card detail-hero">
+          <div class="card-kicker">当前素材</div>
+          <h2>${item.title}</h2>
+          <p class="card-copy">${item.summary}</p>
+          <div class="meta-row"><span class="meta">目标：${item.ability[0]}</span><span class="meta">建议 10 分钟</span></div>
+        </article>
+        <section class="section">
+          <div class="section-head"><h2>训练步骤</h2><button class="ghost-btn" id="openTrainingMaterial">素材详情</button></div>
+          <div class="timeline">
+            <div class="timeline-row"><b>1 分钟</b><span class="muted">读一句话用法，确定本轮只练一个目标。</span></div>
+            <div class="timeline-row"><b>5 分钟</b><span class="muted">重复动作、提示和观察点，避免扩散。</span></div>
+            <div class="timeline-row"><b>3 分钟</b><span class="muted">把素材放入一个角色关系或场景。</span></div>
+            <div class="timeline-row"><b>1 分钟</b><span class="muted">记录 Keep / Try / 下次提醒。</span></div>
+          </div>
+        </section>
+        <div class="bottom-actions three">
+          <button class="ghost-btn" id="pauseTraining">${activeSession.status === "暂停中" ? "继续" : "暂停"}</button>
+          <button class="danger-btn" id="endTraining">结束并复盘</button>
+          <button class="primary-btn" id="trainingToast">记录一句</button>
+        </div>
+      `;
+      $("#trainingBack").addEventListener("click", backToRecord);
+      $("#openTrainingMaterial").addEventListener("click", () => openMaterialDetail(item.id, "record"));
+      $("#pauseTraining").addEventListener("click", () => {
+        activeSession.status = activeSession.status === "暂停中" ? "进行中" : "暂停中";
+        renderTrainingPage();
+        renderPaused();
+        showToast(activeSession.status === "暂停中" ? "训练已暂停" : "继续训练");
+      });
+      $("#endTraining").addEventListener("click", () => openTrainingReview());
+      $("#trainingToast").addEventListener("click", () => showToast("已记录到本次训练"));
+    }
+    function openTrainingReview() {
+      reviewTarget = { type: "training", title: activeSession.title, materialId: activeSession.materialId };
+      $("#rehearsalReviewPage").innerHTML = "";
+      $("#trainingReviewPage").innerHTML = reviewTemplate("训练复盘", reviewTarget.title, "保存训练复盘");
+      bindReview("training");
+      showSubpage("trainingReviewPage");
+    }
+
+    function openRehearsalSheet() {
+      if (!canStartNew("rehearsal")) return;
+      openSheet("快速开启排练", `
+        <div class="field"><label>排练名称</label><input id="rehearsalTitle" value="今晚排练单" /></div>
+        <div class="field"><label>目标</label><input id="rehearsalGoal" value="角色识别 / 蒙太奇过场 / 复盘表达" /></div>
+        <div class="field"><label>时长</label><input id="rehearsalDuration" value="60 分钟" /></div>
+        <div class="choice-row" id="rehearsalSeed">
+          <button class="choice active" data-seed="saved">从最近素材开始</button>
+          <button class="choice" data-seed="blank">空白开始</button>
+        </div>
+        <button class="primary-btn" id="startRehearsalNow" style="width:100%; margin-top: 8px;">开始排练</button>
+      `);
+      $("#startRehearsalNow").addEventListener("click", () => {
+        const seed = $("#rehearsalSeed .choice.active").dataset.seed;
+        const plan = seed === "blank" ? [] : ["host-accept", "detective", "montage"].map((id, index) => ({ id: `p${index}`, materialId: id, status: "未开始", keep: "", try: "" }));
+        activeSession = { kind: "rehearsal", status: "进行中", title: $("#rehearsalTitle").value || "今晚排练单", goal: $("#rehearsalGoal").value, duration: $("#rehearsalDuration").value, plan };
+        currentRehearsal = activeSession;
+        closeSheet();
+        renderRehearsalPage();
+        showSubpage("rehearsalPage");
+      });
+    }
+    function renderRehearsalPage() {
+      const rehearsal = activeSession && activeSession.kind === "rehearsal" ? activeSession : currentRehearsal;
+      $("#rehearsalPage").innerHTML = `
+        <div class="sub-head">
+          <button class="icon-btn" id="rehearsalBack">‹</button>
+          <div><h1>排练编排</h1><p>${rehearsal.title} / ${rehearsal.duration}</p></div>
+          <span class="pill">${rehearsal.status}</span>
+        </div>
+        <article class="card soft-card">
+          <div class="card-kicker">本次排练</div>
+          <h2>${rehearsal.title}</h2>
+          <p class="card-copy">${rehearsal.goal || "先开始，再边排边补。"}</p>
+        </article>
+        <section class="section">
+          <div class="section-head"><h2>排练步骤与素材</h2><button class="ghost-btn" id="addPlanMaterial">加素材</button></div>
+          <div class="stack" id="planStack">${renderPlanItems(rehearsal)}</div>
+        </section>
+        <div class="bottom-actions three">
+          <button class="ghost-btn" id="openPlanSheet">编排</button>
+          <button class="ghost-btn" id="pauseRehearsal">${rehearsal.status === "暂停中" ? "继续" : "暂停"}</button>
+          <button class="danger-btn" id="endRehearsal">结束并复盘</button>
+        </div>
+      `;
+      $("#rehearsalBack").addEventListener("click", backToRecord);
+      $("#addPlanMaterial").addEventListener("click", () => openAddMaterialToPlan());
+      $("#openPlanSheet").addEventListener("click", () => openPlanSheet());
+      $("#pauseRehearsal").addEventListener("click", () => {
+        rehearsal.status = rehearsal.status === "暂停中" ? "进行中" : "暂停中";
+        activeSession = rehearsal;
+        renderRehearsalPage();
+        renderPaused();
+        showToast(rehearsal.status === "暂停中" ? "排练已暂停" : "继续排练");
+      });
+      $("#endRehearsal").addEventListener("click", () => openRehearsalReview());
+      $$(".plan-card").forEach((card) => {
+        card.addEventListener("click", () => openMaterialDetail(card.dataset.materialId, "record"));
+      });
+    }
+    function renderPlanItems(rehearsal) {
+      if (!rehearsal.plan.length) {
+        return `<article class="card soft-card"><h3>还没有排练计划</h3><p class="card-copy">先加入 1-3 张素材，再开始调整顺序和状态。</p></article>`;
+      }
+      return rehearsal.plan.map((plan, index) => {
+        const item = materialById(plan.materialId);
+        return `<button class="plan-card ${plan.status === "已完成" ? "done" : ""}" data-plan-id="${plan.id}" data-material-id="${item.id}">
+          <span class="plan-status">${index + 1}. ${plan.status}</span>
+          <strong>${item.title}</strong>
+          <span>${item.type} / ${item.ability.slice(0, 2).join(" / ")}</span>
+        </button>`;
+      }).join("");
+    }
+    function openAddMaterialToPlan() {
+      const rehearsal = activeSession;
+      openSheet("添加到排练", `
+        <label class="search"><span class="mark"></span><input id="planSearch" placeholder="搜索素材" /></label>
+        <div class="sheet-list" id="planMaterialList" style="margin-top: 12px;">${materials.map((item) => `<button class="sheet-item" data-add-plan="${item.id}"><strong>${item.title}</strong><p class="card-copy">${item.type} / ${item.summary}</p></button>`).join("")}</div>
+      `);
+      $$("#planMaterialList [data-add-plan]").forEach((button) => button.addEventListener("click", () => {
+        rehearsal.plan.push({ id: `p${Date.now()}`, materialId: button.dataset.addPlan, status: "未开始", keep: "", try: "" });
+        closeSheet();
+        renderRehearsalPage();
+        showToast("已加入排练");
+      }));
+    }
+    function openPlanSheet() {
+      const rehearsal = activeSession;
+      openSheet("调整排练计划", `
+        <article class="card soft-card"><div class="card-kicker">当前排练</div><h3>${rehearsal.title}</h3><p class="card-copy">${rehearsal.goal}</p></article>
+        <div class="sheet-list" style="margin-top: 12px;">
+          ${rehearsal.plan.map((plan) => {
+            const item = materialById(plan.materialId);
+            return `<button class="sheet-item" data-cycle-plan="${plan.id}"><strong>${item.title}</strong><p class="card-copy">状态：${plan.status}。点击切换未开始 / 进行中 / 已完成。</p></button>`;
+          }).join("") || `<p class="card-copy">暂无计划，先添加素材。</p>`}
+        </div>
+      `);
+      $$("[data-cycle-plan]").forEach((button) => button.addEventListener("click", () => {
+        const plan = rehearsal.plan.find((item) => item.id === button.dataset.cyclePlan);
+        plan.status = plan.status === "未开始" ? "进行中" : (plan.status === "进行中" ? "已完成" : "未开始");
+        closeSheet();
+        renderRehearsalPage();
+      }));
+    }
+    function openRehearsalReview() {
+      reviewTarget = { type: "rehearsal", title: activeSession.title };
+      $("#trainingReviewPage").innerHTML = "";
+      $("#rehearsalReviewPage").innerHTML = reviewTemplate("排练复盘", reviewTarget.title, "保存排练复盘");
+      bindReview("rehearsal");
+      showSubpage("rehearsalReviewPage");
+    }
+
+    function reviewTemplate(kicker, title, buttonText) {
+      return `
+        <div class="sub-head">
+          <button class="icon-btn" id="reviewBack">‹</button>
+          <div><h1>结束并复盘</h1><p>${title}</p></div>
+          <span class="pill">${kicker}</span>
+        </div>
+        <article class="card soft-card">
+          <div class="card-kicker">${kicker}</div>
+          <h2>${title}</h2>
+          <div class="field"><label>Keep</label><textarea id="reviewKeep" placeholder="这次有效的行为、节奏或选择"></textarea></div>
+          <div class="field"><label>Try</label><textarea id="reviewTry" placeholder="下次要尝试的具体动作"></textarea></div>
+          <div class="field"><label>下次提醒</label><textarea id="reviewNext" placeholder="一句话提醒未来的自己"></textarea></div>
+          <div class="choice-row"><button class="choice active">保存记录</button><button class="choice">沉淀为方法卡</button></div>
+        </article>
+        <div class="bottom-actions"><button class="ghost-btn" id="reviewCancel">返回</button><button class="primary-btn" id="saveReview">${buttonText}</button></div>
+      `;
+    }
+    function bindReview(kind) {
+      $("#reviewBack").addEventListener("click", () => kind === "training" ? renderTrainingPage() || showSubpage("trainingPage") : renderRehearsalPage() || showSubpage("rehearsalPage"));
+      $("#reviewCancel").addEventListener("click", () => kind === "training" ? renderTrainingPage() || showSubpage("trainingPage") : renderRehearsalPage() || showSubpage("rehearsalPage"));
+      $("#saveReview").addEventListener("click", () => {
+        if (kind === "training") {
+          const item = materialById(activeSession.materialId);
+          item.played = true;
+          activeSession = null;
+          showToast("训练复盘已保存");
+        } else {
+          activeSession = null;
+          currentRehearsal = null;
+          showToast("排练复盘已保存");
+        }
+        switchPage("mine");
+        renderPaused();
+      });
+    }
+
+    function openPracticeSheet() {
+      openSheet("选择素材开始练习", `
+        <label class="search"><span class="mark"></span><input id="practiceSearch" placeholder="搜索素材或能力" /></label>
+        <div class="choice-row" id="practiceAbilities">${abilities.slice(0, 10).map((ability, index) => `<button class="choice ${index === 0 ? "active" : ""}" data-filter="${ability}">${ability}</button>`).join("")}</div>
+        <div class="sheet-list" id="practiceList">${materials.map((item) => practiceItemHtml(item)).join("")}</div>
+      `);
+      function refreshPracticeList(filter = "全部") {
+        const list = filter === "全部" ? materials : materials.filter((item) => item.ability.includes(filter) || item.type === filter);
+        $("#practiceList").innerHTML = list.map((item) => practiceItemHtml(item)).join("");
+        bindPracticeItems();
+      }
+      function bindPracticeItems() {
+        $$("#practiceList [data-practice]").forEach((button) => button.addEventListener("click", () => {
+          closeSheet();
+          openMaterialDetail(button.dataset.practice, "record");
+        }));
+      }
+      $$("#practiceAbilities .choice").forEach((button) => button.addEventListener("click", () => {
+        $$("#practiceAbilities .choice").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        refreshPracticeList(button.dataset.filter);
+      }));
+      bindPracticeItems();
+    }
+    function practiceItemHtml(item) {
+      return `<button class="sheet-item" data-practice="${item.id}"><strong>${item.title}</strong><p class="card-copy">${item.type} / ${item.ability.slice(0, 2).join(" / ")}</p></button>`;
+    }
+
+    function showCaptureSheet() {
+      openSheet("记录瞬间", `
+        <div class="field"><label>一句话先存</label><textarea placeholder="刚才那个角色、动作、台词或排练观察..."></textarea></div>
+        <div class="choice-row"><button class="choice active">灵感</button><button class="choice">游戏</button><button class="choice">角色</button><button class="choice">才艺</button><button class="choice">格式</button><button class="choice">主理</button></div>
+        <button class="primary-btn" id="saveCapture" style="width: 100%; margin-top: 4px;">先存起来</button>
+      `);
+      $("#saveCapture").addEventListener("click", () => {
+        closeSheet();
+        showToast("已先存到待整理");
+      });
+    }
+    function bindSheetChoices() {
+      $$(".choice-row").forEach((row) => {
+        row.querySelectorAll(".choice").forEach((choice) => {
+          choice.addEventListener("click", () => {
+            row.querySelectorAll(".choice").forEach((item) => item.classList.remove("active"));
+            choice.classList.add("active");
+          });
+        });
+      });
+    }
+
+    function renderPaused() {
+      const stack = $("#pausedStack");
+      const count = activeSession && activeSession.status === "暂停中" ? 1 : 0;
+      $("#pausedCount").textContent = `${count} 项`;
+      if (!count) {
+        stack.innerHTML = `<article class="card soft-card"><h3>暂无暂停内容</h3><p class="card-copy">暂停训练或排练后，会在这里继续进入。</p></article>`;
+        return;
+      }
+      const title = activeSession.kind === "rehearsal" ? "暂停中的排练" : "暂停中的素材训练";
+      stack.innerHTML = `<button class="card soft-card" id="pausedOpen"><div class="card-kicker">${title}</div><h2>${activeSession.title}</h2><p class="card-copy">点击后回到对应详情页继续、暂停或结束复盘。</p></button>`;
+      $("#pausedOpen").addEventListener("click", () => {
+        activeSession.kind === "rehearsal" ? renderRehearsalPage() || showSubpage("rehearsalPage") : renderTrainingPage() || showSubpage("trainingPage");
+      });
+    }
+
+    function openMineList(type) {
+      const titles = { pending: "待整理", inspiration: "灵感记录", practice: "素材练习记录", rehearsal: "排练记录" };
+      const list = mineData[type] || [];
+      openSheet(titles[type], `
+        <div class="sheet-list">
+          ${list.map((item, index) => `<button class="sheet-item" data-mine-detail="${type}:${index}"><strong>${item.title}</strong><p class="card-copy">${item.desc}</p><div class="meta-row"><span class="meta">${item.type}</span><span class="meta">可沉淀</span></div></button>`).join("")}
+        </div>
+      `);
+      $$("[data-mine-detail]").forEach((button) => button.addEventListener("click", () => {
+        const [kind, idx] = button.dataset.mineDetail.split(":");
+        openMineDetail(mineData[kind][Number(idx)]);
+      }));
+    }
+    function openMineDetail(item) {
+      openSheet(item.title, `
+        <article class="card soft-card">
+          <div class="card-kicker">${item.type}</div>
+          <h2>${item.title}</h2>
+          <p class="card-copy">${item.desc}</p>
+          <div class="detail-grid">
+            <div class="detail-cell"><b>Keep</b><span>保留有效动作和带领方式。</span></div>
+            <div class="detail-cell"><b>Try</b><span>下次缩短说明，增加身体示范。</span></div>
+          </div>
+        </article>
+        <div class="button-row" style="margin-top: 12px;"><button class="ghost-btn" id="discardAsset">不再整理</button><button class="primary-btn" id="sedimentAsset">沉淀为方法卡</button></div>
+      `);
+      $("#discardAsset").addEventListener("click", () => showToast("已标记不再整理"));
+      $("#sedimentAsset").addEventListener("click", () => showToast("已沉淀为方法卡"));
+    }
+
+    function openPathHub() {
+      openSheet("学习与训练路径", `
+        <p class="card-copy" style="margin-top: -4px;">路径是低频参考，日常可以直接搜索、分类、抽卡或从最近使用进入素材。</p>
+        <div style="margin-top: 12px;">
+          <button class="path-option" data-path-detail="learning">
+            <strong>演员学习路径地图</strong>
+            <span>从敢上场到能驾驭：底盘、关系、角色、情绪、叙事和演出整合。</span>
+          </button>
+          <button class="path-option" data-path-detail="training">
+            <strong>完整训练路径</strong>
+            <span>从素材收集、归类、速查、短练，到组合进排练和复盘成资产。</span>
+          </button>
+        </div>
+      `);
+      $$("[data-path-detail]").forEach((button) => button.addEventListener("click", () => openPathDetail(button.dataset.pathDetail)));
+    }
+    function openPathDetail(type) {
+      const isLearning = type === "learning";
+      const title = isLearning ? "演员学习路径地图" : "完整训练路径";
+      const intro = isLearning ? "从敢上场到能驾驭，先建即兴底盘，再逐步进入角色、叙事和演出整合。" : "从素材到舞台可用，把灵感和素材变成能复用的个人训练资产。";
+      const actionText = isLearning ? "按能力找素材" : "从素材开始";
+      const steps = isLearning ? [
+        ["即兴底盘", "自发性、Yes And、积极聆听、失败复原，先让自己敢开始。"],
+        ["关系与平台", "建立谁和谁、在哪里、正在发生什么，避免只玩点子。"],
+        ["角色与身体", "用动作、声音、神态、重心和识别点让观众一眼看懂。"],
+        ["情绪与节奏", "放大情绪变化，控制停顿、重复、加速和反差。"],
+        ["叙事与结构", "练开场、转场、回收、蒙太奇和长篇格式。"],
+        ["演出整合", "把游戏、角色、才艺、格式和复盘放进真实排练与演出。"]
+      ] : [
+        ["收集", "课程、演出、视频、灵感和团队反馈先保存。"],
+        ["归类", "放入游戏、角色、才艺、格式、主理、技巧或复盘。"],
+        ["速查", "只看一句话用法、动作、提示和识别点。"],
+        ["短练 10 分钟", "练动作、声音、台词、关系、节奏或主理提示。"],
+        ["组合进排练", "放进热身、主练、长篇格式或主持流程。"],
+        ["应用", "在排练、课堂、工作坊、开放麦或演出中使用。"],
+        ["复盘成资产", "留下本次有效方法和下次练法。"]
+      ];
+      openSheet(title, `
+        <p class="card-copy" style="margin-top: -4px;">${intro}</p>
+        <div class="path-steps">
+          ${steps.map((step, index) => `<div class="path-step"><i>${index + 1}</i><div><strong>${step[0]}</strong><span>${step[1]}</span></div></div>`).join("")}
+        </div>
+        <div class="inline-actions">
+          <button class="ghost-btn" id="backToPathHub">返回</button>
+          <button class="primary-btn" id="pathPrimaryAction">${actionText}</button>
+        </div>
+      `);
+      $("#backToPathHub").addEventListener("click", openPathHub);
+      $("#pathPrimaryAction").addEventListener("click", () => {
+        closeSheet();
+        isLearning ? openAbilityResults("Yes And") : drawMaterial();
+      });
+    }
+
+    function drawMaterial() {
+      const filteredPool = filteredMaterials().filter((item) => !item.referenceOnly);
+      const pool = filteredPool.length ? filteredPool : materials;
+      const item = pool[Math.floor(Math.random() * pool.length)];
+      openMaterialDetail(item.id, "assets");
+    }
+    function collectionTitleFor(category, ability) {
+      if (category && ability !== "全部") return `${category} / ${ability}`;
+      if (category) return category;
+      if (ability !== "全部") return `能力：${ability}`;
+      return "全部素材";
+    }
+    function showAssetFilter() {
+      const initialCategory = currentCategory;
+      const initialAbility = currentAbility;
+      const initialMode = categoryMode;
+      const typeOptions = [{ key: "", title: "全部" }, ...categories.map((category) => ({ key: category.key, title: category.title }))];
+      openSheet("筛选素材", `
+        <div class="field"><label>素材类型</label><div class="choice-row" id="filterCategoryChoices">${typeOptions.map((item) => `<button class="choice ${item.key === currentCategory ? "active" : ""}" data-filter-category="${item.key}">${item.title}</button>`).join("")}</div></div>
+        <div class="field"><label>训练能力</label><div class="choice-row" id="filterAbilityChoices">${abilities.map((ability) => `<button class="choice ${ability === currentAbility ? "active" : ""}" data-filter-ability="${ability}">${ability}</button>`).join("")}</div></div>
+        <div class="field"><label>显示方式</label><div class="choice-row" id="filterViewChoices"><button class="choice ${categoryMode === "grid" ? "active" : ""}" data-filter-view="grid">两列</button><button class="choice ${categoryMode === "h-scroll" ? "active" : ""}" data-filter-view="h-scroll">横滑</button></div></div>
+        <button class="primary-btn" id="applyAssetFilter" style="width: 100%; margin-top: 6px;">应用筛选</button>
+      `);
+      $("#applyAssetFilter").addEventListener("click", () => {
+        const selectedCategory = $("#filterCategoryChoices .choice.active")?.dataset.filterCategory || "";
+        const selectedAbility = $("#filterAbilityChoices .choice.active")?.dataset.filterAbility || "全部";
+        const selectedMode = $("#filterViewChoices .choice.active")?.dataset.filterView || "grid";
+        categoryMode = selectedMode;
+        renderCategories();
+        const onlyViewChanged = selectedCategory === initialCategory && selectedAbility === initialAbility && selectedMode !== initialMode;
+        currentCategory = selectedCategory;
+        currentAbility = selectedAbility;
+        if (onlyViewChanged && $("#assetHome").style.display !== "none") {
+          closeSheet();
+          return;
+        }
+        $("#assetHome").style.display = "none";
+        $("#assetCollection").classList.add("active");
+        $("#collectionTitle").textContent = collectionTitleFor(currentCategory, currentAbility);
+        renderCollection(filteredMaterials());
+        closeSheet();
+      });
+    }
+
+    function bindEvents() {
+      $$(".tab").forEach((tab) => tab.addEventListener("click", () => switchPage(tab.dataset.tab)));
+      $("#assetSearch").addEventListener("input", (event) => openSearchResults(event.target.value));
+      $("#backToAssets").addEventListener("click", backToAssetsHome);
+      $("#openAssetFilter").addEventListener("click", showAssetFilter);
+      $("#openAbilityFilter").addEventListener("click", showAssetFilter);
+      $("#drawButton").addEventListener("click", drawMaterial);
+      $("#recentAll").addEventListener("click", () => openCategory("游戏"));
+      $("#recordMomentButton").addEventListener("click", showCaptureSheet);
+      $("#practiceEntry").addEventListener("click", openPracticeSheet);
+      $("#rehearsalEntry").addEventListener("click", openRehearsalSheet);
+      $("#recordRefresh").addEventListener("click", () => {
+        recommendIndex += 1;
+        renderRecommend();
+      });
+      $("#closeSheet").addEventListener("click", closeSheet);
+      $("#sheetMask").addEventListener("click", (event) => {
+        if (event.target === $("#sheetMask")) closeSheet();
+      });
+      $$("[data-mine]").forEach((button) => button.addEventListener("click", () => openMineList(button.dataset.mine)));
+    }
+
+    renderCategories();
+    renderRecents();
+    renderCollection(allMaterials);
+    renderRecommend();
+    renderPaused();
+    bindEvents();
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ Page({
     editingId: '',
     titleValue: '',
     contentValue: '',
-    linkedGame: '',
+    linkedMaterial: '',
     linkedRehearsal: '',
     arrangementValue: '带领提醒',
     selectedTags: [],
@@ -107,7 +107,7 @@ Page({
           editingId,
           titleValue: existing.title || existing.desc || '',
           contentValue: existing.desc || existing.content || '',
-          linkedGame: existing.linkedMaterialTitle || '',
+          linkedMaterial: existing.linkedMaterialTitle || '',
           linkedRehearsal: existing.linkedRehearsalTitle || '',
           selectedTags: existing.meta || existing.tags || []
         })
@@ -119,7 +119,7 @@ Page({
     const state = getState()
     const rehearsalHistory = state.rehearsalHistory || []
     this.setData({
-      showLinkSection: !!((state.materials || []).length || rehearsalHistory.length || this.data.linkedGame || this.data.linkedRehearsal)
+      showLinkSection: !!((state.materials || []).length || rehearsalHistory.length || this.data.linkedMaterial || this.data.linkedRehearsal)
     })
     this.syncOptions()
   },
@@ -150,15 +150,15 @@ Page({
 
   openLink(event) {
     const kind = event.currentTarget.dataset.kind
-    const isGame = kind === 'material'
+    const isMaterial = kind === 'material'
     const linkOptions = this.getLinkOptions(kind)
     openModal(this, {
       linkVisible: true,
       linkKind: kind,
-      linkSheetTitle: isGame ? '选择关联素材' : '选择关联排练',
+      linkSheetTitle: isMaterial ? '选择关联素材' : '选择关联排练',
       linkOptions,
-      linkEmptyTitle: isGame ? '暂时没有可关联的素材' : '暂时没有可关联的排练',
-      linkEmptyDesc: isGame
+      linkEmptyTitle: isMaterial ? '暂时没有可关联的素材' : '暂时没有可关联的排练',
+      linkEmptyDesc: isMaterial
         ? '还没有素材库时，先把灵感存下来，之后再补关联也可以。'
         : '还没有排练记录时，不需要先补全结构，保存灵感更重要。'
     })
@@ -168,7 +168,7 @@ Page({
     const value = (event.detail && event.detail.id) || event.currentTarget.dataset.value
     closeModal(this, {
       linkVisible: false,
-      linkedGame: this.data.linkKind === 'material' ? value : this.data.linkedGame,
+      linkedMaterial: this.data.linkKind === 'material' ? value : this.data.linkedMaterial,
       linkedRehearsal: this.data.linkKind === 'rehearsal' ? value : this.data.linkedRehearsal
     })
   },
@@ -187,7 +187,7 @@ Page({
       title: this.data.titleValue,
       desc: this.data.contentValue,
       meta: this.data.selectedTags,
-      linkedMaterialTitle: this.data.linkedGame,
+      linkedMaterialTitle: this.data.linkedMaterial,
       linkedRehearsalTitle: this.data.linkedRehearsal
     }
     if (editingId) {
@@ -205,7 +205,7 @@ Page({
         title: this.data.titleValue,
         desc: this.data.contentValue,
         meta: this.data.selectedTags,
-        linkedMaterialTitle: this.data.linkedGame,
+        linkedMaterialTitle: this.data.linkedMaterial,
         linkedRehearsalTitle: this.data.linkedRehearsal
       }
       try {
