@@ -1,34 +1,30 @@
 {
   "improv_materials": {
-    ".read": "auth.openId == 'system'",
-    ".write": "auth.openId == 'system'",
-    "doc.ownerOpenId": {
-      ".read": "doc.ownerOpenId == 'system' || doc.ownerOpenId == auth.openId",
-      ".write": "doc.ownerOpenId == auth.openId"
-    }
+    ".read": false,
+    ".write": false
   },
   "improv_user_material_states": {
-    ".read": "doc.ownerOpenId == auth.openId",
-    ".write": "doc.ownerOpenId == auth.openId"
+    ".read": false,
+    ".write": false
   },
   "improv_profiles": {
-    ".read": "doc.ownerOpenId == auth.openId",
-    ".write": "doc.ownerOpenId == auth.openId"
+    ".read": false,
+    ".write": false
   },
   "improv_inspirations": {
-    ".read": "doc.ownerOpenId == auth.openId",
-    ".write": "doc.ownerOpenId == auth.openId"
+    ".read": false,
+    ".write": false
   },
   "improv_rehearsals": {
-    ".read": "doc.ownerOpenId == auth.openId",
-    ".write": "doc.ownerOpenId == auth.openId"
+    ".read": false,
+    ".write": false
   },
   "improv_practice_records": {
-    ".read": "doc.ownerOpenId == auth.openId",
-    ".write": "doc.ownerOpenId == auth.openId"
+    ".read": false,
+    ".write": false
   },
   "improv_method_cards": {
-    ".read": "doc.ownerOpenId == auth.openId",
-    ".write": "doc.ownerOpenId == auth.openId"
+    ".read": false,
+    ".write": false
   }
 }

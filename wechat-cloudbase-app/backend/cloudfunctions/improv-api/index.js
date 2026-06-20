@@ -21,24 +21,25 @@ const COLLECTIONS = {
 // 分页常量
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 100
+const MAX_MATERIAL_SCAN = 500
 const TODAY_LIMIT = 20
 const RECOMMEND_POOL_SIZE = 5
 
 // 各集合允许写入的字段白名单
 const FIELD_WHITELISTS = {
-  inspirations: ['id', 'title', 'desc', 'meta', 'linkedMaterialTitle', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
-  methodCards: ['id', 'type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
-  rehearsals: ['id', 'title', 'desc', 'plan', 'status', 'keep', 'try'],
-  practiceRecords: ['id', 'materialId', 'materialTitle', 'feedback', 'keep', 'try', 'duration', 'rating'],
-  profiles: ['id', 'displayName', 'avatarUrl', 'troupeName']
+  [COLLECTIONS.inspirations]: ['id', 'title', 'desc', 'meta', 'linkedMaterialId', 'linkedMaterialTitle', 'linkedRehearsalId', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
+  [COLLECTIONS.methodCards]: ['id', 'type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
+  [COLLECTIONS.rehearsals]: ['id', 'title', 'desc', 'teamName', 'duration', 'goals', 'source', 'status', 'plan', 'reviewKeep', 'reviewTry', 'reviewReminder', 'meta'],
+  [COLLECTIONS.practiceRecords]: ['id', 'materialId', 'materialTitle', 'rehearsalId', 'rehearsalTitle', 'title', 'desc', 'effect', 'keep', 'try', 'reminder', 'duration', 'meta'],
+  [COLLECTIONS.profiles]: ['id', 'displayName', 'avatarUrl', 'troupeName']
 }
 
 // 各集合允许更新的字段白名单
 const UPDATE_WHITELISTS = {
-  inspirations: ['title', 'desc', 'meta', 'linkedMaterialTitle', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
-  methodCards: ['type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
-  rehearsals: ['title', 'desc', 'plan', 'status', 'keep', 'try'],
-  practiceRecords: ['materialId', 'materialTitle', 'feedback', 'keep', 'try', 'duration', 'rating']
+  [COLLECTIONS.inspirations]: ['title', 'desc', 'meta', 'linkedMaterialId', 'linkedMaterialTitle', 'linkedRehearsalId', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
+  [COLLECTIONS.methodCards]: ['type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
+  [COLLECTIONS.rehearsals]: ['title', 'desc', 'teamName', 'duration', 'goals', 'source', 'status', 'plan', 'reviewKeep', 'reviewTry', 'reviewReminder', 'meta'],
+  [COLLECTIONS.practiceRecords]: ['materialId', 'materialTitle', 'rehearsalId', 'rehearsalTitle', 'title', 'desc', 'effect', 'keep', 'try', 'reminder', 'duration', 'meta']
 }
 
 function ok(data = {}, requestId = '') {
@@ -75,6 +76,43 @@ function pickFields(payload, whitelist) {
   return result
 }
 
+function findUnknownFields(payload, whitelist) {
+  return Object.keys(payload || {}).filter(key => !whitelist.includes(key))
+}
+
+function validateFields(payload, whitelist, requestId) {
+  const unknown = findUnknownFields(payload, whitelist)
+  if (unknown.length) return fail(`包含未定义字段: ${unknown.join(', ')}`, requestId, 400)
+  return null
+}
+
+function validateOwnedPayload(collectionName, payload, requestId, isUpdate = false) {
+  const whitelist = isUpdate ? UPDATE_WHITELISTS[collectionName] : FIELD_WHITELISTS[collectionName]
+  const invalid = validateFields(payload, whitelist, requestId)
+  if (invalid) return invalid
+  if (!isUpdate && (!payload.id || typeof payload.id !== 'string')) return fail('缺少合法 id', requestId, 400)
+  if (!isUpdate && (!payload.title || typeof payload.title !== 'string')) return fail('缺少合法 title', requestId, 400)
+  if (!isUpdate && collectionName === COLLECTIONS.practiceRecords && (!payload.materialId || typeof payload.materialId !== 'string')) {
+    return fail('缺少合法 materialId', requestId, 400)
+  }
+  return null
+}
+
+async function getAllByWhere(collectionName, where, orderField, maxItems = MAX_MATERIAL_SCAN) {
+  const items = []
+  for (let offset = 0; offset < maxItems; offset += MAX_LIMIT) {
+    const result = await db.collection(collectionName)
+      .where(where)
+      .orderBy(orderField, 'asc')
+      .skip(offset)
+      .limit(Math.min(MAX_LIMIT, maxItems - offset))
+      .get()
+    items.push(...result.data)
+    if (result.data.length < MAX_LIMIT) break
+  }
+  return items
+}
+
 function normalizeMaterialPayload(payload, ownerOpenId) {
   const type = payload.type || '游戏'
   return {
@@ -102,8 +140,11 @@ function normalizeMaterialPayload(payload, ownerOpenId) {
 }
 
 async function listMaterials(payload, requestId) {
+  const invalid = validateFields(payload, ['query', 'type', 'ability', 'scene', 'status', 'limit', 'offset'], requestId)
+  if (invalid) return invalid
   const ownerOpenId = getOpenId()
   const limit = Math.min(Number(payload.limit) || DEFAULT_LIMIT, MAX_LIMIT)
+  const offset = Math.max(Number(payload.offset) || 0, 0)
   const type = typeof payload.type === 'string' ? payload.type.trim() : ''
   const query = typeof payload.query === 'string' ? payload.query.trim().toLowerCase() : ''
   const ability = typeof payload.ability === 'string' ? payload.ability.trim() : ''
@@ -114,25 +155,18 @@ async function listMaterials(payload, requestId) {
     { deletedAt: null, ownerOpenId: _.in(visibleOwners) },
     type && type !== 'all' ? { type } : {}
   )
-  const materialsResult = await db.collection(COLLECTIONS.materials)
-    .where(materialWhere)
-    .orderBy('sortOrder', 'asc')
-    .limit(limit)
-    .get()
+  const materials = await getAllByWhere(COLLECTIONS.materials, materialWhere, 'sortOrder')
 
   // 无 OPENID 时（如云控制台测试）跳过用户状态合并
   const statesResult = ownerOpenId
-    ? await db.collection(COLLECTIONS.userMaterialStates)
-      .where({ ownerOpenId })
-      .limit(MAX_LIMIT)
-      .get()
+    ? { data: await getAllByWhere(COLLECTIONS.userMaterialStates, { ownerOpenId }, 'createdAt') }
     : { data: [] }
 
   const states = statesResult.data.reduce((map, item) => {
     map[item.materialId] = item
     return map
   }, {})
-  const items = materialsResult.data.map((material) => {
+  const filteredItems = materials.map((material) => {
     const state = states[material.id] || {}
     return Object.assign({}, material, {
       saved: !!state.saved,
@@ -163,18 +197,31 @@ async function listMaterials(payload, requestId) {
     ].join(' ').toLowerCase()
     return inAbility && inScene && inStatus && (!query || text.includes(query))
   })
-  return ok({ items }, requestId)
+  const items = filteredItems.slice(offset, offset + limit)
+  const nextOffset = offset + items.length
+  return ok({
+    items,
+    total: filteredItems.length,
+    hasMore: nextOffset < filteredItems.length,
+    nextOffset: nextOffset < filteredItems.length ? nextOffset : null
+  }, requestId)
 }
 
 async function createMaterial(payload, requestId) {
+  const invalid = validateFields(payload, ['id', 'title', 'desc', 'type', 'tags', 'abilities', 'scenes', 'meta', 'steps', 'tips', 'variant', 'issue', 'relatedMaterialId', 'referenceOnly', 'stripeTone', 'sortOrder'], requestId)
+  if (invalid) return invalid
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
   const ownerOpenId = getOpenId()
+  const existing = await db.collection(COLLECTIONS.materials).where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
+  if (existing.data.length) return ok({ item: existing.data[0] }, requestId)
   const doc = normalizeMaterialPayload(payload, ownerOpenId)
   const result = await db.collection(COLLECTIONS.materials).add({ data: doc })
-  return ok({ id: result._id, materialId: doc.id }, requestId)
+  return ok({ item: Object.assign({ _id: result._id }, doc) }, requestId)
 }
 
 async function updateMaterial(payload, requestId) {
+  const invalid = validateFields(payload, ['id', 'title', 'desc', 'type', 'tags', 'abilities', 'scenes', 'meta', 'steps', 'tips', 'variant', 'issue', 'relatedMaterialId', 'referenceOnly', 'stripeTone', 'sortOrder'], requestId)
+  if (invalid) return invalid
   if (!payload.id) return fail('缺少素材 ID', requestId, 400)
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
   const ownerOpenId = getOpenId()
@@ -189,7 +236,7 @@ async function updateMaterial(payload, requestId) {
   doc.updatedAt = now()
 
   await collection.doc(existing.data[0]._id).update({ data: doc })
-  return ok({ materialId: payload.id }, requestId)
+  return ok({ item: Object.assign({}, existing.data[0], doc, { id: payload.id }) }, requestId)
 }
 
 async function deleteMaterial(payload, requestId) {
@@ -205,6 +252,8 @@ async function deleteMaterial(payload, requestId) {
 }
 
 async function updateMaterialState(payload, requestId) {
+  const invalid = validateFields(payload, ['materialId', 'saved', 'played', 'lastRehearsalAt'], requestId)
+  if (invalid) return invalid
   const ownerOpenId = getOpenId()
   const materialId = payload.materialId
   if (!materialId) return fail('缺少 materialId', requestId, 400)
@@ -253,16 +302,20 @@ async function listOwned(collectionName, payload, requestId) {
 
 async function createOwned(collectionName, payload, requestId) {
   const whitelist = FIELD_WHITELISTS[collectionName]
-  const safeData = whitelist ? pickFields(payload, whitelist) : payload
-  const result = await db.collection(collectionName).add({
-    data: Object.assign({}, safeData, {
-      ownerOpenId: getOpenId(),
-      createdAt: now(),
-      updatedAt: now(),
-      deletedAt: null
-    })
+  const invalid = validateOwnedPayload(collectionName, payload, requestId)
+  if (invalid) return invalid
+  const safeData = pickFields(payload, whitelist)
+  const collection = db.collection(collectionName)
+  const existing = await collection.where(ownerWhere({ id: safeData.id })).limit(1).get()
+  if (existing.data.length) return ok({ item: existing.data[0] }, requestId)
+  const doc = Object.assign({}, safeData, {
+    ownerOpenId: getOpenId(),
+    createdAt: now(),
+    updatedAt: now(),
+    deletedAt: null
   })
-  return ok({ id: result._id }, requestId)
+  const result = await collection.add({ data: doc })
+  return ok({ item: Object.assign({ _id: result._id }, doc) }, requestId)
 }
 
 async function deleteOwned(collectionName, payload, requestId) {
@@ -281,10 +334,13 @@ async function updateOwned(collectionName, payload, requestId) {
   if (!result.data.length) return fail('未找到记录', requestId, 404)
   const whitelist = UPDATE_WHITELISTS[collectionName]
   const rawPatch = payload.patch || {}
-  const safePatch = whitelist ? pickFields(rawPatch, whitelist) : rawPatch
+  const invalid = validateOwnedPayload(collectionName, rawPatch, requestId, true)
+  if (invalid) return invalid
+  if (!Object.keys(rawPatch).length) return fail('没有可更新字段', requestId, 400)
+  const safePatch = pickFields(rawPatch, whitelist)
   const patch = Object.assign({}, safePatch, { updatedAt: now() })
   await collection.doc(result.data[0]._id).update({ data: patch })
-  return ok({ id: payload.id }, requestId)
+  return ok({ item: Object.assign({}, result.data[0], safePatch) }, requestId)
 }
 
 async function getProfile(requestId) {
@@ -348,7 +404,7 @@ async function updateRehearsalMaterialStatus(payload, requestId) {
       updatedAt: now()
     }
   })
-  return ok({ rehearsalId: payload.rehearsalId, materialId }, requestId)
+  return ok({ item: Object.assign({}, rehearsal, { plan, status: payload.rehearsalStatus || rehearsal.status || '进行中' }) }, requestId)
 }
 
 async function todaySummary(requestId) {
@@ -399,6 +455,182 @@ async function todaySummary(requestId) {
   }, requestId)
 }
 
+async function completePractice(payload, requestId) {
+  const rootInvalid = validateFields(payload, ['practiceRecord', 'rehearsalPatch', 'methodCard'], requestId)
+  if (rootInvalid) return rootInvalid
+  const recordPayload = payload.practiceRecord || {}
+  const recordInvalid = validateOwnedPayload(COLLECTIONS.practiceRecords, recordPayload, requestId)
+  if (recordInvalid) return recordInvalid
+  const rehearsalPatch = payload.rehearsalPatch || null
+  const methodCardPayload = payload.methodCard || null
+  if (rehearsalPatch) {
+    const invalid = validateFields(rehearsalPatch, ['rehearsalId', 'materialId', 'status', 'keep', 'try'], requestId)
+    if (invalid) return invalid
+  }
+  if (methodCardPayload) {
+    const invalid = validateOwnedPayload(COLLECTIONS.methodCards, methodCardPayload, requestId)
+    if (invalid) return invalid
+  }
+
+  const ownerOpenId = getOpenId()
+  const result = await db.runTransaction(async transaction => {
+    const practiceCollection = transaction.collection(COLLECTIONS.practiceRecords)
+    const existingRecord = await practiceCollection.where({ ownerOpenId, id: recordPayload.id, deletedAt: null }).limit(1).get()
+    let practiceRecord = existingRecord.data[0]
+    if (practiceRecord) {
+      let existingRehearsal = null
+      let existingMethodCard = null
+      if (rehearsalPatch) {
+        const foundRehearsal = await transaction.collection(COLLECTIONS.rehearsals)
+          .where({ ownerOpenId, id: rehearsalPatch.rehearsalId, deletedAt: null }).limit(1).get()
+        existingRehearsal = foundRehearsal.data[0] || null
+      }
+      if (methodCardPayload) {
+        const foundMethod = await transaction.collection(COLLECTIONS.methodCards)
+          .where({ ownerOpenId, id: methodCardPayload.id, deletedAt: null }).limit(1).get()
+        existingMethodCard = foundMethod.data[0] || null
+      }
+      return { practiceRecord, rehearsal: existingRehearsal, methodCard: existingMethodCard }
+    }
+    if (!practiceRecord) {
+      practiceRecord = Object.assign({}, pickFields(recordPayload, FIELD_WHITELISTS[COLLECTIONS.practiceRecords]), {
+        ownerOpenId,
+        createdAt: now(),
+        updatedAt: now(),
+        deletedAt: null
+      })
+      const added = await practiceCollection.add({ data: practiceRecord })
+      practiceRecord = Object.assign({ _id: added._id }, practiceRecord)
+    }
+
+    let rehearsal = null
+    if (rehearsalPatch) {
+      const rehearsalCollection = transaction.collection(COLLECTIONS.rehearsals)
+      const rehearsalResult = await rehearsalCollection.where({ ownerOpenId, id: rehearsalPatch.rehearsalId, deletedAt: null }).limit(1).get()
+      if (!rehearsalResult.data.length) throw new Error('关联排练不存在')
+      rehearsal = rehearsalResult.data[0]
+      const currentPlan = Array.isArray(rehearsal.plan) ? rehearsal.plan : []
+      const plan = currentPlan.map(item => item.materialId === rehearsalPatch.materialId
+        ? Object.assign({}, item, {
+            status: rehearsalPatch.status || item.status,
+            keep: typeof rehearsalPatch.keep === 'string' ? rehearsalPatch.keep : item.keep || '',
+            try: typeof rehearsalPatch.try === 'string' ? rehearsalPatch.try : item.try || ''
+          })
+        : item)
+      await rehearsalCollection.doc(rehearsal._id).update({ data: { plan, updatedAt: now() } })
+      rehearsal = Object.assign({}, rehearsal, { plan })
+    }
+
+    let methodCard = null
+    if (methodCardPayload) {
+      const methodCollection = transaction.collection(COLLECTIONS.methodCards)
+      const existingMethod = await methodCollection.where({ ownerOpenId, id: methodCardPayload.id, deletedAt: null }).limit(1).get()
+      methodCard = existingMethod.data[0]
+      if (!methodCard) {
+        methodCard = Object.assign({}, pickFields(methodCardPayload, FIELD_WHITELISTS[COLLECTIONS.methodCards]), {
+          ownerOpenId,
+          createdAt: now(),
+          updatedAt: now(),
+          deletedAt: null
+        })
+        const added = await methodCollection.add({ data: methodCard })
+        methodCard = Object.assign({ _id: added._id }, methodCard)
+      }
+    }
+
+    const materialStateCollection = transaction.collection(COLLECTIONS.userMaterialStates)
+    const materialStateResult = await materialStateCollection.where({ ownerOpenId, materialId: recordPayload.materialId }).limit(1).get()
+    if (materialStateResult.data.length) {
+      await materialStateCollection.doc(materialStateResult.data[0]._id).update({
+        data: { playedCount: _.inc(1), lastPlayedAt: now(), updatedAt: now() }
+      })
+    } else {
+      await materialStateCollection.add({ data: {
+        ownerOpenId,
+        materialId: recordPayload.materialId,
+        saved: false,
+        playedCount: 1,
+        lastPlayedAt: now(),
+        lastRehearsalAt: null,
+        createdAt: now(),
+        updatedAt: now()
+      } })
+    }
+    return { practiceRecord, rehearsal, methodCard }
+  })
+  return ok(result, requestId)
+}
+
+async function completeRehearsal(payload, requestId) {
+  const rootInvalid = validateFields(payload, ['id', 'patch', 'methodCard'], requestId)
+  if (rootInvalid) return rootInvalid
+  if (!payload.id) return fail('缺少排练 id', requestId, 400)
+  const patch = payload.patch || {}
+  const invalidPatch = validateOwnedPayload(COLLECTIONS.rehearsals, patch, requestId, true)
+  if (invalidPatch) return invalidPatch
+  const methodCardPayload = payload.methodCard || null
+  if (methodCardPayload) {
+    const invalid = validateOwnedPayload(COLLECTIONS.methodCards, methodCardPayload, requestId)
+    if (invalid) return invalid
+  }
+  const ownerOpenId = getOpenId()
+  const result = await db.runTransaction(async transaction => {
+    const rehearsalCollection = transaction.collection(COLLECTIONS.rehearsals)
+    const found = await rehearsalCollection.where({ ownerOpenId, id: payload.id, deletedAt: null }).limit(1).get()
+    if (!found.data.length) throw new Error('排练记录不存在')
+    const rehearsalPatch = Object.assign({}, pickFields(patch, UPDATE_WHITELISTS[COLLECTIONS.rehearsals]), {
+      status: '已完成',
+      updatedAt: now()
+    })
+    await rehearsalCollection.doc(found.data[0]._id).update({ data: rehearsalPatch })
+    const rehearsal = Object.assign({}, found.data[0], rehearsalPatch)
+    let methodCard = null
+    if (methodCardPayload) {
+      const methodCollection = transaction.collection(COLLECTIONS.methodCards)
+      const existing = await methodCollection.where({ ownerOpenId, id: methodCardPayload.id, deletedAt: null }).limit(1).get()
+      methodCard = existing.data[0]
+      if (!methodCard) {
+        methodCard = Object.assign({}, pickFields(methodCardPayload, FIELD_WHITELISTS[COLLECTIONS.methodCards]), {
+          ownerOpenId,
+          createdAt: now(),
+          updatedAt: now(),
+          deletedAt: null
+        })
+        const added = await methodCollection.add({ data: methodCard })
+        methodCard = Object.assign({ _id: added._id }, methodCard)
+      }
+    }
+    return { rehearsal, methodCard }
+  })
+  return ok(result, requestId)
+}
+
+async function deleteAccount(requestId) {
+  const ownerOpenId = getOpenId()
+  const profileResult = await db.collection(COLLECTIONS.profiles).where({ ownerOpenId, deletedAt: null }).limit(1).get()
+  const avatarUrl = profileResult.data[0] && profileResult.data[0].avatarUrl
+  const privateCollections = [
+    COLLECTIONS.profiles,
+    COLLECTIONS.inspirations,
+    COLLECTIONS.rehearsals,
+    COLLECTIONS.practiceRecords,
+    COLLECTIONS.methodCards,
+    COLLECTIONS.materials
+  ]
+  await Promise.all(privateCollections.map(collectionName => db.collection(collectionName)
+    .where({ ownerOpenId, deletedAt: null })
+    .update({ data: { deletedAt: now(), updatedAt: now() } })))
+  await db.collection(COLLECTIONS.userMaterialStates).where({ ownerOpenId }).remove()
+  if (typeof avatarUrl === 'string' && avatarUrl.startsWith('cloud://')) {
+    try {
+      await cloud.deleteFile({ fileList: [avatarUrl] })
+    } catch (error) {
+      console.warn('[improv-api] delete avatar failed', error)
+    }
+  }
+  return ok({ deleted: true }, requestId)
+}
+
 // 路由表
 const routes = {
   'material.list': (payload, requestId) => listMaterials(payload, requestId),
@@ -425,7 +657,10 @@ const routes = {
   'practiceRecord.list': (payload, requestId) => listOwned(COLLECTIONS.practiceRecords, payload, requestId),
   'practiceRecord.create': (payload, requestId) => createOwned(COLLECTIONS.practiceRecords, payload, requestId),
   'practiceRecord.update': (payload, requestId) => updateOwned(COLLECTIONS.practiceRecords, payload, requestId),
-  'practiceRecord.delete': (payload, requestId) => deleteOwned(COLLECTIONS.practiceRecords, payload, requestId)
+  'practiceRecord.delete': (payload, requestId) => deleteOwned(COLLECTIONS.practiceRecords, payload, requestId),
+  'practice.complete': (payload, requestId) => completePractice(payload, requestId),
+  'rehearsal.complete': (payload, requestId) => completeRehearsal(payload, requestId),
+  'account.delete': (_payload, requestId) => deleteAccount(requestId)
 }
 
 exports.main = async (event) => {

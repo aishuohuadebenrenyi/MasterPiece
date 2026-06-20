@@ -19,6 +19,9 @@
         <text class="feedback-status-title">{{contextSummaryTitle}}</text>
         <text class="feedback-helper">{{contextSummaryDesc}}</text>
       </view>
+      <picker wx:if="{{contextType === 'history'}}" mode="selector" range="{{historicalRehearsals}}" range-key="title" bindchange="selectHistoricalRehearsal">
+        <view class="app-input">{{linkedRehearsal || '选择历史排练'}}</view>
+      </picker>
     </view>
     <view class="feedback-section effect-inline-section">
       <text class="feedback-section-title">效果反馈</text>
@@ -52,6 +55,8 @@
       </view>
     </view>
   </form-card>
+
+  <view class="bottom-spacer"></view>
 
   <root-portal>
     <view class="action-stack">

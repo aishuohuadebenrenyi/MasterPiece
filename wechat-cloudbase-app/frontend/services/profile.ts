@@ -1,4 +1,4 @@
-import { callImprovAction } from './cloud'
+import { callImprovAction, callImprovData } from './cloud'
 import { getState, setProfile } from '../store/index'
 
 interface ProfileData {
@@ -50,6 +50,10 @@ export async function updateProfile(payload: Partial<ProfileData>) {
     message: response.message || '保存失败',
     item: null
   }
+}
+
+export async function deleteAccount() {
+  return callImprovData<{ deleted: boolean }>('account.delete')
 }
 
 export { DEFAULT_PROFILE }

@@ -244,7 +244,13 @@ Page({
     if (!this.data.material) return
     const saved = toggleSaved(this.data.material.id)
     this.setData({ saved }, () => this.syncStatusText())
-    await updateMaterialState(this.data.material.id, { saved })
+    try {
+      await updateMaterialState(this.data.material.id, { saved })
+    } catch (error: any) {
+      toggleSaved(this.data.material.id)
+      this.setData({ saved: !saved }, () => this.syncStatusText())
+      toast(error.message || '收藏状态保存失败')
+    }
   },
 
   async togglePlayed() {
@@ -253,12 +259,24 @@ Page({
     if (isPlayed) {
       unmarkPlayed(this.data.material.id)
       this.setData({ played: false }, () => this.syncStatusText())
-      await updateMaterialState(this.data.material.id, { played: false })
+      try {
+        await updateMaterialState(this.data.material.id, { played: false })
+      } catch (error: any) {
+        markPlayed(this.data.material.id)
+        this.setData({ played: true }, () => this.syncStatusText())
+        toast(error.message || '状态保存失败')
+      }
     } else {
       markPlayed(this.data.material.id)
       this.setData({ played: true }, () => this.syncStatusText())
-      await updateMaterialState(this.data.material.id, { played: true })
-      toast('已标记练过')
+      try {
+        await updateMaterialState(this.data.material.id, { played: true })
+        toast('已标记练过')
+      } catch (error: any) {
+        unmarkPlayed(this.data.material.id)
+        this.setData({ played: false }, () => this.syncStatusText())
+        toast(error.message || '状态保存失败')
+      }
     }
   },
 
@@ -559,21 +577,19 @@ Page({
 
     const updatePayload = { ...updatedMaterial }
     delete updatePayload.ownerOpenId
-    const response = await updateMaterial(updatePayload)
-    if (response.code !== 0) {
-      if (isPermissionError(response.message)) {
-        toast('只能修改自己创建的素材')
-        this.refreshMaterials(updatedMaterial.id)
-        return
-      }
-      toast('保存失败，请稍后重试')
+    let response
+    try {
+      response = await updateMaterial(updatePayload)
+    } catch (error: any) {
+      toast(isPermissionError(error.message) ? '只能修改自己创建的素材' : (error.message || '保存失败，请稍后重试'))
       return
     }
 
     const allMaterials = getState().materials
-    const nextMaterials = allMaterials.map((materialItem: Material) => materialItem.id === updatedMaterial.id ? Object.assign({}, materialItem, updatedMaterial) : materialItem)
+    const savedMaterial = Object.assign({}, updatedMaterial, response.item)
+    const nextMaterials = allMaterials.map((materialItem: Material) => materialItem.id === updatedMaterial.id ? savedMaterial : materialItem)
     setMaterials(nextMaterials)
-    this.renderMaterial(updatedMaterial)
+    this.renderMaterial(savedMaterial)
     this.cancelEdit()
     toast('已保存修改')
   },
@@ -605,14 +621,10 @@ Page({
           const materialId = this.data.material?.id
           if (!materialId) return
 
-          const response = await deleteMaterial(materialId)
-          if (response.code !== 0) {
-            if (isPermissionError(response.message)) {
-              toast('只能删除自己创建的素材')
-              this.refreshMaterials(materialId)
-              return
-            }
-            toast('删除失败，请稍后重试')
+          try {
+            await deleteMaterial(materialId)
+          } catch (error: any) {
+            toast(isPermissionError(error.message) ? '只能删除自己创建的素材' : (error.message || '删除失败，请稍后重试'))
             return
           }
 

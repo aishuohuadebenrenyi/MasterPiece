@@ -1,5 +1,5 @@
 import type { PracticeRecord } from '../types/domain'
-import { callImprovAction } from './cloud'
+import { callImprovData } from './cloud'
 
 export function normalizePracticeRecord(raw: Partial<PracticeRecord> & { _id?: string } = {}): PracticeRecord {
   return Object.assign({
@@ -14,27 +14,29 @@ export function normalizePracticeRecord(raw: Partial<PracticeRecord> & { _id?: s
     reminder: '',
     duration: 0,
     meta: [],
-    type: '素材练习',
-    syncStatus: 'synced'
+    type: '素材练习'
   }, raw, {
     materialId: raw.materialId || ''
   }) as PracticeRecord
 }
 
 export async function listPracticeRecords(filters: Record<string, unknown> = {}): Promise<PracticeRecord[]> {
-  const response = await callImprovAction<{ items: PracticeRecord[] }>('practiceRecord.list', filters, { silent: true })
-  if (response.code === 0 && response.data && response.data.items) return response.data.items.map(normalizePracticeRecord)
-  throw new Error(response.message || '加载练习记录失败')
+  const data = await callImprovData<{ items: PracticeRecord[] }>('practiceRecord.list', filters, { silent: true })
+  return (data.items || []).map(normalizePracticeRecord)
 }
 
 export async function createPracticeRecord(payload: Partial<PracticeRecord>) {
-  return callImprovAction('practiceRecord.create', payload as Record<string, unknown>)
+  return callImprovData<{ item: PracticeRecord }>('practiceRecord.create', payload as Record<string, unknown>)
 }
 
 export async function updatePracticeRecord(id: string, patch: Partial<PracticeRecord>) {
-  return callImprovAction('practiceRecord.update', { id, patch } as Record<string, unknown>)
+  return callImprovData<{ item: PracticeRecord }>('practiceRecord.update', { id, patch } as Record<string, unknown>)
 }
 
 export async function deletePracticeRecord(id: string) {
-  return callImprovAction('practiceRecord.delete', { id })
+  return callImprovData<{ id: string }>('practiceRecord.delete', { id })
+}
+
+export async function completePractice(payload: Record<string, unknown>) {
+  return callImprovData<{ practiceRecord: PracticeRecord; rehearsal?: unknown; methodCard?: unknown }>('practice.complete', payload)
 }

@@ -210,14 +210,10 @@ Page({
     })
     if (!confirmed) return
     try {
-      const result = await deleteRehearsal(id)
-      if (result.code === 0) {
-        const records = this.data.records.filter(item => item.id !== id)
-        this.setData({ records })
-        toast('已删除')
-      } else {
-        toast(result.message || '删除失败')
-      }
+      await deleteRehearsal(id)
+      const records = this.data.records.filter(item => item.id !== id)
+      this.setData({ records })
+      toast('已删除')
     } catch (err) {
       toast('删除失败')
     }

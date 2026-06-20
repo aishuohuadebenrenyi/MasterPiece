@@ -26,6 +26,7 @@
     </view>
 
     <view class="record-stack">
+      <empty-state-panel wx:if="{{todayLoadError}}" tone="error" title="今日记录暂未同步" desc="{{todayLoadError}}" />
       <view wx:if="{{materialSessionCard}}" class="card record-hub-card material-card">
         <view class="row">
           <view>

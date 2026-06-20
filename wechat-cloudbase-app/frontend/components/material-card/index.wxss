@@ -1,6 +1,12 @@
 @import "../../app.wxss";
 @import "../../styles/theme.wxss";
 
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .material-card {
   position: relative;
   display: flex;

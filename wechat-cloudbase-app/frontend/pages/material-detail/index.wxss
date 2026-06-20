@@ -125,14 +125,8 @@
 }
 
 .fixed-actions button {
-  flex: 0 1 176rpx;
+  flex: 1 1 0;
   min-width: 0;
-  max-width: 176rpx;
-}
-
-.fixed-actions button:last-child {
-  flex: 0 1 240rpx;
-  max-width: 240rpx;
 }
 
 .save-toggle-btn {
@@ -171,13 +165,7 @@
   gap: 16rpx;
 }
 
-.edit-fixed-actions .delete-btn {
-  flex: 0 1 240rpx;
-  min-height: 76rpx;
-  padding: 0 28rpx;
-  font-size: 26rpx;
-}
-
+.edit-fixed-actions .delete-btn,
 .edit-fixed-actions .primary-btn {
   flex: 1 1 0;
   min-height: 76rpx;

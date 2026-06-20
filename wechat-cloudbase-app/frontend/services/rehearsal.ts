@@ -1,7 +1,7 @@
 import type { RehearsalRecord } from '../types/domain'
 import { MATERIAL_STATUS } from '../constants/enums'
 import { DEFAULT_REHEARSAL_DURATION } from '../config/constants'
-import { callImprovAction } from './cloud'
+import { callImprovData } from './cloud'
 
 export function normalizeRehearsal(raw: Partial<RehearsalRecord> & { _id?: string } = {}): RehearsalRecord {
   return Object.assign({
@@ -24,23 +24,26 @@ export function nextMaterialStatus(status: string): string {
 }
 
 export async function listRehearsals(filters: Record<string, unknown> = {}): Promise<RehearsalRecord[]> {
-  const response = await callImprovAction<{ items: RehearsalRecord[] }>('rehearsal.list', filters)
-  if (response.code === 0 && response.data && response.data.items) return response.data.items.map(normalizeRehearsal)
-  throw new Error(response.message || '加载排练记录失败')
+  const data = await callImprovData<{ items: RehearsalRecord[] }>('rehearsal.list', filters)
+  return (data.items || []).map(normalizeRehearsal)
 }
 
 export async function createRehearsal(payload: Partial<RehearsalRecord>) {
-  return callImprovAction('rehearsal.create', payload as Record<string, unknown>)
+  return callImprovData<{ item: RehearsalRecord }>('rehearsal.create', payload as Record<string, unknown>)
 }
 
 export async function updateRehearsal(id: string, patch: Partial<RehearsalRecord>) {
-  return callImprovAction('rehearsal.update', { id, patch } as Record<string, unknown>)
+  return callImprovData<{ item: RehearsalRecord }>('rehearsal.update', { id, patch } as Record<string, unknown>)
 }
 
 export async function updateMaterialStatus(payload: Record<string, unknown>) {
-  return callImprovAction('rehearsal.updateMaterialStatus', payload)
+  return callImprovData<{ item: RehearsalRecord }>('rehearsal.updateMaterialStatus', payload)
 }
 
 export async function deleteRehearsal(id: string) {
-  return callImprovAction('rehearsal.delete', { id })
+  return callImprovData<{ id: string }>('rehearsal.delete', { id })
+}
+
+export async function completeRehearsal(payload: Record<string, unknown>) {
+  return callImprovData<{ rehearsal: RehearsalRecord; methodCard?: unknown }>('rehearsal.complete', payload)
 }

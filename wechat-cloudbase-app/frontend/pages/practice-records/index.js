@@ -152,15 +152,11 @@ Page({
     })
     if (!confirmed) return
     try {
-      const result = await deletePracticeRecord(id)
-      if (result.code === 0) {
-        this.setData({
-          records: this.data.records.filter(item => item.id !== id)
-        })
-        toast('已删除')
-      } else {
-        toast(result.message || '删除失败')
-      }
+      await deletePracticeRecord(id)
+      this.setData({
+        records: this.data.records.filter(item => item.id !== id)
+      })
+      toast('已删除')
     } catch (err) {
       toast('删除失败')
     }

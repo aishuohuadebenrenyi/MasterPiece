@@ -4,6 +4,7 @@
 :host {
   display: block;
   width: 100%;
+  box-sizing: border-box;
   min-width: 0;
   --record-card-inset: var(--improv-card-padding-md, 40rpx);
   --record-card-action-width: 132rpx;
@@ -134,17 +135,13 @@
 
 .record-card-meta-row {
   margin-top: 0 !important;
-  display: block;
-  line-height: 0;
-  margin-bottom: -12rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
 }
 
 .record-card-meta-row .meta-pill {
-  display: inline-block;
-  margin-right: 12rpx;
-  margin-bottom: 12rpx;
-  line-height: 1;
-  vertical-align: top;
+  flex: 0 0 auto;
 }
 
 .record-card-action-top-right {

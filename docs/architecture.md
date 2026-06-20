@@ -1,6 +1,6 @@
 # 技术架构文档
 
-更新时间：2026-06-11
+更新时间：2026-06-20
 
 ## 1. 文档目的
 
@@ -100,7 +100,9 @@
 
 半弹窗组件当前通过 `sheetClass` 区分 `compact-sheet`、`task-sheet`、`full-sheet` 等用途规格。轻量选择使用较低高度，任务型弹层保持标题区稳定；底部操作区通过 `showActions` 可选启用，添加素材这类原型化快速表单不启用独立底栏，主按钮放在内容流末尾。任务型弹层必须显式设置 `closeOnMask="{{false}}"`，避免用户误点遮罩丢失正在填写或编辑的内容；轻量查看、筛选和详情弹层可保留遮罩关闭。超过单一任务或长表单的场景进入子页面。
 
-全局轻提示由 `frontend/utils/page.js` 的 `toast(title)` 统一触发，并在 `app.wxss` 中定义样式。默认提示为柔和白色半透明胶囊，`待同步` 文案进入暖色样式。页面通过 `root-portal` 渲染提示；`wx.showToast` 只作为拿不到当前页面实例时的兜底。
+全局轻提示由 `frontend/utils/page.js` 的 `toast(title)` 统一触发，并在 `app.wxss` 中定义样式。成功文案只能在服务端确认写入后展示；失败时保留表单草稿并提供重试，不使用“待同步”伪装成功。
+
+当前 UI 架构量化基线见 [ui-architecture-audit.md](ui-architecture-audit.md)：生产前端包含 15 个通用组件和 1 个自定义 TabBar；`bottom-sheet`、状态面板和子页面头部是覆盖率最高的基础设施。组件覆盖率只用于衡量跨页面基础设施，业务专用组件应按适用场景覆盖评价。页面内新增卡片必须先归入导航、内容、参考、操作、反馈或容器六类角色，不能以单页私有色值、阴影和圆角建立同层级新卡种。
 
 ### 6.1 页面栈约定
 - 保持扁平，尽量使用 Tab 切换或 BottomSheet。
@@ -131,7 +133,7 @@
 状态内容包括：
 
 - 视图模式
-- 游戏列表
+- 素材列表
 - 收藏与练过状态
 - 今日灵感与今日排练
 - 方法卡
@@ -146,12 +148,11 @@
 - 例外只限纯 UI 偏好、且不参与业务事实判断的本地状态。例如“我的 -> 待整理”中的 `已不再整理` 忽略标记、灵感的训练线索 / 排练线索用途标记，以及全局 `themeMode` 主题模式，可用本地 Storage 记住用户选择；它们不会回写云端，也不参与正式业务数据同步。
 - 页面展示数据优先级为：
   - 云端成功结果
-  - 当前会话内存态中的 pending 数据
   - 空态 / 错误态
 - 文档中的“本地兜底”统一指当前会话内存态，不等同于持久化历史缓存。
 - 明确区分两种情况：
   - 云端请求成功但返回空数组：页面应进入空态，不回退历史本地数据
-  - 云端请求失败：页面可展示错误态，并在必要时保留当前会话内 pending 数据
+  - 云端请求失败：页面展示错误态；写入页保留当前表单草稿，但不将未入库对象加入历史列表
 - 旧版本开发缓存不再作为事实源。如果页面仍显示历史数据，应先清理微信开发者工具 Storage / 清缓存 / 编译缓存。
 
 ## 8. 后端架构
@@ -162,9 +163,11 @@
 - 前端统一封装：`frontend/services/cloud.ts`
 - 请求结构：`action`、`requestId`、`payload`
 - 返回结构：`code`、`message`、`data`、`requestId`
+- 业务服务统一使用 `callImprovData<T>()`；传输失败或 `code !== 0` 统一抛出 `ImprovActionError`，页面不再解释原始响应码。
+- `practice.complete` 和 `rehearsal.complete` 承载跨集合的事务化完成链路，业务 `id` 同时作为幂等键。
 - 私有数据由云函数通过 `cloud.getWXContext()` 获取 `OPENID` 并写入 `ownerOpenId`
 
-详细集合和 action 见 [data-api.md](data-api.md) 与 [wechat-cloudbase-app/database.md](../wechat-cloudbase-app/database.md)。
+详细集合和 action 见 [data-architecture.md](data-architecture.md) 与 [wechat-cloudbase-app/database.md](../wechat-cloudbase-app/database.md)。
 
 ## 9. 数据隔离约定
 
@@ -203,8 +206,8 @@
 
 优先优化：
 
-- 统一弹层模态容器方案。
+- 修复 Skyline 已报告的不支持样式，并在真机验证中文输入和 fixed 安全区。
+- 继续将历史 notice/loading/error 私有卡迁移到统一状态面板。
+- 按卡片角色和主题 token 收敛发现页、记录页、我的页的页面私有表面。
 - 统一底部 fixed 操作栏和内容 spacer 策略。
-- 继续将页面临时态沉淀到 `store/index.ts` 或页面局部状态，避免重新引入并行本地状态源。
-- 补齐 loading、empty、error 三态。
-- 为保存失败增加本地 pending 状态。
+- 继续保持页面局部临时态、store 会话态和云端业务事实的边界，避免重新引入并行事实源。

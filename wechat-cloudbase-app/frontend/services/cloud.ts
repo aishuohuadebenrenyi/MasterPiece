@@ -6,6 +6,18 @@ import { REQUEST_TIMEOUT_MS } from '../config/constants'
 export const IMPROV_FUNCTION_NAME = 'improv-api'
 const DEFAULT_TIMEOUT_MS = REQUEST_TIMEOUT_MS
 
+export class ImprovActionError extends Error {
+  code: number
+  requestId?: string
+
+  constructor(message: string, code = -1, requestId?: string) {
+    super(message)
+    this.name = 'ImprovActionError'
+    this.code = code
+    this.requestId = requestId
+  }
+}
+
 function createRequestId(action: string) {
   return `improv_${action.replace(/\./g, '_')}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
@@ -70,6 +82,21 @@ export async function callImprovAction<T = unknown>(
   } finally {
     if (!options.silent) hideLoading()
   }
+}
+
+export async function callImprovData<T>(
+  action: string,
+  payload: Record<string, unknown> = {},
+  options: { timeoutMs?: number; silent?: boolean } = {}
+): Promise<T> {
+  const response = await callImprovAction<T>(action, payload, options)
+  if (response.code !== 0) {
+    throw new ImprovActionError(response.message || '操作失败，请稍后再试', response.code, response.requestId)
+  }
+  if (response.data === undefined || response.data === null) {
+    throw new ImprovActionError('服务返回数据为空', -1, response.requestId)
+  }
+  return response.data
 }
 
 export { getMiniProgramEnvVersion }

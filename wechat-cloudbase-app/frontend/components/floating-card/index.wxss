@@ -45,7 +45,6 @@ text {
   transform: translateY(-50%);
   background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
   box-shadow: var(--improv-shadow-floating);
-  backdrop-filter: blur(20rpx);
 }
 
 .float-head {

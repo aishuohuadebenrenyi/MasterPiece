@@ -115,6 +115,7 @@
       <button
         wx:if="{{fabReady}}"
         class="random-fab"
+        hover-class="fab-btn-active"
         style="left: {{fabX}}px; top: {{fabY}}px;"
         bindtap="openRandom"
         bindtouchstart="onFabTouchStart"

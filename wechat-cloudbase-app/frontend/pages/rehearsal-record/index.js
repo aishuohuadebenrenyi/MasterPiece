@@ -202,12 +202,21 @@ Page({
       keep: target ? target.keepValue : '',
       try: target ? target.tryValue : ''
     })
-    await updateMaterialStatus({
-      rehearsalId: this.data.rehearsalId,
-      materialId: id,
-      status: next
-    })
-    toast(`已标记为${next}`)
+    try {
+      await updateMaterialStatus({
+        rehearsalId: this.data.rehearsalId,
+        materialId: id,
+        status: next
+      })
+      toast(`已标记为${next}`)
+    } catch (error) {
+      updateCurrentRehearsalPlan(id, {
+        status: target ? target.status : '未开始',
+        keep: target ? target.keepValue : '',
+        try: target ? target.tryValue : ''
+      })
+      toast((error && error.message) || '状态保存失败')
+    }
   },
 
   updatePlanField(event) {
@@ -222,20 +231,24 @@ Page({
     wx.navigateTo({ url: `/pages/material-detail/index?id=${event.currentTarget.dataset.id}` })
   },
 
-  pause() {
-    const current = patchCurrentRehearsal({
-      status: '暂停中',
-      title: `${this.data.title} · ${this.data.duration} 分钟`
-    })
-    if (current) {
-      upsertRehearsalHistory(current)
-      updateRehearsal(current.id, {
+  async pause() {
+    const current = getState().currentRehearsal
+    if (!current) return
+    try {
+      const result = await updateRehearsal(current.id, {
         status: '暂停中',
         plan: current.plan
-      }).catch(() => {})
+      })
+      const paused = patchCurrentRehearsal({
+        status: '暂停中',
+        title: `${this.data.title} · ${this.data.duration} 分钟`
+      })
+      upsertRehearsalHistory(Object.assign({}, paused, result.item))
+      toast('排练已暂停')
+      wx.switchTab({ url: '/pages/record/index' })
+    } catch (error) {
+      toast((error && error.message) || '暂停失败，请重试')
     }
-    toast('排练已暂停')
-    wx.switchTab({ url: '/pages/record/index' })
   },
 
   review() {

@@ -71,7 +71,8 @@ Page({
     savedSourceUnavailable: false,
     rehearsalSourceHint: '',
     layoutStyle: '',
-    privacyVisible: false
+    privacyVisible: false,
+    todayLoadError: ''
   },
 
   unsubscribeStore: null as null | (() => void),
@@ -198,7 +199,12 @@ Page({
         this.setData({ privacyVisible: true })
       })
     }
-    await fetchTodaySummary()
+    try {
+      await fetchTodaySummary()
+      this.setData({ todayLoadError: '' })
+    } catch (error) {
+      this.setData({ todayLoadError: '今日记录加载失败，当前数量可能不完整。' })
+    }
     await this.refreshMaterials()
   },
 
@@ -291,24 +297,21 @@ Page({
       type: '灵感',
       title,
       desc: text,
-      syncStatus: 'pending',
       meta: ['快速记录', '待整理']
     }
-    addInspiration(item)
-    let synced = false
     try {
-      await createInspiration({
+      const result = await createInspiration({
+        id: item.id,
         title: item.title,
         desc: item.desc,
         meta: item.meta
       })
-      synced = true
-      upsertInspiration(Object.assign({}, item, { syncStatus: 'synced' as const }))
-    } catch (error) {
-      upsertInspiration(item)
+      addInspiration(result.item as InspirationItem)
+      this.setData({ inspirationText: '' })
+      toast('已保存灵感')
+    } catch (error: any) {
+      toast(error.message || '保存失败，请重试')
     }
-    this.setData({ inspirationText: '' })
-    toast(synced ? '已保存灵感' : '已保存到本地，待同步')
   },
 
   openStartRehearsal() {
@@ -546,24 +549,20 @@ Page({
       goals: mergedGoals,
       source: this.data.rehearsalSource,
       status: '进行中' as const,
-      syncStatus: 'pending' as const,
       plan: selectedPlan.map((materialId) => ({ materialId, status: '未开始' as const, keep: '', try: '' })),
       meta: [`${selectedPlan.length || 0} 条素材`, sourceLabel]
     }
-    startRehearsalStore(rehearsal)
-    let synced = false
     try {
-      await createRehearsal(rehearsal)
-      synced = true
-      const syncedRehearsal = Object.assign({}, rehearsal, { syncStatus: 'synced' as const })
-      setCurrentRehearsal(syncedRehearsal)
-      upsertRehearsalHistory(syncedRehearsal)
-    } catch (error) {
-      // 云端同步失败时保留本地排练可用
+      const result = await createRehearsal(rehearsal)
+      const savedRehearsal = Object.assign({}, rehearsal, result.item)
+      startRehearsalStore(savedRehearsal)
+      setCurrentRehearsal(savedRehearsal)
+      upsertRehearsalHistory(savedRehearsal)
+      this.closeSheet()
+      wx.navigateTo({ url: '/pages/rehearsal-record/index' })
+    } catch (error: any) {
+      toast(error.message || '开启失败，请重试')
     }
-    this.closeSheet()
-    if (!synced) toast('排练已本地开启，待同步')
-    wx.navigateTo({ url: '/pages/rehearsal-record/index' })
   },
 
   openToday(event: WechatMiniprogram.TouchEvent) {

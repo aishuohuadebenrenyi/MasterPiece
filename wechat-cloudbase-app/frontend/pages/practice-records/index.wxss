@@ -44,13 +44,7 @@
 
 .empty-actions {
   justify-content: center;
-  margin-top: 24rpx;
 }
-
-.empty-action-btn {
-  flex: 0 1 240rpx;
-  min-width: 0;
-  max-width: 240rpx;
 }
 
 .detail-card {

@@ -76,7 +76,7 @@ function buildPracticeRecordCardViewModel(record = {}) {
     title: record.title || '未命名练习记录',
     bodyText: summaryText,
     metaPills: meta,
-    pending: record.syncStatus === 'pending',
+    pending: false,
     primaryActionText: '查看',
     secondaryActionText: '删除'
   })
@@ -89,7 +89,7 @@ function buildRehearsalRecordCardViewModel(record = {}) {
     title: record.displayTitle || record.title || '团队排练',
     bodyText: record.displayDesc || record.desc || '按时间回看团队练习、素材反馈和下次提醒。',
     metaPills: record.displayMeta || [],
-    pending: record.syncStatus === 'pending',
+    pending: false,
     primaryActionText: '查看',
     secondaryActionText: '删除'
   })
@@ -101,7 +101,7 @@ function buildSummaryRecordCardViewModel(item = {}) {
     title: item.title || '未命名记录',
     bodyText: item.desc || '暂无内容',
     metaPills: item.filteredMeta || item.meta || [],
-    pending: item.syncStatus === 'pending',
+    pending: false,
     badgeText: item.type || '',
     badgeTone: item.badgeTone || 'blue'
   })

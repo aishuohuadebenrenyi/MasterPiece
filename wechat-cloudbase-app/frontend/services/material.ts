@@ -1,5 +1,5 @@
 import type { Material } from '../types/domain'
-import { callImprovAction } from './cloud'
+import { callImprovData } from './cloud'
 import { getState } from '../store/index'
 import { DEFAULT_SORT_ORDER } from '../config/constants'
 
@@ -10,6 +10,14 @@ export type MaterialListFilters = {
   scene?: string
   status?: string
   limit?: number
+  offset?: number
+}
+
+export interface MaterialListResult {
+  items: Material[]
+  total: number
+  hasMore: boolean
+  nextOffset: number | null
 }
 
 export function normalizeMaterial(raw: Partial<Material> & { _id?: string }): Material {
@@ -46,27 +54,34 @@ export function normalizeMaterial(raw: Partial<Material> & { _id?: string }): Ma
 }
 
 export async function listMaterials(filters: MaterialListFilters = {}) {
-  const response = await callImprovAction<{ items: Material[] }>('material.list', filters, { silent: true })
-  if (response.code === 0 && response.data && response.data.items) {
-    return response.data.items.map(normalizeMaterial).sort((a, b) => a.sortOrder - b.sortOrder)
+  const data = await listMaterialsPage(filters)
+  return data.items
+}
+
+export async function listMaterialsPage(filters: MaterialListFilters = {}): Promise<MaterialListResult> {
+  const data = await callImprovData<{ items: Material[]; total: number; hasMore: boolean; nextOffset: number | null }>('material.list', filters, { silent: true })
+  return {
+    items: (data.items || []).map(normalizeMaterial).sort((a, b) => a.sortOrder - b.sortOrder),
+    total: Number(data.total) || 0,
+    hasMore: !!data.hasMore,
+    nextOffset: typeof data.nextOffset === 'number' ? data.nextOffset : null
   }
-  throw new Error(response.message || '加载素材失败')
 }
 
 export async function createMaterial(payload: Partial<Material>) {
-  return callImprovAction<{ id: string }>('material.create', payload as Record<string, unknown>)
+  return callImprovData<{ item: Material }>('material.create', payload as Record<string, unknown>)
 }
 
 export async function updateMaterial(payload: Partial<Material>) {
-  return callImprovAction<{ materialId: string }>('material.update', payload as Record<string, unknown>)
+  return callImprovData<{ item: Material }>('material.update', payload as Record<string, unknown>)
 }
 
 export async function deleteMaterial(id: string) {
-  return callImprovAction<{ materialId: string }>('material.delete', { id })
+  return callImprovData<{ materialId: string }>('material.delete', { id })
 }
 
 export async function updateMaterialState(materialId: string, patch: { saved?: boolean; played?: boolean }) {
-  return callImprovAction<{ materialId: string }>('material.updateState', { materialId, ...patch })
+  return callImprovData<{ materialId: string }>('material.updateState', { materialId, ...patch })
 }
 
 export async function updateSaved(materialId: string, value: boolean) {

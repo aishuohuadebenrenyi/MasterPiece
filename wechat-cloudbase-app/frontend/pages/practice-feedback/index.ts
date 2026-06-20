@@ -1,18 +1,12 @@
-import type { Material, TodayItem, RehearsalRecord, PracticeRecord } from '../../types/domain'
+import type { Material, TodayItem, PracticeRecord } from '../../types/domain'
 import { findLocalMaterial } from '../../services/material'
-import { createPracticeRecord } from '../../services/practice-record'
-import { createMethodCard as createMethodCardRecord } from '../../services/method-card'
-import { createRehearsal, updateMaterialStatus } from '../../services/rehearsal'
+import { completePractice } from '../../services/practice-record'
 import {
   addMethodCard,
   addPracticeRecord,
   getState,
-  getTaskMutexError,
   markPlayed,
-  setCurrentRehearsal,
-  startRehearsal,
   updateCurrentRehearsalPlan,
-  upsertRehearsalHistory,
   getThemeClass
 } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
@@ -24,6 +18,8 @@ Page({
     material: null as Material | null,
     linkedRehearsal: '',
     contextType: 'single',
+    historicalRehearsals: [] as Array<{ id: string; title: string }>,
+    selectedHistoricalRehearsalId: '',
     contextSummaryTitle: '',
     contextSummaryDesc: '',
     attendanceText: '',
@@ -72,10 +68,10 @@ Page({
         title: '加入当前排练',
         desc: `保存时会回写到「${linkedRehearsal}」的计划里。`
       },
-      new: {
-        title: '新建排练后保存',
-        desc: `会先创建「${linkedRehearsal}」，再挂入这次反馈。`
-      }
+      history: {
+        title: '关联历史排练',
+        desc: `只保存与「${linkedRehearsal}」的关联，不修改历史排练。`
+      },
     }
     const nextSummary = summaryMap[this.data.contextType] || summaryMap.single
     this.setData({
@@ -86,11 +82,12 @@ Page({
 
   syncOptions() {
     const currentRehearsal = getState().currentRehearsal
+    const hasHistorical = this.data.historicalRehearsals.length > 0
     this.setData({
       contextOptions: [
         { value: 'single', label: '单独记录' },
         ...(currentRehearsal ? [{ value: 'current', label: '加入当前排练' }] : []),
-        { value: 'new', label: '新建排练' }
+        ...(hasHistorical ? [{ value: 'history', label: '关联历史排练' }] : [])
       ].map((item) => Object.assign({}, item, {
         activeClass: this.data.contextType === item.value ? 'active' : ''
       })),
@@ -127,6 +124,9 @@ Page({
     }
 
     const currentRehearsal = state.currentRehearsal
+    const historicalRehearsals = (state.rehearsalHistory || [])
+      .filter((item) => !currentRehearsal || item.id !== currentRehearsal.id)
+      .map((item) => ({ id: item.id, title: item.title }))
 
     let durationText = ''
     if (duration > 0) {
@@ -141,6 +141,8 @@ Page({
       durationText,
       linkedRehearsal: currentRehearsal ? currentRehearsal.title : '单独记录',
       contextType: currentRehearsal ? 'current' : 'single',
+      historicalRehearsals,
+      selectedHistoricalRehearsalId: historicalRehearsals[0] ? historicalRehearsals[0].id : ''
     }, () => {
       this.syncContextSummary()
     })
@@ -149,12 +151,13 @@ Page({
 
   onShow() {
     const currentRehearsal = getState().currentRehearsal
+    const historical = this.data.historicalRehearsals.find((item) => item.id === this.data.selectedHistoricalRehearsalId)
     this.setData({
       themeClass: getThemeClass(),
       linkedRehearsal: this.data.contextType === 'single'
         ? '单独记录'
-        : this.data.contextType === 'new'
-          ? `${this.data.material ? this.data.material.title : '本次练习'} · 新排练`
+        : this.data.contextType === 'history'
+          ? (historical ? historical.title : '历史排练')
           : (currentRehearsal ? currentRehearsal.title : '当前排练')
     }, () => {
       this.syncOptions()
@@ -184,17 +187,28 @@ Page({
     const value = event.currentTarget.dataset.value as string
     const current = getState().currentRehearsal
     const nextType = value === 'current' && !current ? 'single' : value
+    const historical = this.data.historicalRehearsals.find((item) => item.id === this.data.selectedHistoricalRehearsalId)
     this.setData({
       contextType: nextType,
       linkedRehearsal: nextType === 'single'
         ? '单独记录'
-        : nextType === 'new'
-          ? `${this.data.material ? this.data.material.title : '本次练习'} · 新排练`
+        : nextType === 'history'
+          ? (historical ? historical.title : '历史排练')
           : (current ? current.title : '当前排练')
     }, () => {
       this.syncOptions()
       this.syncContextSummary()
     })
+  },
+
+  selectHistoricalRehearsal(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    const index = Number(event.detail.value)
+    const selected = this.data.historicalRehearsals[index]
+    if (!selected) return
+    this.setData({
+      selectedHistoricalRehearsalId: selected.id,
+      linkedRehearsal: selected.title
+    }, () => this.syncContextSummary())
   },
 
   setEffect(event: WechatMiniprogram.TouchEvent) {
@@ -212,137 +226,82 @@ Page({
 
   async persistFeedbackRecord(options: { createMethodCard: boolean }) {
     if (!this.data.material || this.data.savingMode) return
-    if (this.data.contextType === 'new') {
-      const mutexError = getTaskMutexError('rehearsal')
-      if (mutexError) {
-        toast(mutexError)
-        return
-      }
-    }
-
     this.setData({ savingMode: options.createMethodCard ? 'method' : 'record' })
-    let syncFailed = false
     const material = this.data.material
-    let targetRehearsal = getState().currentRehearsal
+    const targetRehearsal = this.data.contextType === 'current'
+      ? getState().currentRehearsal
+      : this.data.contextType === 'history'
+        ? this.data.historicalRehearsals.find((item) => item.id === this.data.selectedHistoricalRehearsalId) || null
+        : null
+    const practiceRecord: PracticeRecord = {
+      id: `practiceRecord-${Date.now()}`,
+      title: material.title,
+      desc: this.data.keepValue || this.data.tryValue || this.data.reminderValue || '无反馈',
+      materialId: material.id,
+      materialTitle: material.title,
+      rehearsalId: targetRehearsal ? targetRehearsal.id : '',
+      rehearsalTitle: targetRehearsal ? targetRehearsal.title : '',
+      effect: this.data.effectValue,
+      keep: this.data.keepValue,
+      try: this.data.tryValue,
+      reminder: this.data.reminderValue,
+      duration: this.data.duration,
+      meta: [this.data.effectValue, this.data.attendanceText].filter(Boolean),
+      createdAt: Date.now()
+    }
+    const methodCard = options.createMethodCard ? this.buildMethodCardItem() : null
 
     try {
-      if (this.data.contextType === 'new') {
-        const rehearsal: RehearsalRecord = {
-          id: `rehearsal-${Date.now()}`,
-          type: '排练',
-          title: this.data.linkedRehearsal,
-          desc: `${material.title} · ${this.data.effectValue}`,
-          teamName: this.data.linkedRehearsal.replace(' · 新排练', '') || material.title,
-          duration: '60',
-          goals: ['素材练习'],
-          source: 'feedback',
-          status: '进行中',
-          syncStatus: 'pending',
-          plan: [{
-            materialId: material.id,
-            status: '已完成',
-            keep: this.data.keepValue,
-            try: this.data.tryValue
-          }],
-          meta: [this.data.attendanceText, '从反馈创建'].filter(Boolean)
-        }
-        startRehearsal(rehearsal)
-        upsertRehearsalHistory(rehearsal)
-        targetRehearsal = rehearsal
-        try {
-          await createRehearsal(rehearsal)
-          const syncedRehearsal = Object.assign({}, rehearsal, { syncStatus: 'synced' as const })
-          setCurrentRehearsal(syncedRehearsal)
-          upsertRehearsalHistory(syncedRehearsal)
-          targetRehearsal = syncedRehearsal
-        } catch (error) {
-          syncFailed = true
-        }
-      }
-
-      const practiceRecord: PracticeRecord = {
-        id: `practiceRecord-${Date.now()}`,
-        title: material.title,
-        desc: `${this.data.keepValue || this.data.tryValue || this.data.reminderValue || '无反馈'}`,
-        materialId: material.id,
-        rehearsalId: targetRehearsal ? targetRehearsal.id : '',
-        effect: this.data.effectValue,
-        keep: this.data.keepValue,
-        try: this.data.tryValue,
-        reminder: this.data.reminderValue,
-        duration: this.data.duration,
-        meta: [this.data.effectValue, this.data.attendanceText].filter(Boolean),
-        syncStatus: 'pending',
-        createdAt: Date.now()
-      }
-      addPracticeRecord(practiceRecord)
-
-      try {
-        await createPracticeRecord({
+      const result = await completePractice({
+        practiceRecord: {
+          id: practiceRecord.id,
           materialId: practiceRecord.materialId,
+          materialTitle: practiceRecord.materialTitle,
           rehearsalId: practiceRecord.rehearsalId,
+          rehearsalTitle: practiceRecord.rehearsalTitle,
           title: practiceRecord.title,
+          desc: practiceRecord.desc,
           effect: practiceRecord.effect,
           keep: practiceRecord.keep,
           try: practiceRecord.try,
           reminder: practiceRecord.reminder,
           duration: practiceRecord.duration,
           meta: practiceRecord.meta
-        })
-      } catch (error) {
-        syncFailed = true
-      }
-
-      if (targetRehearsal && this.data.contextType !== 'single') {
+        },
+        rehearsalPatch: targetRehearsal && this.data.contextType === 'current' ? {
+          rehearsalId: targetRehearsal.id,
+          materialId: material.id,
+          status: '已完成',
+          keep: this.data.keepValue,
+          try: this.data.tryValue
+        } : null,
+        methodCard: methodCard ? {
+          id: methodCard.id,
+          sourceType: 'practiceRecord',
+          sourceId: practiceRecord.id,
+          sourceTitle: practiceRecord.title,
+          type: '素材练习',
+          title: methodCard.title,
+          desc: methodCard.desc,
+          meta: ['素材练习', material.title, this.data.effectValue]
+        } : null
+      })
+      addPracticeRecord(result.practiceRecord)
+      if (targetRehearsal && this.data.contextType === 'current') {
         updateCurrentRehearsalPlan(material.id, {
           status: '已完成',
           keep: this.data.keepValue,
           try: this.data.tryValue
         })
-        try {
-          await updateMaterialStatus({
-            rehearsalId: targetRehearsal.id,
-            materialId: material.id,
-            status: '已完成',
-            keep: this.data.keepValue,
-            try: this.data.tryValue
-          })
-        } catch (error) {
-          syncFailed = true
-        }
       }
-
       markPlayed(material.id)
-
-      if (options.createMethodCard) {
-        const item = this.buildMethodCardItem()
-        if (item) {
-          try {
-            await createMethodCardRecord({
-              sourceType: 'practiceRecord',
-              type: '素材练习',
-              title: item.title,
-              desc: item.desc,
-              meta: ['素材练习', material.title, this.data.effectValue]
-            })
-            addMethodCard(item)
-          } catch (error) {
-            syncFailed = true
-            addMethodCard(Object.assign({}, item, { syncStatus: 'pending' as const }))
-          }
-        }
-      }
-
-      toast(
-        syncFailed
-          ? '已本地保存，待同步'
-          : options.createMethodCard
-            ? '已保存并沉淀为方法卡'
-            : '已保存练习记录'
-      )
+      if (methodCard && result.methodCard) addMethodCard(result.methodCard as TodayItem)
+      toast(options.createMethodCard ? '已保存并沉淀为方法卡' : '已保存练习记录')
       setTimeout(() => {
         wx.switchTab({ url: '/pages/discover/index' })
       }, 1500)
+    } catch (error: any) {
+      toast(error.message || '保存失败，请重试')
     } finally {
       this.setData({ savingMode: '' })
     }

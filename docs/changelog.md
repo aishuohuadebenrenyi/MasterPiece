@@ -1,5 +1,15 @@
 # 变更记录
 
+## 2026-06-20
+
+- 完成上线前数据链路整改：统一 `callImprovData` 异常合同，修正私有集合白名单索引，补齐排练、练习、灵感关联和方法卡字段，新增 `practice.complete`、`rehearsal.complete`、`account.delete` Action，并使用事务和业务 ID 收敛复合写入与幂等。
+- 取消无持久化队列支撑的“本地暂存 / 待同步”假成功；快速灵感、排练、练习复盘、排练复盘、方法卡和素材写入均改为服务端确认后更新 Store，失败保留表单并支持重试。
+- 修正素材库伪分页：服务端在当前 500 条 MVP 上限内先完整搜索筛选再按 `offset/limit` 切页，发现页使用 `nextOffset` 追加，163 条系统素材可全部访问。
+- 补齐账号注销、头像上传失败阻断、内置反馈入口和数据库禁止客户端直读直写规则；云函数 SDK 改为固定版本。
+- 新增 `npm run contract-check`，持续校验核心 Action、正式字段、Skyline 中文输入规则、假 pending 残留和分页接入。
+- 重审并完整替换 [ui-architecture-audit.md](ui-architecture-audit.md)：按当前工作树复算 11 个页面、15 个通用组件、组件调用点、卡片角色、主题 token、直接色值、字体、间距、圆角、图标和通用交互，补充架构拓扑、运行态证据边界及带依赖/工作量/验收标准的 P0-P2 整改清单。
+- 同步更新 [architecture.md](architecture.md) 与 [product-design-and-experience.md](product-design-and-experience.md)：明确组件覆盖率口径、六类卡片角色、UI 审计维护规则、Skyline 中文输入约束和正式文档分工；本轮未修改生产 UI 或业务逻辑。
+
 ## 2026-06-19
 
 - 落地按钮语义体系统一：新增 `--improv-btn-*` 主题 token，重定义主动作、次主动作、卡片轻动作、工具栏动作、选择 chip、图标动作和危险动作的全局样式；将发现页“分享 / 新建 / 筛选”、路径卡“查看”、我的页“编辑 / 整理 / 查看”、素材详情和隐私弹窗等按钮映射到统一语义，降低白底描边胶囊的视觉噪声，并保留主题切换能力。

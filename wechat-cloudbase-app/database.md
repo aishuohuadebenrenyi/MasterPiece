@@ -117,7 +117,9 @@
 
 - `id`
 - `materialId`
+- `materialTitle`
 - `rehearsalId`
+- `rehearsalTitle`
 - `title`
 - `desc`
 - `effect`
@@ -134,7 +136,16 @@
 说明：
 
 - `title` 为本次练习对应的素材名。
-- `rehearsalId` 只记录当前排练或从复盘新建的排练，不回写历史排练。
+- `materialId` / `rehearsalId` 是稳定关联，`materialTitle` / `rehearsalTitle` 是删除来源后仍可回看的标题快照。
+- 关联历史排练时只写入练习记录，不回写历史排练。
+
+### improv_inspirations
+
+关联字段统一使用 `linkedMaterialId` / `linkedMaterialTitle` 和 `linkedRehearsalId` / `linkedRehearsalTitle`；ID 用于跳转，标题用于历史快照。
+
+### improv_method_cards
+
+正文字段统一使用 `desc`，不写入 `content`。来源使用 `sourceType` / `sourceId` / `sourceTitle` 保留可追溯关系。
 
 ### improv_profiles
 
@@ -181,6 +192,9 @@
 | `practiceRecord.create` | 创建单次素材练习复盘，不用于保存排练复盘。 |
 | `practiceRecord.update` | 更新当前用户单次素材练习复盘。 |
 | `practiceRecord.delete` | 软删除当前用户单次素材练习复盘。 |
+| `practice.complete` | 事务化保存练习记录、可选当前排练计划、练过状态与方法卡。 |
+| `rehearsal.complete` | 事务化完成排练复盘，可选同步创建方法卡。 |
+| `account.delete` | 软删除当前用户的私有业务数据，删除素材状态和当前头像文件。 |
 
 `material.list` 可选 `payload`：
 
@@ -189,7 +203,8 @@
 - `ability`：训练能力；`all` 或空值表示不限。
 - `scene`：使用场景；`all` 或空值表示不限。
 - `status`：`all`、`saved`、`played`、`unplayed`。
-- `limit`：返回数量上限，当前最大 100。
+- `limit`：单页数量上限，当前最大 100。
+- `offset`：分页起点。返回值包含 `total`、`hasMore` 和 `nextOffset`。当前 MVP 会最多扫描 500 条可见素材后再搜索、筛选和切页。
 
 说明：
 
@@ -258,13 +273,15 @@ wx.cloud.callFunction({
 
 - 前端暂不启用 `store` 本地持久化缓存，只保留当前会话内存态。
 - 云端接口成功返回空数组时，前端应按空态处理，不回退旧本地缓存数据。
-- 云端接口失败时，前端才进入错误态；如当前会话内存在 `pending` 记录，可继续展示这些记录。
-- 文档里的“本地记录”统一指当前会话内存态，不等同于持久化历史缓存。
+- 云端接口失败时，前端保留表单草稿并进入错误态；未经服务端确认的业务记录不进入历史列表。
+- 当前不提供离线同步队列，不展示“待同步”或“本地暂存成功”。
 - 如果之前运行过旧版本，而页面仍显示历史数据，请先在微信开发者工具中清除 Storage / 清缓存 / 编译缓存，再重新打开小程序验证空态。
 
 ## 8. 权限
 
 MVP 阶段建议所有业务读写都走 `improv-api` 云函数。
+
+`backend/database_security_rules.json` 禁止小程序端直接读写所有业务集合；管理员权限的 `improv-api` 是唯一业务读写入口。
 
 私有数据必须由云函数通过 `cloud.getWXContext()` 写入 `ownerOpenId`，前端不传、不信任 `ownerOpenId`。
 

@@ -17,7 +17,9 @@ Page({
     titleValue: '',
     contentValue: '',
     linkedMaterial: '',
+    linkedMaterialId: '',
     linkedRehearsal: '',
+    linkedRehearsalId: '',
     arrangementValue: '带领提醒',
     selectedTags: [],
     linkVisible: false,
@@ -50,13 +52,13 @@ Page({
     const state = getState()
     if (kind === 'material') {
       return (state.materials || []).slice(0, 6).map((item) => ({
-        value: item.title,
+        value: item.id,
         title: item.title,
         desc: item.desc
       }))
     }
     return (state.rehearsalHistory || []).slice(0, 4).map((item) => ({
-      value: item.title,
+      value: item.id,
       title: item.title,
       desc: item.desc
     }))
@@ -108,7 +110,9 @@ Page({
           titleValue: existing.title || existing.desc || '',
           contentValue: existing.desc || existing.content || '',
           linkedMaterial: existing.linkedMaterialTitle || '',
+          linkedMaterialId: existing.linkedMaterialId || '',
           linkedRehearsal: existing.linkedRehearsalTitle || '',
+          linkedRehearsalId: existing.linkedRehearsalId || '',
           selectedTags: existing.meta || existing.tags || []
         })
       } else {
@@ -166,10 +170,14 @@ Page({
 
   chooseLink(event) {
     const value = (event.detail && event.detail.id) || event.currentTarget.dataset.value
+    const selected = (this.data.linkOptions || []).find((item) => item.value === value)
+    if (!selected) return
     closeModal(this, {
       linkVisible: false,
-      linkedMaterial: this.data.linkKind === 'material' ? value : this.data.linkedMaterial,
-      linkedRehearsal: this.data.linkKind === 'rehearsal' ? value : this.data.linkedRehearsal
+      linkedMaterial: this.data.linkKind === 'material' ? selected.title : this.data.linkedMaterial,
+      linkedMaterialId: this.data.linkKind === 'material' ? selected.value : this.data.linkedMaterialId,
+      linkedRehearsal: this.data.linkKind === 'rehearsal' ? selected.title : this.data.linkedRehearsal,
+      linkedRehearsalId: this.data.linkKind === 'rehearsal' ? selected.value : this.data.linkedRehearsalId
     })
   },
 
@@ -187,7 +195,9 @@ Page({
       title: this.data.titleValue,
       desc: this.data.contentValue,
       meta: this.data.selectedTags,
+      linkedMaterialId: this.data.linkedMaterialId,
       linkedMaterialTitle: this.data.linkedMaterial,
+      linkedRehearsalId: this.data.linkedRehearsalId,
       linkedRehearsalTitle: this.data.linkedRehearsal
     }
     if (editingId) {
@@ -205,16 +215,18 @@ Page({
         title: this.data.titleValue,
         desc: this.data.contentValue,
         meta: this.data.selectedTags,
+        linkedMaterialId: this.data.linkedMaterialId,
         linkedMaterialTitle: this.data.linkedMaterial,
+        linkedRehearsalId: this.data.linkedRehearsalId,
         linkedRehearsalTitle: this.data.linkedRehearsal
       }
       try {
-        await createInspiration(payload)
-        addInspiration(item)
+        const result = await createInspiration(Object.assign({}, payload, { id: item.id }))
+        addInspiration(result.item)
         toast('已保存灵感')
       } catch (error) {
-        addInspiration(Object.assign({}, item, { syncStatus: 'pending' }))
-        toast('已本地保存，待同步')
+        toast('保存失败，请重试')
+        return
       }
     }
     wx.navigateBack()
@@ -229,17 +241,17 @@ Page({
       meta: (this.data.selectedTags.length ? this.data.selectedTags : []).concat('可复用')
     }
     try {
-      await createMethodCardRecord({
+      const result = await createMethodCardRecord({
+        id: item.id,
         sourceType: 'inspiration',
         title: item.title,
         desc: item.desc,
         meta: item.meta
       })
-      addMethodCard(item)
+      addMethodCard(result.item)
       toast('已沉淀为方法卡')
     } catch (error) {
-      addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
-      toast('已本地保存，待同步')
+      toast('沉淀失败，请重试')
     }
   }
 })

@@ -1,5 +1,6 @@
 <scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" bindscroll="onScroll" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="page mine {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
   <view class="mine-content {{showIntroState ? 'mine-content-intro' : ''}}">
+    <empty-state-panel wx:if="{{loadErrorText}}" tone="error" title="数据未完全加载" desc="{{loadErrorText}}" />
     <block wx:if="{{showIntroState}}">
       <view class="mine-intro-layout">
         <view class="intro-hero-section">
@@ -173,7 +174,10 @@
         </view>
       </form-field>
 
-      <button class="primary-btn profile-save-btn" loading="{{profileSaving}}" bindtap="saveProfile">保存</button>
+      <view class="profile-action-bar">
+        <button class="ghost-btn profile-delete-btn" disabled="{{profileSaving}}" bindtap="deleteMyAccount">注销</button>
+        <button class="primary-btn profile-save-btn" loading="{{profileSaving}}" bindtap="saveProfile">保存</button>
+      </view>
     </view>
   </bottom-sheet>
 
@@ -181,11 +185,11 @@
     <view class="edit-form">
       <view class="edit-form-field">
         <text class="edit-form-label">标题</text>
-        <input class="edit-form-input" value="{{methodCardDraftTitle}}" bindinput="onMethodCardDraftTitleInput" placeholder="方法卡标题" />
+        <input class="edit-form-input" value="{{methodCardDraftTitle}}" bindblur="onMethodCardDraftTitleInput" bindconfirm="onMethodCardDraftTitleInput" placeholder="方法卡标题" />
       </view>
       <view class="edit-form-field">
         <text class="edit-form-label">内容</text>
-        <textarea class="edit-form-textarea" value="{{methodCardDraftContent}}" bindinput="onMethodCardDraftContentInput" placeholder="方法卡内容" />
+        <textarea class="edit-form-textarea" value="{{methodCardDraftContent}}" bindblur="onMethodCardDraftContentInput" placeholder="方法卡内容" />
       </view>
       <button class="primary-btn edit-form-submit" bindtap="saveMethodCardEdit">保存</button>
     </view>

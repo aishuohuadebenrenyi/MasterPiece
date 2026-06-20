@@ -182,7 +182,6 @@
   flex: 0 0 auto;
   width: auto;
   min-width: 112rpx;
-  max-width: none;
   min-height: 58rpx;
   margin-left: auto;
   margin-right: 0;
@@ -238,6 +237,7 @@
   flex: 1 1 auto;
   width: 100%;
   display: flex;
+  flex-direction: column;
   min-height: 0;
   padding: 24rpx 0;
 }
@@ -272,6 +272,9 @@
 }
 
 .discover-hero-empty .muted {
+  display: block;
+  white-space: normal;
+  word-break: break-all;
   max-width: 520rpx;
   margin-top: 18rpx;
   font-size: 32rpx;
@@ -282,10 +285,6 @@
 .discover-hero-empty .empty-actions {
   justify-content: center;
   padding-top: 24rpx;
-}
-
-.discover-error-empty .empty-action-btn {
-  min-width: 240rpx;
 }
 
 .matchless-card {
@@ -849,11 +848,6 @@
   padding-top: 28rpx;
 }
 
-.random-state-card .empty-action-btn {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .add-submit-btn {
   width: 100%;
   min-height: 88rpx;
@@ -903,7 +897,7 @@
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.fab-btn:active {
+.fab-btn-active {
   transform: scale(0.92);
 }
 

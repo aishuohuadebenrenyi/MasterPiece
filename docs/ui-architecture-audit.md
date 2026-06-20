@@ -1,345 +1,302 @@
 # 架构与 UI 交互体系分析报告
 
-更新时间：2026-06-19
+更新时间：2026-06-20
 
-## 1. 分析范围与结论
+## 1. 审计口径与结论
 
-本报告基于当前工作树扫描 `wechat-cloudbase-app/`、`docs/` 与 `project_memory/` 后整理，目标是为后续 UI 统一、组件复用和交互标准化提供可执行依据。
+本报告以 2026-06-20 当前工作树中的生产小程序 `wechat-cloudbase-app/` 为审计对象。`prototype/`、`素材整理/`、`.trae/documents/` 不计入页面、组件和样式统计；它们分别属于探索原型、素材辅助工具和历史归档。
 
-整改状态：2026-06-19 已按 P0-P2 执行首轮落地。P0 事实源、action 表和废弃组件已处理；P1 已主题化隐私弹窗、统一任务型弹层遮罩关闭并扩展 `state-panel` 语义；P2 已补充素材命名、卡片角色、图标语义和长期维护规则。后续仍可继续按本报告推进更大范围的视觉 debt 清理。
+审计覆盖：11 个页面、15 个通用组件、1 个自定义 TabBar、8 个前端服务模块、轻量 store、领域类型、7 个 CloudBase 集合和 25 个云函数 action。结论基于源码静态扫描与微信开发者工具运行态观察；统计结果是当前工作树快照，不代表 Git 基线。
 
-当前项目总体架构方向正确：微信原生小程序 + Skyline + Glass-Easel + CloudBase 聚合云函数 + 轻量 store，适合 MVP 阶段的临场工具定位。主要问题不在技术选型，而在实现口径漂移：页面数量、数据 action 文档、组件命名、卡片角色、主题 token 覆盖、图标与弹层交互存在不一致。
+总体判断：
 
-优先整改方向：
+- 技术选型和分层适合 MVP，不需要迁移框架。微信原生小程序、Skyline、Glass-Easel、CloudBase 聚合云函数和轻量 store 的职责边界基本成立。
+- UI 已有可复用基础：`bottom-sheet`、`state-panel`、表单容器、记录卡、主题 token 和全局按钮语义均已形成；主要问题是页面私有实现继续增长，导致卡片、尺寸和交互口径漂移。
+- 视觉 debt 可量化：WXSS 有 306 个 `--improv-*` token 定义和 538 次 token 消费，但主题文件外仍有 209 个直接色值表达，其中 140 个与 `var()` 同行、可视为 Skyline fallback，另有 69 个未与主题变量绑定；字号 22 档、圆角 23 档、gap 22 档、阴影 36 种表达。
+- 当前最高优先级不是重构，而是修复可验证缺陷：方法卡编辑的 2 个 `bindinput` 违反既定中文输入规则；发现页存在 Skyline 不支持的 `max-width: none`；17 个半弹窗的关闭策略虽基本正确，但规范仍依赖调用方自觉。
 
-1. 先修正事实源不一致：页面数量、`database.md` action 表、无引用组件、语音组件遗留。
-2. 再统一 UI 基础设施：卡片角色、按钮层级、半弹窗关闭规则、错误/空态/加载态。
-3. 最后做视觉规范化：减少页面级硬编码色值、收敛字号/圆角/间距 token、统一图标体系。
+### 1.1 统计定义
 
-## 2. 项目架构拓扑与模块职责
+- **注册页面数**：页面 `index.json` 中注册该组件的页面数。
+- **页面覆盖率**：注册页面数 / 11。它只用于比较跨页面基础设施，不用于评价专业组件价值。
+- **调用点**：WXML 中组件标签出现次数；循环渲染仍计为一个模板调用点。
+- **适用覆盖**：组件是否覆盖其应服务的已知场景，采用“完整 / 部分 / 专用”描述，避免用全页面分母误判专业组件。
 
-### 2.1 技术栈选型
+## 2. 项目架构
 
-| 维度 | 当前实现 | 说明 |
+### 2.1 技术栈
+
+| 维度 | 当前实现 | 评价 |
 | --- | --- | --- |
-| 前端形态 | 微信小程序原生页面/组件 | 未引入 Taro、React、Vue 或大型 UI 框架。 |
-| 渲染/组件 | Skyline + Glass-Easel | `app.json` 已配置 `renderer: "skyline"`、`componentFramework: "glass-easel"`。 |
-| 语言 | TypeScript + JavaScript 混合 | 新组件/页面逐步使用 `.ts`，历史页面仍有 `.js`。 |
-| 样式 | WXSS + `--improv-*` 主题 token | `frontend/styles/theme.wxss` 是主题变量中心，部分页面仍有硬编码。 |
-| 后端 | CloudBase 聚合云函数 | 单一 `improv-api` action 路由。 |
-| 数据 | `improv_` 前缀集合 | 素材、用户素材状态、灵感、排练、练习记录、方法卡、资料。 |
-| 状态 | 自定义轻量 store | 业务数据以内存态为主，UI 偏好和活跃 session 有本地 Storage。 |
+| 客户端 | 微信小程序原生页面与组件 | 符合产品规模，避免跨端框架成本。 |
+| 渲染 | Skyline + Glass-Easel | 已启用；需持续验证 WXSS 兼容性和真机输入。 |
+| 语言 | TypeScript + JavaScript | 可接受的渐进迁移状态；新领域逻辑优先 TS。 |
+| UI | WXML + WXSS + 自定义组件 | 设计自由度高，但必须靠 token 和审查规则控制漂移。 |
+| 状态 | 自定义发布订阅 store | 适合当前规模；业务事实以云端为主，session/UI 偏好例外持久化。 |
+| 后端 | CloudBase 单聚合云函数 `improv-api` | 部署简单；action 表是公开接口契约。 |
+| 数据 | 7 个 `improv_` 集合 | 公共素材、用户状态与用户私有资产边界清楚。 |
+| 工具 | TypeScript 类型检查 + 自定义语法检查 | 缺少自动化 UI lint 和组件单测。 |
 
-### 2.2 架构拓扑图
+### 2.2 架构拓扑
 
 ```mermaid
 flowchart TB
-  User["微信用户"] --> MiniProgram["微信小程序前端"]
+  User["微信用户"] --> Router["app.json / 自定义 TabBar"]
+  Router --> Tabs["主 Tab：发现 / 记录 / 我的"]
+  Router --> Subpages["子页面：详情 / 编辑 / 复盘 / 历史 / 隐私"]
 
-  MiniProgram --> AppLayer["应用入口层\napp.json / app.ts / app.wxss"]
-  AppLayer --> PageLayer["页面层\npages/*"]
-  PageLayer --> ComponentLayer["组件层\ncomponents/* / custom-tab-bar"]
-  PageLayer --> Store["轻量状态层\nstore/index.ts"]
-  PageLayer --> Services["服务层\nservices/*"]
-  ComponentLayer --> Theme["主题与基础样式\ntheme.wxss / app.wxss"]
+  Tabs --> Pages["页面层 pages/*"]
+  Subpages --> Pages
+  Pages --> Components["组件层 components/*"]
+  Pages --> Store["状态层 store/index.ts"]
+  Pages --> Services["服务层 services/*"]
+  Pages --> Utils["工具层 layout / modal / page / tabbar / record-card"]
+  Components --> Theme["UI 基础设施 app.wxss / theme.wxss"]
   Store --> Theme
 
-  Services --> CloudWrap["Cloud 调用封装\nservices/cloud.ts"]
-  CloudWrap --> CloudFunction["CloudBase 云函数\nimprov-api"]
-  CloudFunction --> Collections["improv_* 数据集合"]
-
-  PageLayer --> Utils["工具层\nlayout / modal / page / tabbar / record-card"]
-  Utils --> Store
+  Services --> CloudWrap["services/cloud.ts\n超时 / loading / 错误归一"]
+  CloudWrap --> Function["CloudBase improv-api\n25 个 action"]
+  Function --> PublicData["公共素材与用户素材状态"]
+  Function --> PrivateData["资料 / 灵感 / 排练 / 练习复盘 / 方法卡"]
+  Function --> Identity["getWXContext() / ownerOpenId"]
 ```
 
-### 2.3 前端模块分层
+### 2.3 分层职责与依赖约束
 
-| 层级 | 位置 | 主要职责 | 当前问题 |
-| --- | --- | --- | --- |
-| 应用入口层 | `frontend/app.json`、`app.ts`、`app.wxss` | 页面注册、TabBar、云环境初始化、全局布局/按钮/卡片/输入基线。 | 已修正文档页面矩阵为 11 个页面。 |
-| 页面层 | `frontend/pages/*` | 页面数据拼装、交互流程、弹层状态、导航。 | 页面局部卡片和样式较多，部分页面重复定义卡片结构。 |
-| 组件层 | `frontend/components/*` | 卡片、弹层、表单、搜索、筛选、空态、记录详情。 | 无引用 `voice-field` 与空 `tag-chip` 已移除；组件与页面命名已统一到素材和练习语义。 |
-| 服务层 | `frontend/services/*` | CloudBase action 封装、返回归一、业务接口。 | 已补齐 `database.md` 和 `data-api.md` 的 update/delete action 表。 |
-| 状态层 | `frontend/store/index.ts` | 订阅、内存态、主题偏好、pending 标记、活跃 session。 | session 使用 Storage 持久化，与“业务数据不把本地缓存作为事实源”需要在文档中明确区分。 |
-| 类型层 | `frontend/types/domain.ts` | Material、Record、Session、AppState 等领域类型。 | `RecordCardViewModel` 已抽象，但卡片角色未完全覆盖页面内自定义卡。 |
-| 工具层 | `frontend/utils/*` | layout、modal、toast、record-card view model、tabbar。 | toast 已统一；任务型弹层已开始显式使用 `closeOnMask=false`。 |
+| 层级 | 位置 | 职责 | 允许依赖 | 当前风险 |
+| --- | --- | --- | --- | --- |
+| 应用入口 | `app.json`、`app.ts`、`app.wxss` | 页面注册、云初始化、全局基础样式、网络监听 | config、store | `app.wxss` 已承担较多语义；继续增长会成为全局耦合点。 |
+| 页面 | `pages/*` | 页面状态、数据拼装、任务流程、导航 | components、services、store、utils | 局部卡片和样式重复；JS/TS 并存。 |
+| 组件 | `components/*` | 可复用结构、事件透传、主题适配 | store（仅主题类）、基础样式 | 部分组件直接订阅主题，主题接入方式不完全一致。 |
+| 服务 | `services/*` | action 封装、参数归一、异常归一 | cloud、store、types、constants | 业务调用统一通过 `callImprovData` 抛出错误，页面只处理成功数据或失败态。 |
+| 状态 | `store/index.ts` | 订阅、任务互斥、会话态、UI 偏好 | types、constants、Storage | UI 偏好、活跃 session、云端镜像共处一层，需维持清晰边界。 |
+| 类型 | `types/domain.ts` | Material、Rehearsal、PracticeRecord、AppState 等契约 | 无 | JS 页面无法获得完整编译期保护。 |
+| 工具 | `utils/*` | 安全区、toast、modal、loading、导航辅助、卡片 view model | wx API，少量 store | 统一入口已有，但没有强制 lint 防止页面绕过。 |
+| 云函数 | `improv-api/index.js` | 身份识别、action 路由、集合读写、软删除 | CloudBase SDK | 单文件随 action 增长；当前规模尚可，不需提前拆分。 |
+
+依赖规则：页面不得直接调用 `wx.cloud.callFunction`；组件不承担业务数据请求；私有数据 owner 由云函数写入；store 的本地持久化只允许 UI 偏好和未结束 session，不得成为历史业务数据事实源。
 
 ### 2.4 核心业务模块
 
-| 模块 | 页面/组件/服务 | 职责 |
-| --- | --- | --- |
-| 素材发现 | `pages/discover`、`material-card`、`material-form`、`material.ts` | 多类型素材浏览、筛选、分类、抽卡、添加/编辑素材。 |
-| 素材详情与训练 | `pages/material-detail`、`pages/practice-feedback`、`practice-record.ts` | 查看素材、收藏/练过、开始/暂停/结束练习、保存复盘。 |
-| 快速记录 | `pages/record`、`today.ts`、`inspiration.ts` | 灵感草稿、快速开始练习/排练、今日聚合。 |
-| 排练过程 | `pages/rehearsal-record`、`pages/rehearsal-review`、`rehearsal.ts` | 活跃排练计划、素材状态、Keep/Try、整体复盘。 |
-| 个人沉淀 | `pages/mine`、`record-card`、`asset-detail-panel`、`method-card.ts` | 方法卡、待整理、灵感记录、资料和主题偏好。 |
-| 历史回看 | `pages/practice-records`、`pages/team-records`、`record-detail-panel` | 练习记录与排练记录列表、只读详情、删除确认。 |
-| 隐私授权 | `privacy-popup`、`pages/privacy` | 隐私授权提示和政策详情。 |
+| 模块 | 页面与组件 | 服务 / 状态 | 职责 |
+| --- | --- | --- | --- |
+| 素材发现 | `discover`、`material-card`、`material-form` | `material.ts`、materials/saved/played | 浏览、搜索、分类、筛选、抽卡、创建素材与路径副本。 |
+| 素材详情与练习 | `material-detail`、`practice-feedback` | `material.ts`、`practice-record.ts`、currentMaterial | 收藏、练过、任务计时、结束复盘和方法卡沉淀。 |
+| 快速记录 | `record` | `today.ts`、`inspiration.ts` | 灵感快速保存、今日聚合、快速启动练习或排练。 |
+| 排练过程 | `rehearsal-record`、`rehearsal-review` | `rehearsal.ts`、currentRehearsal | 计划、素材状态、暂停/继续、Keep/Try、整体复盘。 |
+| 个人沉淀 | `mine`、`asset-detail-panel`、`floating-card` | profile/inspiration/method-card services | 资料、主题、待整理、方法卡、灵感筛选与编辑。 |
+| 历史回看 | `practice-records`、`team-records`、`record-card` | practice/rehearsal services | 列表、只读详情、删除确认。 |
+| 隐私 | `privacy-popup`、`privacy` | 微信隐私 API | 授权说明、拒绝和政策查看。 |
+
+### 2.5 数据与 action
+
+数据流统一为：页面操作 → 业务 service → `callImprovAction()` → `improv-api` action → `improv_*` 集合 → 结构化响应 → 页面/store。当前 action 共 25 个：Material 5、Profile 2、Today 1、Inspiration 4、MethodCard 4、Rehearsal 5、PracticeRecord 4。
+
+7 个集合为：`improv_materials`、`improv_user_material_states`、`improv_profiles`、`improv_inspirations`、`improv_rehearsals`、`improv_practice_records`、`improv_method_cards`。
 
 ## 3. 组件体系盘点
 
-### 3.1 组件分类与复用情况
+### 3.1 组件复用矩阵
 
-| 类别 | 组件 | 复用情况 | 应用场景 | 主要差异/问题 |
-| --- | --- | --- | --- | --- |
-| 弹层容器 | `bottom-sheet` | 8 个页面 | 筛选、抽卡、添加素材、选择记录、详情 | 已支持 `closeOnMask`；任务型弹层显式禁用遮罩关闭，轻量查看/筛选保留。 |
-| 浮层详情 | `floating-card` | 1 个页面 | 我的页待整理/资产详情翻页 | 独立于 `bottom-sheet`，适合沉浸详情，但交互规范需单独定义。 |
-| 表单容器 | `form-card` | 6 个页面 | 复盘、编辑、概览、排练信息 | 复用较高，但部分页面仍直接写 `.card block`。 |
-| 表单字段 | `form-field` | 7 个页面 + 2 个组件 | label/desc/slot 字段布局 | 输入控件仍靠页面传入 `.app-input`/`.app-textarea`，这是当前合理的半组件化。 |
-| 搜索 | `search-bar` | 3 个页面 | 发现、记录弹层、排练添加 | 清空按钮和 hint 统一；搜索提交有 blur/confirm 混用。 |
-| 筛选 | `filter-section` | 3 个页面 + `material-form` | 类型、能力、场景、状态、目标 | 支持横向/换行，但页面大量传 `customClass` 修差异。 |
-| 空态/状态 | `empty-state-panel` | 8 个页面 | 空列表、同步失败、无结果、无计划、加载中 | 已扩展 `tone=empty/loading/error/notice` 承接 `state-panel` 语义。 |
-| 素材卡 | `material-card` | 1 个页面 | 发现页素材列表 | 命名仍为 `material-card`，业务已是 `Material`；详情页和记录页未复用。 |
-| 选择卡 | `selection-card` | 3 个页面 | 选择素材、今日记录、关联对象 | 适合操作交互类卡片，已统一 selected/pending/action。 |
-| 历史记录卡 | `record-card` | 3 个页面 | 练习、排练、我的页记录列表 | 复用率高，承担 swipe 删除和 action，后续可扩展到更多记录类。 |
-| 详情面板 | `asset-detail-panel`、`record-detail-panel` | 3 个页面合计 | 待整理详情、历史记录详情 | 信息展示相近但组件分裂，后续可统一详情区块 token。 |
-| 导航头 | `subpage-header` | 8 个页面 | 子页面返回头部 | 复用高，符合安全区规则。 |
-| 隐私弹窗 | `privacy-popup` | 3 个 Tab 页面 | 微信隐私授权 | 已接入主题订阅和 token 化样式；遮罩不再等同拒绝。 |
-| TabBar | `custom-tab-bar` | 全局 | 三 Tab 主导航 | PNG 图标仍存在；颜色已部分 token 化。 |
-| 无引用/遗留 | `voice-field`、`tag-chip` | 0 引用 | 无实际场景 | 已删除 `voice-field` 组件文件并移除 `tag-chip` 空目录。 |
+| 组件 | 分类 | 注册页面数 / 覆盖率 | 调用点 | 适用覆盖与场景 | 现存差异 |
+| --- | --- | ---: | ---: | --- | --- |
+| `bottom-sheet` | 模态基础设施 | 8 / 72.7% | 17 | 部分；筛选、抽卡、选择、编辑、详情 | 规格依靠自由 `sheetClass`；任务态需调用方显式禁用遮罩关闭。 |
+| `empty-state-panel` | 状态基础设施 | 8 / 72.7% | 17 | 部分；empty/loading/error/notice | 仍有 `.notice-note-card`、`.state-note-card` 页面实现。 |
+| `subpage-header` | 导航基础设施 | 8 / 72.7% | 9 | 完整；8 个子页面 | `material-detail` 有两个模板调用点；文本箭头仍属于临时图标方案。 |
+| `form-card` | 表单容器 | 7 / 63.6% | 11 | 部分；编辑、复盘、概览 | `record` 已注册但模板未使用；详情页和记录页仍有私有表单/容器卡。 |
+| `form-field` | 字段容器 | 7 / 63.6% | 32 | 完整；含 `material-form` 的 8 个调用点 | 原生输入通过 slot 保留，属于合理半组件化。 |
+| `filter-section` | 筛选基础 | 3 / 27.3% | 12 | 完整；发现、记录、灵感关联、素材表单 | `customClass/rowClass/chipClass` 较多，需限制为布局覆盖。 |
+| `privacy-popup` | 专用授权 | 3 / 27.3% | 3 | 完整；三个主 Tab | 专用组件，不应以全页面覆盖率评价。 |
+| `record-card` | 记录摘要 | 3 / 27.3% | 3 | 完整；我的、练习历史、排练历史 | swipe 删除只在有 secondary action 时出现，需补交互可发现性。 |
+| `selection-card` | 操作选择 | 3 / 27.3% | 5 | 完整；关联、快速开始、排练添加 | 同时承载 selected/pending/action，职责接近上限。 |
+| `search-bar` | 搜索基础 | 3 / 27.3% | 3 | 完整；发现、快速练习、排练加素材 | blur/confirm 触发一致，非实时搜索是中文输入安全取舍。 |
+| `material-form` | 业务表单 | 2 / 18.2% | 2 | 完整；创建与编辑素材 | 专用组件，复用价值高于覆盖率。 |
+| `record-detail-panel` | 记录详情 | 2 / 18.2% | 2 | 完整；练习与排练只读详情 | 与 `asset-detail-panel` 共享视觉语言但不是同一业务职责。 |
+| `asset-detail-panel` | 待整理详情 | 1 / 9.1% | 1 | 专用；我的页待整理 | 包含用途标记和沉淀动作，不宜强行合并记录详情。 |
+| `floating-card` | 浮层详情 | 1 / 9.1% | 1 | 专用；待整理翻页容器 | 遮罩点击直接关闭，与任务型 sheet 规则不同，应明确其只读定位。 |
+| `material-card` | 素材摘要 | 1 / 9.1% | 1 | 部分；仅发现页列表 | 记录页活跃素材、详情历史仍用私有卡片。 |
+| `custom-tab-bar` | 主导航 | 3 个 Tab / 100% Tab 覆盖 | 全局 | 完整；发现、记录、我的 | PNG 与文本图标体系并存。 |
 
-### 3.2 复用率概览
+结论：组件不存在“零引用遗留”，但 `record/index.json` 有一条未使用的 `form-card` 注册；复用最稳定的是半弹窗、状态面板、子页头和表单容器。低覆盖不等于低价值，`material-form`、隐私弹窗和详情面板都是合理的业务专用组件。真正的复用缺口集中在页面内卡片和状态提示，而不是组件数量不足。
 
-按页面使用数统计：
+### 3.2 组件依赖关系
 
-| 组件 | 页面使用数 | 评价 |
-| --- | ---: | --- |
-| `bottom-sheet` | 8 | 核心基础设施，应继续强化。 |
-| `empty-state-panel` | 8 | 核心基础设施，已扩展为 `state-panel` 语义。 |
-| `subpage-header` | 8 | 稳定复用。 |
-| `form-field` | 7 | 稳定复用。 |
-| `form-card` | 6 | 稳定复用，但页面自定义卡仍多。 |
-| `record-card` | 3 | 记录类列表标准组件。 |
-| `selection-card` | 3 | 操作选择类标准组件。 |
-| `search-bar` | 3 | 需要统一触发时机。 |
-| `filter-section` | 3 | 需要减少页面级覆盖。 |
-| `material-card` | 1 | 业务重要但复用低，建议重命名/泛化为 `material-card`。 |
-| `floating-card` | 1 | 特定详情场景可保留。 |
-| `privacy-popup` | 3 | 已主题化。 |
-| `voice-field`、`tag-chip` | 0 | 已删除。 |
+```mermaid
+flowchart LR
+  Pages["11 个页面"] --> Foundation["基础：bottom-sheet / state-panel / subpage-header"]
+  Pages --> Forms["表单：form-card / form-field / material-form"]
+  Pages --> Lists["列表：material-card / record-card / selection-card"]
+  Pages --> Detail["详情：floating-card / asset-detail-panel / record-detail-panel"]
+  Pages --> Utility["search-bar / filter-section / privacy-popup"]
+  MaterialForm["material-form"] --> FormField["form-field"]
+  MaterialForm --> FilterSection["filter-section"]
+  FloatingCard["floating-card"] --> AssetPanel["asset-detail-panel（slot 内容）"]
+  Components["全部主题化组件"] --> Theme["theme.wxss + app.wxss"]
+```
 
-## 4. 卡片组件分类与现状
+## 4. 卡片体系
 
-### 4.1 卡片类型
+### 4.1 分类与现状
 
-| 业务属性 | 当前实现 | 布局结构 | 尺寸/样式现状 | 交互逻辑 |
-| --- | --- | --- | --- | --- |
-| 数据展示类 | `material-card`、`record-card`、`record-detail-panel`、详情页 `.card block` | 标题 + 描述 + meta/pill + 状态 | 常用 40rpx 圆角、28/40rpx padding；详情页有局部 28/26rpx 变体 | 点击进入详情、收藏、编辑、删除、只读查看。 |
-| 操作交互类 | `selection-card`、记录页 `record-hub-card`、排练计划卡 | 标题 + 描述 + selected/action | `selection-card` 28rpx padding；记录页 hub 卡为页面自定义 | 选择、加入、切换状态、继续任务。 |
-| 信息通知类 | `empty-state-panel`、`.notice-note-card`、`.state-note-card`、`.sync-pill` | 标题/说明/动作或纯文本 | 空态已组件化；notice/loading/error 仍依赖全局或页面类 | 重试、清空条件、跳转、新建。 |
-| 内容聚合类 | 我的页入口卡、发现页分类卡、路径卡、汇总卡 | 标题 + 数量 + 说明 + 入口 | 多为页面自定义，部分使用 `card-surface-nav/content/container` token | 进入列表、打开半弹窗、主题/资料编辑。 |
-| 容器表单类 | `form-card`、`form-field`、编辑表单卡 | header + body slot | `form-card` 40rpx padding、32rpx 标题；输入用 `.app-input/.app-textarea` | 保存、取消、沉淀、展开更多。 |
-| 浮层详情类 | `floating-card`、`asset-detail-panel` | 遮罩 + 详情卡 + 翻页导航 | 52rpx 圆角、75vh 高度、居中浮层 | 上一个/下一个、沉淀、不再整理、用途标记。 |
+| 卡片角色 | 当前实现 | 标准结构 | 当前尺寸/样式 | 交互 | 问题 |
+| --- | --- | --- | --- | --- | --- |
+| 导航入口 | 分类卡、我的页入口卡 | title + count/icon + 一句说明 | 页面私有；常见 28-40rpx padding | 进入分类、列表或子页 | 仅分类卡使用 `card-surface-nav`；我的页入口未完全映射。 |
+| 内容摘要 | `material-card`、`record-card`、历史卡 | kicker/status + title + desc + meta + action | 主卡常见 40rpx padding；紧凑记录卡另有布局 | 打开详情、收藏、编辑、删除 | 素材摘要只有发现页复用；记录摘要较稳定。 |
+| 操作选择 | `selection-card`、排练计划卡、记录 hub 卡 | title + desc/meta + selected/action | `selection-card` 采用紧凑容器；页面私有卡尺寸不一 | 选择、加入、继续、切换状态 | 同类场景仍分为组件和页面结构。 |
+| 信息状态 | `empty-state-panel`、notice/state note、feedback status | tone + title + desc + 0-2 actions | 组件已支持四种 tone | 重试、清空、新建、跳转 | 3 个页面仍使用 `.notice-note-card`，详情页另有 `.state-note-card`。 |
+| 参考聚合 | 路径卡、推荐卡、统计卡 | title + summary + progress/meta + view | 路径、推荐、统计分别实现 | 展开 sheet、查看详情 | 与导航卡视觉容易同权；参考内容需更低强调。 |
+| 表单容器 | `form-card`、详情页 `.card block` | header + body slot + optional action | `form-card` 40rpx padding；详情 block 有局部变体 | 编辑、保存、展开更多 | 容器角色已明确，但私有 block 未完全收口。 |
+| 浮层详情 | `floating-card` + 两类 detail panel | mask + header + scroll body + action/nav | 52rpx 圆角、约 75vh | 翻页、沉淀、用途标记、关闭 | 只读与任务型浮层边界需写入维护规则。 |
 
-### 4.2 主要卡片规范差异
+### 4.2 统一卡片标准
 
-- `material-card` 只有发现页使用，详情页、记录页仍用页面自定义 `.card`，导致素材摘要卡和素材详情卡视觉节奏不同。
-- 历史记录已通过 `record-card` 收敛，但 `practice-records` 与 `team-records` 的 summary、loading、notice 仍是页面局部结构。
-- 发现页分类卡、路径卡和我的页入口卡都属于导航/聚合入口，但样式分别在页面内实现，卡片层级容易撞脸。
-- `selection-card` 同时承担“选择项”和“列表项”，有 selected/action/pending 能力，但尺寸固定性强，长期应明确它只用于选择/加入类场景。
-- 卡片 token 已存在：`--improv-card-nav-*`、`--improv-card-reference-*`、`--improv-card-content-*`、`--improv-card-container-*`，但页面并未完全按角色使用。
+| 角色类 | 用途 | 内边距 | 圆角 | 内容限制 | 动作规则 |
+| --- | --- | ---: | ---: | --- | --- |
+| `card-surface-nav` | 分类、快捷入口、我的页目录 | 28rpx | 28-32rpx | 一行标题 + 一句说明 | 整卡点击，最多一个低强调动作。 |
+| `card-surface-content` | 素材、记录摘要 | 40rpx | 40rpx | 摘要 2-3 行，meta 使用 pill | 一个主入口，可附一个状态动作。 |
+| `card-surface-reference` | 路径、说明、推荐 | 28-40rpx | 32-40rpx | 只露摘要和关键阶段 | 完整内容进 sheet/子页。 |
+| `card-surface-action` | 选择、继续任务、计划项 | 28rpx | 28-32rpx | 明确 selected/pending/status | 状态变化必须有可见反馈。 |
+| `card-surface-feedback` | empty/loading/error/notice | 32-40rpx | 32-40rpx | 标题 + 说明 | 最多一个主动作和一个次动作。 |
+| `card-surface-container` | 表单、详情、浮层内容 | 40rpx | 40rpx；sheet 44rpx | 可承载长内容 | 操作区与正文分组，不让整卡误触。 |
 
-### 4.3 建议统一卡片标准
+不得为单页新增同层级卡片颜色、阴影和圆角；需要新角色时先证明现有六类无法表达，再扩展 token 和文档。
 
-| 卡片角色 | 标准用途 | 建议结构 | 建议 token |
-| --- | --- | --- | --- |
-| `card-nav` | 分类、快捷入口、我的页入口 | 轻标题 + 数量/图标 + 一句说明 | `--improv-card-nav-*` |
-| `card-content` | 素材、记录摘要 | Kicker/状态 + title + desc + meta + action | `--improv-card-content-*` |
-| `card-reference` | 学习路径、说明型入口 | 标题 + 摘要 + 阶段/标签 + 查看 | `--improv-card-reference-*` |
-| `card-container` | 表单、详情、弹层内容块 | header + body slot + optional action | `--improv-card-container-*` |
-| `card-state` | empty/loading/error/notice | 状态标题 + 说明 + 1 个主动作 | 复用 card container + state tone |
+## 5. 视觉风格 Audit
 
-## 5. 设计风格 Audit
+### 5.1 色彩
 
-### 5.1 色彩体系
+当前是奶油浅底、橙色主动作、蓝灰辅助、柔和阴影的双主题体系。量化结果：306 个主题 token 定义、538 次 `var(--improv-*)` 消费；主题文件外有 209 个直接色值，其中 140 个与变量同行，是 Skyline / Glass-Easel 兼容 fallback，69 个没有同行主题变量。
 
-当前默认主题是橙色主品牌、蓝色辅助色、浅色卡片、柔和阴影；`theme-vivid` 已存在。主题 token 覆盖已经具备基础，但存在以下问题：
+主要影响面：
 
-- `privacy-popup` 仍大量使用 `#ffffff`、`#1a1a2e`、`#4a4a6a`、`rgba(0,0,0,0.5)`，切换主题时会明显割裂。
-- `discover/index.wxss`、`app.wxss`、`bottom-sheet`、`floating-card`、`record-card` 仍有直接色值兜底。兜底本身合理，但局部新增色值应避免脱离 token。
-- `theme.wxss` 中 token 很丰富，但页面实际使用没有完全映射到角色，导致“有 token，但页面继续自定义卡片层级”。
-- `app.json` 的 `tabBar` 仍写死 `color`、`selectedColor`、`backgroundColor`，实际使用自定义 TabBar 时影响有限，但作为配置事实仍应同步 token 口径。
+- `app.wxss`：104 个直接色值表达，其中 33 个未同行绑定变量。全局语义集中是合理的，但未绑定值会影响换色和暗色扩展。
+- `discover/index.wxss`：36 个直接色值，其中 18 个未绑定变量，是页面级最高风险。
+- `bottom-sheet`：30 个直接色值，其中 10 个未绑定变量；遮罩、sheet 与操作区是主题关键表面。
+- `floating-card`、`record-card`、TabBar：仍有少量未绑定直接值。
+- `material-card`、`privacy-popup`、`selection-card` 的直接值均与 token fallback 同行，属于兼容写法，不列为违规。
+- `mine/index.wxml` 的主题切换入口把 padding、尺寸、背景、文字和边框写在行内；虽然颜色仍使用 token，但绕过了样式角色和审查入口。
 
-影响范围：主题切换、隐私授权弹窗、发现页分类/路径区、记录卡删除 reveal、浮层导航按钮。
+规则：允许“直接 fallback → `var(--improv-*, fallback)`”双声明；不允许新增没有语义 token 的品牌色、状态色、遮罩、阴影或卡片表面。
 
 ### 5.2 字体层级
 
-当前字号范围较大：页面标题 56-64rpx，卡片标题 32-46rpx，正文 24-30rpx，标签 20-24rpx。总体可读，但层级过多：
+当前共有 22 档字号：高频为 24rpx（46 次）、28rpx（27 次）、26rpx（23 次）、22rpx/32rpx（各 12 次）。字重只有 5 档，但 900 使用 67 次、800 使用 22 次，视觉整体偏重。line-height 有 36 种表达，说明正文节奏尚未收敛。
 
-- 发现页存在 20、22、24、25、26、28、30、31、32、36、40、48、56、64rpx 等多档，说明页面局部还在做视觉试错。
-- `form-card` 标题 32rpx，`material-card.large` 标题 52rpx，记录页标题 60rpx，详情页标题 44rpx，缺少明确的页面/卡片/列表标题 token。
-- 字重普遍偏重，`font-weight: 900` 高频使用，容易让导航卡、内容卡、操作卡视觉同权。
+建议层级：
 
-建议字号 token：
+| 语义 | 字号 / 字重 | 行高 |
+| --- | --- | --- |
+| 页面主标题 | 56rpx / 900 | 1.1-1.2 |
+| 页面次标题 | 40rpx / 900 | 1.2 |
+| 卡片标题 | 32rpx / 800-900 | 1.25 |
+| 列表标题 | 28-30rpx / 800 | 1.3 |
+| 正文 | 26rpx / 600 | 1.55 |
+| 辅助说明 | 24rpx / 600 | 1.45 |
+| 标签与小按钮 | 22-24rpx / 800 | 1.2 |
 
-| 层级 | 建议值 |
-| --- | --- |
-| 页面大标题 | 56rpx / 900 |
-| 页面次标题 | 40rpx / 900 |
-| 卡片标题 | 32rpx / 900 |
-| 列表标题 | 30rpx / 800 |
-| 正文 | 26rpx / 600，line-height 1.55 |
-| 辅助说明 | 24rpx / 600，line-height 1.45 |
-| 标签/按钮小字 | 22-24rpx / 800-900 |
+优先整改发现页 25/31/34/38/46/48/64rpx 等孤立字号；不要机械替换具有明确展示价值的页面主标题。
 
-### 5.3 间距与圆角
+### 5.3 间距、圆角与阴影
 
-优势：
+- `gap` 有 22 种表达，高频为 18/16/12/20rpx；18rpx 使用最多但不是现有命名 token 的核心步长。
+- 圆角有 23 种表达；999rpx、40rpx、28rpx、24rpx占主要用量，其余 16-58rpx 的零散档位造成风格噪声。
+- 阴影有 36 种表达，其中 14 次为 `none`；其余常见阴影已有 token，但页面仍存在一次性参数。
 
-- 全局已有 `--page-side`、`--page-bottom`、`--fixed-action-*`、`--improv-card-padding-*`。
-- `form-card`、`material-card`、`record-card` 已开始复用 40rpx 卡片 padding。
+建议步长：相关元素 8/12/16rpx，控件/卡片内部 20/24/28rpx，字段组 36rpx，区块 48rpx；圆角只保留 pill 999rpx、控件 24rpx、紧凑卡 28/32rpx、主卡 40rpx、sheet 44rpx。特殊圆形、头像和业务插画除外。
 
-问题：
+### 5.4 图标
 
-- 页面局部仍大量出现 18、20、22、24、26、28、32、34、40、48rpx 等间距，缺少小/中/大/区块级标准。
-- 圆角从 16、22、24、26、28、30、32、34、40、42、44、46、52、56、58rpx 到 999rpx 均有使用，视觉语言不够收敛。
-- 底部固定操作区存在 `form-actions`、`fixed-actions`、`action-stack` 等多套语义，长期会导致安全区 spacer 和按钮对齐漂移。
+TabBar 使用 6 张 PNG；搜索、返回、关闭、随机、收藏等使用文本符号/emoji 和 `.icon-text` 语义类。当前问题不是来源混合本身，而是同一语义的字形、线宽、尺寸和点击热区无法稳定一致。
 
-建议间距 token：
+短期继续使用 `.icon-text + .icon-*`，并统一尺寸和热区；中期只替换 back/close/search/favorite/random/share 六个高频图标为同一矢量来源。TabBar PNG 可保留，不要求为形式统一而重做稳定资产。
 
-| 场景 | 标准 |
-| --- | --- |
-| 页面左右 | `--page-side` 40rpx |
-| 卡片内边距 | 40rpx，紧凑卡 28rpx |
-| 相关元素 gap | 12-16rpx |
-| 字段组 gap | 28-36rpx |
-| 区块 gap | 48rpx |
-| 卡片圆角 | 40rpx，紧凑卡/内嵌块 28-32rpx，sheet 44rpx，pill 999rpx |
+## 6. 交互逻辑 Audit
 
-### 5.4 图标风格
-
-当前图标来源混合：
-
-- TabBar 使用 PNG。
-- 搜索、返回、关闭、骰子、收藏使用文本符号或 emoji：`⌕`、`←`、`✕`、`🎲`、心形。
-- 业务图标没有统一尺寸、线宽、可变色策略。
-
-影响范围：TabBar、搜索框、返回头、半弹窗关闭、发现页抽卡 FAB、收藏按钮。
-
-建议：短期统一文本符号尺寸和颜色 token；中期将常用图标收敛为纯 CSS/SVG 组件，至少覆盖 search/back/close/favorite/random/share。
-
-## 6. 交互逻辑标准化分析
-
-| 交互行为 | 当前实现 | 不一致问题 | 标准化建议 |
+| 行为 | 当前证据 | 差异 / 风险 | 标准 |
 | --- | --- | --- | --- |
-| 按钮点击态 | 全局按钮有 `:active scale(0.98)`；卡片有 `hover-class` | 已开始收敛，但仍需防止页面新增私有按钮色值 | 按 7 类语义使用 `.primary-btn`、`.ghost-btn`、`.small-btn` / `.button-tertiary`、`.mini-action-btn.neutral`、`.mini-action-btn.primary-lite`、`.chip`、`.button-danger-quiet`，页面只补布局。 |
-| 表单提交反馈 | 多数页面用 `toast()`；保存失败写入 pending | pending 文案有“本地暂存/待同步/本地保存”混用 | 成功：已保存；云失败但保留：已保存到本次会话，待同步；卡片状态：本地暂存。 |
-| 弹窗唤起 | `bottom-sheet` + `root-portal` 为主，`floating-card` 为详情 | `bottom-sheet` mask 点击关闭，与规范“背景不可点击”冲突；隐私弹窗 mask 点击拒绝过重 | 任务型弹层 mask 不关闭，仅关闭按钮；轻量筛选/抽卡可配置关闭；隐私弹窗 mask 不应等同拒绝。 |
-| 页面跳转 | `navigateTo` 子页面，`switchTab` 回主 Tab | 基本统一 | 保持：深读/完整编辑进子页，轻选择进 sheet。 |
-| 异常提示 | `notice-note-card`、`state-note-card`、`empty-state-panel` | empty 组件化，loading/error 未组件化 | 增加 `state-panel` 或扩展 `empty-state-panel` 支持 `tone=loading/error/empty`。 |
-| 删除确认 | 历史记录/素材使用 `wx.showModal` | 系统模态视觉与自定义 UI 不一致，但危险操作适合强确认 | 短期保留系统确认；中期做统一 `confirm-sheet`。 |
-| 输入更新 | 表单基本使用 `bindblur`/`bindconfirm` | 搜索也依赖 blur/confirm，实时筛选体验较慢但符合中文输入安全 | 表单继续禁用实时 `bindinput`；搜索可保留 confirm/blur，若要实时搜索需单独验证中文输入。 |
-| TabBar 与弹层 | `utils/modal.js` 控制 modalOpen/TabBar | 依赖页面正确调用 open/close 工具 | 所有新弹层必须通过 modal 工具或 `bottom-sheet` 标准状态管理。 |
+| 点击态 | 全局按钮有 active；仅 3 个 `hover-class` 模板点 | 卡片/入口点击态覆盖不完整 | 命令按钮统一 active；整卡可点击时使用同一 hover/pressed token。 |
+| 提交状态 | 5 个 loading、4 个 disabled 绑定 | 部分异步动作没有局部防重；全局 loading 会遮罩所有请求 | 提交按钮必须 loading + disabled；只读加载可用 state panel。 |
+| 文本输入 | 普通表单已统一 blur/confirm，全仓无 `bindinput` | 开发者工具 Skyline 模拟器仍无法验证中文组合输入 | 普通表单只用 blur/confirm；中文输入必须真机验证。 |
+| 反馈 | 页面统一 `toast()`；2 处 `wx.showToast` 为全局网络提示和兜底 | 已取消无队列支撑的假同步语义 | 成功文案只在服务端确认后显示；失败保留表单并明确重试。 |
+| 弹层 | 17 个 `bottom-sheet`；9 个任务型实例显式 `closeOnMask=false` | 默认值允许关闭，任务属性靠调用方维护 | 任务/编辑 sheet 必须禁用遮罩关闭；筛选、抽卡、只读详情可关闭。 |
+| 删除确认 | 5 个 `wx.showModal` | 视觉不同但危险确认强度合理 | 短期保留系统确认；不要为统一视觉降低确认强度。 |
+| 导航 | 16 navigateTo、10 switchTab、10 navigateBack、1 redirectTo | 基本符合页面边界 | 深读/完整编辑/过程态进子页；轻选择与筛选进 sheet。 |
+| 状态 | 17 个 state panel 调用点 | 仍有 notice/state 私有卡；部分页面三态不完整 | 新列表必须显式 loading/empty/error；未入库记录不进入历史列表。 |
+| 手势 | record-card 左滑、floating-card 翻页、发现页 FAB 拖动 | 无替代入口时可发现性不足 | 手势必须有按钮或文案替代，不作为唯一完成路径。 |
+| TabBar 与 modal | `openModal/closeModal` 控制隐藏 | 调用方绕过工具时可能遮挡 | 新增 modal 必须走统一工具并验证关闭后恢复。 |
 
-## 7. 现存关键问题清单
+## 7. 运行态核验
 
-### P0：事实源和废弃物（已完成）
+### 7.1 已验证
 
-1. `docs/project-context.md`、`project_memory`、`information-architecture.md` 已修正为 11 个页面，并补充 `pages/privacy/index`。
-2. `wechat-cloudbase-app/database.md` 和 `docs/data-api.md` 已补齐当前云函数支持的 `inspiration.update/delete`、`methodCard.update/delete`、`rehearsal.delete`、`practiceRecord.update/delete`。
-3. `components/voice-field` 已删除，符合 ADR-014 “MVP 文本优先、不提供 app 内语音入口”。
-4. `components/tag-chip` 空目录已移除。
+微信开发者工具 Stable 运行在 Skyline 模式、iPhone 12/13 模拟器：
 
-### P1：UI 体系漂移（首轮已落地）
+- `pages/discover/index` 可渲染；CloudBase 请求超时后进入“添加素材”空态，主卡、主按钮和自定义 TabBar可见，未出现白屏。
+- 控制台确认请求超时错误被页面状态承接，但仍保留原始 timeout 日志，说明服务归一和页面空态链路都在工作。
+- 控制台报告 `pages/discover/index.wxss` 的 `max-width: none` 为 Skyline 不支持属性，应列入 P0。
+- 开发者工具提示未设置线上最低基础库版本，低版本客户端可能回退 WebView；这是发布配置风险，不是本轮 UI 代码整改范围。
 
-1. 卡片角色虽然已有 token，但页面内仍存在大量局部卡片：发现页分类/路径、记录页 hub/recommend、详情页 block、我的页入口卡。
-2. `privacy-popup` 已主题化，并订阅 `themeClass`。
-3. 已建立 `.icon-text` 与 search/back/close/favorite/random 等图标语义类，后续继续替换散落实现。
-4. `bottom-sheet` 已用 `closeOnMask` 区分任务型弹层和轻量弹层，任务型弹层不再误触关闭。
+### 7.2 证据限制
 
-### P2：长期维护风险
+本地 CloudBase 请求持续超时，且开发者工具窗口自动化无法稳定切换全部路由。因此三个主 Tab、八个子页面的完整数据态、pending、练习/排练任务态和所有 17 个弹层未完成逐一运行态复现。它们在本报告中均以 WXML/WXSS/逻辑源码为证据，不标记为“运行通过”。涉及中文输入、真机安全区、手势和 fixed 操作栏的结论仍需真机回归。
 
-1. 页面 `.wxss` 仍存在大量硬编码尺寸和直接色值，后续主题迭代成本高；按钮相关新增样式必须使用 `--improv-btn-*` token。
-2. 旧游戏语义命名曾广泛存在，现已按 Material 与 PracticeRecord 模型收敛。
-3. loading/error/notice 已通过 `empty-state-panel tone` 开始组件化，后续继续替换页面内历史 `notice-note-card`。
-4. TypeScript 与 JavaScript 混合是可接受的迁移状态，但新逻辑应优先 TS，避免类型体系停留在局部。
+## 8. 可落地统一规范
 
-## 8. 落地方案
+### 8.1 组件复用
 
-### 8.1 组件复用优化
+1. 优先增强现有组件，不新增大型 UI 框架。
+2. 状态提示全部迁移到现有 `empty-state-panel` 的 `tone` 能力；不再新增 notice/loading/error 私有卡。
+3. 素材摘要优先扩展 `material-card` 的 mode，不把详情容器或活跃任务卡强塞进摘要组件。
+4. `selection-card` 只承担选择/加入；长详情和复杂状态流使用专用容器。
+5. `asset-detail-panel` 与 `record-detail-panel` 保持业务分离，只共享 detail token。
 
-短期不引入外部 UI 框架，不重写页面。按“已有组件增强优先”的方式推进：
+### 8.2 视觉与交互 token
 
-1. 已删除无引用组件：移除 `tag-chip` 空目录，删除 `voice-field`。
-2. 已扩展 `state-panel`：覆盖 loading、empty、error、notice，复用 `empty-state-panel` 的结构和按钮能力。
-3. `material-card` 暂不重命名，作为迁移期兼容遗留；新增命名和文档优先使用 `material` 语义。
-4. 统一详情面板基础样式：让 `asset-detail-panel` 与 `record-detail-panel` 共用 detail card token、标题、meta、pending 样式。
-5. 建立卡片角色 class：`card-surface-nav`、`card-surface-content`、`card-surface-reference`、`card-surface-container` 作为唯一视觉入口。
+- 色彩：`brand/secondary/text/muted/surface/state/favorite/mask` 语义，不以页面名命名颜色。
+- 字体：page-title/section-title/card-title/body/caption/label 七级。
+- 间距：space-1/2/3/4/6/8/12，对应 4/8/12/16/24/32/48rpx；现有表单 token 可逐步映射，不要求一次性重写。
+- 圆角：control/card-compact/card/sheet/pill 五级。
+- 动作：primary/secondary/tertiary/tool/chip/icon/danger 七类；一个任务容器最多一个主动作。
+- 状态：loading/empty/error/notice 四类；业务保存以服务端确认为准。
 
-### 8.2 卡片统一设计标准
+### 8.3 页面与弹层边界
 
-执行规则：
+- 子页面：深读、完整编辑、排练过程、复盘和隐私政策。
+- 任务型 sheet：单一快速任务，可在当前上下文完成，遮罩不可关闭。
+- 轻量 sheet：筛选、抽卡、关联选择、只读详情，允许遮罩关闭。
+- 浮层详情：只读浏览和翻页；一旦包含长编辑，升级为 task sheet 或子页面。
 
-- 导航入口卡：轻阴影、28rpx 内边距、标题 30-32rpx、说明 24-26rpx，不承载长正文。
-- 内容摘要卡：40rpx 内边距、标题 32rpx、正文最多 2-3 行、meta 用 `meta-pill`。
-- 操作选择卡：28rpx 内边距，必须支持 selected、action、pending，但不承担长详情。
-- 详情容器卡：40rpx 内边距，允许多段信息，但操作区放到底部或浮层 action 区。
-- 状态卡：只允许一个主动作和一个次动作，不在空态里放多个竞争入口。
+### 8.4 长期维护
 
-### 8.3 视觉风格整改路径
+- 新组件必须记录：角色、适用页面、props/events、主题 token、状态和关闭规则。
+- 新页面必须记录：路由、入口/出口、数据源、三态、提交态、fixed 安全区和主题绑定。
+- UI PR 必查：直接色值、卡片角色、按钮层级、字体/圆角新档位、图标语义、表单输入事件、弹层遮罩、三态、真机验证。
+- 每个较大 UI 迭代后复算：组件零引用、页面覆盖率、未绑定直接色值、字号/圆角/gap 档位、私有状态卡、`bindinput`、直接 `wx.showToast`、任务型 sheet 配置。
 
-1. P0：已将 `privacy-popup` 改为 token 化，并复用主题系统。
-2. P1：为字号、间距、圆角增加语义 token；优先替换 `discover`、`mine` 两个页面的局部硬编码。
-3. P1：把发现页分类卡、路径卡、我的页入口卡映射到卡片角色 token。
-4. P2：逐步收敛直接色值，只保留 Skyline 兼容所需“直接兜底 + var 覆盖”。
-5. P2：统一图标组件或图标 class，替换 emoji FAB、搜索符号、关闭/返回符号的散落实现。
+## 9. 整改优先级清单
 
-### 8.4 交互逻辑标准化规则
+2026-06-20 实施更新：两项仓库内 P0（方法卡 `bindinput`、Skyline `max-width: none`）已修复并通过开发者工具重新编译；线上最低基础库仍需在微信后台执行。
 
-1. 所有弹层默认使用 `bottom-sheet`；任务型弹层 mask 不关闭，轻量弹层可配置关闭。
-2. 所有普通反馈调用 `toast(title)`；页面不直接创建新 toast 样式。
-3. 所有危险操作先确认；短期可用 `wx.showModal`，中期统一为 `confirm-sheet`。
-4. 所有表单文本输入继续使用 `bindblur`/`bindconfirm`，避免 Skyline 中文输入问题。
-5. 所有新列表必须显式覆盖 loading、empty、error 三态。
-6. 所有 fixed 操作栏使用统一 spacer 和 safe-area 规则，不新增页面私有底栏语义。
-7. 页面跳转边界保持：完整编辑/深读进子页面，轻量选择/筛选/局部确认进半弹窗。
+| 优先级 | 类型 | 问题与证据 | 影响 | 建议动作 | 依赖 / 工作量 | 验收 |
+| --- | --- | --- | --- | --- | --- | --- |
+| P0 | 缺陷修复 | `mine/index.wxml` 方法卡编辑有 2 个 `bindinput` | Skyline 中文组合输入可能被打断 | 改为 blur/confirm，并在真机验证中文标题与正文 | 无；0.5 天 | 真机中文输入、保存、再次编辑均正确。 |
+| P0 | 缺陷修复 | `discover/index.wxss` 使用不支持的 `max-width: none` | Skyline 控制台告警，存在渲染差异 | 使用支持的布局约束或移除无效声明 | 无；0.25 天 | Skyline 控制台不再出现该告警。 |
+| P0 | 发布风险 | 未设置线上最低基础库版本 | 低版本可能回退 WebView | 明确最低版本并做 Skyline/WebView 发布策略 | 发布配置；0.5 天 | 开发者工具不再提示未配置，发布文档同步。 |
+| P1 | 规范收敛 | 69 个未同行绑定 token 的直接色值，集中于 app/discover/sheet | 主题扩展与换色成本高 | 先分类兼容值与真实债务，再为真实债务补语义 token | 视觉回归；1-2 天 | 未绑定值下降且两主题无退化。 |
+| P1 | 规范收敛 | 22 档字号、23 档圆角、22 档 gap | 层级噪声与页面漂移 | 优先清理 discover/mine 孤立档位，映射推荐层级 | 逐页视觉回归；2-3 天 | 不新增孤立档位，重点页层级清晰。 |
+| P1 | 组件复用 | notice/state 私有卡仍在 4 个场景 | 三态结构和文案漂移 | 迁移到 `empty-state-panel tone` | 无；1 天 | 新旧状态路径均由统一组件渲染。 |
+| P1 | 组件复用 | 导航/参考/操作卡仍有页面私有表面 | 同屏卡片同权、重复样式 | 将分类、路径、我的入口、record hub 映射到六类卡片角色 | 视觉回归；2-3 天 | 每张卡可明确归类，无新增同级表面。 |
+| P1 | 交互统一 | 异步按钮 loading/disabled 覆盖不完整 | 重复提交或反馈不明确 | 按保存/创建/删除 action 建立检查表逐页补齐 | 业务回归；1-2 天 | 所有写操作具备防重和明确结果。 |
+| P2 | 工程治理 | `record` 注册但未使用 `form-card`，且存在静态行内样式 | 依赖清单和样式审查噪声 | 移除无用注册，把非动态行内样式迁回页面语义 class | 无；0.5 天 | 页面注册与模板一致，仅动态布局值保留行内。 |
+| P2 | 长期演进 | 高频图标来自 PNG、文本、emoji | 线宽、尺寸、主题适配不一致 | 统一六个高频矢量图标；TabBar PNG 保留 | 设计资产；2-3 天 | 高频图标来源、尺寸、热区统一。 |
+| P2 | 长期演进 | JS 页面缺少领域类型保护 | 字段迁移更易漏改 | 新增逻辑优先 TS，按实际修改逐页迁移 | 随功能迭代 | 不做独立大迁移；新代码不扩大 JS 债务。 |
+| P2 | 工程治理 | 没有 UI lint/组件测试 | 规范依赖人工审查 | 增加只读 audit 脚本和最小组件行为测试 | 工具建设；2-4 天 | CI 可报告新增直接色值、bindinput、零引用组件。 |
 
-## 9. 可执行整改优先级清单
+## 10. 执行顺序
 
-### P0：1 天内可完成（已完成）
+1. 先完成三个 P0，并做 Skyline + 真机回归。
+2. 以“状态面板 → 色彩 token → 卡片角色 → 字体/间距”的顺序推进 P1，避免同时重写全部页面。
+3. 每个 P1 子任务独立提交，包含前后截图、受影响页面和回滚边界。
+4. P2 随功能迭代执行，不建立脱离产品需求的大型重构分支。
 
-- 已修正正式文档中的页面数量：当前为 11 个页面。
-- 已补齐 `wechat-cloudbase-app/database.md` action 表，与 `improv-api` routes 对齐。
-- 已删除 `components/tag-chip`、`components/voice-field`。
-- 已将本报告加入 `docs/README.md`，避免分析只停留在聊天记录。
-
-验收：
-
-- 搜索旧页面数量口径时，不再指向当前事实。
-- `database.md` action 表覆盖云函数 routes。
-- 无引用组件处理后 `npm run syntax-check`、`npm run typecheck` 通过。
-
-### P1：1-2 个迭代（首轮已完成）
-
-- 已主题化 `privacy-popup`。
-- 已建立 `state-panel` 语义，替换部分页面内 loading 重复结构。
-- 将发现页分类卡、路径卡、我的页入口卡迁移到卡片角色 class。
-- 已接入 `bottom-sheet.closeOnMask`，任务型弹层默认不可点遮罩关闭。
-- 已梳理图标 class，先统一 search/back/close/favorite/random 的语义入口。
-
-验收：
-
-- `privacy-popup` 除 Skyline / Glass-Easel 兼容 fallback 外，不再出现脱离 token 的色值。
-- 新增列表/弹层不再自定义 loading/error 样式。
-- 任务型弹层误触遮罩不关闭。
-
-### P2：长期维护
-
-- 命名已收敛到 `material-*` 与 `practice-*`，降低业务模型歧义。
-- 页面级 `.wxss` 中新增样式必须优先引用 token，不新增未登记色值和卡片阴影；新增按钮必须先选择按钮语义类，不允许单页重新定义颜色、边框、阴影和圆角。
-- 为卡片和交互规范补充轻量设计检查清单，放入 `.codex/rules` 或 `docs/experience-guidelines.md`。
-- 对 `discover`、`mine` 做一次视觉 debt 清理，减少局部字号/圆角/间距档位。
-
-验收：
-
-- 新增组件默认有使用场景、props、空态/错误态和主题适配说明。
-- 每次 UI PR 至少检查：卡片角色、按钮层级、主题 token、三态、弹层关闭规则。
-
-## 10. 长期维护规范
-
-- 架构事实变更：先改实现，再同步 `docs/architecture.md`、`docs/project-context.md` 和 `project_memory` 受管快照。
-- 数据/action 变更：先改云函数与服务层，再同步 `wechat-cloudbase-app/database.md` 和 `docs/data-api.md`。
-- UI 规则变更：同步 `docs/experience-guidelines.md`；如果影响组件策略，同步 `docs/architecture.md`。
-- 组件新增规则：必须说明所属角色、复用场景、props、主题 token、loading/empty/error 处理方式。
-- 页面新增规则：必须注册到 `app.json`，同步信息架构、页面数量和导航边界。
-- 设计 audit 周期：每个较大 UI 迭代后检查一次直接色值、无引用组件、重复卡片结构和弹层行为。
+本报告保留审计快照和长期整改路径；2026-06-20 已实施数据链路、错误合同、分页、账号注销和两项 P0 Skyline 修复。

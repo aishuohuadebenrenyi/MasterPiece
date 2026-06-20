@@ -21,7 +21,7 @@
     <text class="privacy-text">我们采用微信云开发的安全机制保护您的数据，所有数据读写均通过云函数进行权限校验，前端不直接操作数据库。</text>
 
     <text class="privacy-section-title">五、您的权利</text>
-    <text class="privacy-text">您可以随时在小程序内查看、编辑或删除您创建的所有内容。如需注销账户或删除所有数据，请通过小程序内反馈渠道联系我们。</text>
+    <text class="privacy-text">您可以随时查看、编辑或删除自己创建的内容。如需删除全部个人数据，可在“我的 → 编辑个人卡片”中选择“注销并删除我的数据”。</text>
 
     <text class="privacy-section-title">六、未成年人保护</text>
     <text class="privacy-text">我们高度重视未成年人个人信息保护。若您是未满14周岁的未成年人，请在监护人指导下使用本小程序。</text>
@@ -31,5 +31,6 @@
 
     <text class="privacy-section-title">八、联系我们</text>
     <text class="privacy-text">如您对本隐私政策有任何疑问或建议，请通过小程序内反馈功能与我们联系。</text>
+    <button class="ghost-btn" open-type="feedback">提交反馈</button>
   </view>
 </scroll-view>

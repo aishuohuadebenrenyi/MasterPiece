@@ -1,6 +1,6 @@
 const { toast } = require('../../utils/page')
 const { createMethodCard: createMethodCardRecord } = require('../../services/method-card')
-const { updateRehearsal } = require('../../services/rehearsal')
+const { completeRehearsal } = require('../../services/rehearsal')
 const { addMethodCard, finishCurrentRehearsal, getState, upsertRehearsalHistory , getThemeClass } = require('../../store/index')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
@@ -69,28 +69,28 @@ Page({
       return
     }
     this.closeSheet()
-    let syncFailed = false
-    const finished = finishCurrentRehearsal({
-      desc: this.data.keepValue,
-      syncStatus: 'pending',
-      meta: this.data.selectedDirections
-    })
-    if (finished) {
-      try {
-        await updateRehearsal(finished.id, {
+    try {
+      const result = await completeRehearsal({
+        id: current.id,
+        patch: {
           status: '已完成',
           reviewKeep: this.data.keepValue,
           reviewTry: this.data.tryValue,
           reviewReminder: this.data.reminderValue,
-          plan: finished.plan
-        })
-        upsertRehearsalHistory(Object.assign({}, finished, { syncStatus: 'synced' }))
-      } catch (error) {
-        syncFailed = true
-      }
+          plan: current.plan,
+          meta: this.data.selectedDirections
+        }
+      })
+      finishCurrentRehearsal({
+        desc: this.data.keepValue,
+        meta: this.data.selectedDirections
+      })
+      upsertRehearsalHistory(result.rehearsal)
+      toast('复盘已保存')
+      wx.navigateTo({ url: '/pages/team-records/index' })
+    } catch (error) {
+      toast((error && error.message) || '保存失败，请重试')
     }
-    toast(syncFailed ? '复盘已本地保存，待同步' : '复盘已保存')
-    wx.navigateTo({ url: '/pages/team-records/index' })
   },
   createMethodCard() {
     openModal(this, { insightVisible: true })
@@ -106,19 +106,18 @@ Page({
       sourceType: 'rehearsalReview'
     }
     try {
-      await createMethodCardRecord({
+      const result = await createMethodCardRecord({
+        id: item.id,
         sourceType: 'rehearsalReview',
         title: item.title,
         desc: item.desc,
         meta: item.meta
       })
-      addMethodCard(item)
+      addMethodCard(result.item)
       this.closeSheet()
       toast('已沉淀为方法卡')
     } catch (error) {
-      addMethodCard(Object.assign({}, item, { syncStatus: 'pending' }))
-      this.closeSheet()
-      toast('已本地保存，待同步')
+      toast('沉淀失败，请重试')
     }
   }
 })

@@ -1,5 +1,5 @@
 import type { Material, MaterialType, ViewMode } from '../../types/domain'
-import { createMaterial, listMaterials, updateMaterial, updateSaved } from '../../services/material'
+import { createMaterial, listMaterialsPage, updateMaterial, updateSaved } from '../../services/material'
 import { getState, setMaterials, setState, subscribe, toggleSaved, getThemeClass } from '../../store/index'
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
@@ -250,6 +250,7 @@ Page({
   fabMoved: false,
   fabIgnoreTapUntil: 0,
   currentLimit: DEFAULT_PAGE_LIMIT,
+  currentOffset: 0,
 
   getRandomCandidates() {
     const source = this.data.randomUseAllMaterials ? this.data.materials : this.data.filteredMaterials
@@ -381,18 +382,18 @@ Page({
   async loadMaterials(showRetryToast = false, loadMore = false) {
     if (loadMore) {
       if (!this.data.hasMore || this.data.pageLoading) return
-      this.currentLimit += DEFAULT_PAGE_LIMIT
       this.setData({ pageLoading: true })
     } else {
       this.currentLimit = DEFAULT_PAGE_LIMIT
+      this.currentOffset = 0
       this.setData({ loadingMaterials: true, loadErrorText: '', hasMore: true }, () => this.syncFiltered())
     }
     try {
-      const items = await listMaterials({ limit: this.currentLimit })
+      const page = await listMaterialsPage({ limit: DEFAULT_PAGE_LIMIT, offset: loadMore ? this.currentOffset : 0 })
+      const items = loadMore ? getState().materials.concat(page.items) : page.items
+      this.currentOffset = page.nextOffset === null ? items.length : page.nextOffset
       setMaterials(items)
-      if (items.length < this.currentLimit) {
-        this.setData({ hasMore: false })
-      }
+      this.setData({ hasMore: page.hasMore })
     } catch (error) {
       this.syncFromStore()
       const loadErrorText = getState().materials.length
@@ -974,7 +975,13 @@ Page({
       stripeTone: 'orange',
       sortOrder: DEFAULT_SORT_ORDER
     }
-    setMaterials([material].concat(getState().materials))
+    try {
+      const response = await createMaterial(material)
+      setMaterials([Object.assign({}, material, response.item)].concat(getState().materials))
+    } catch (error: any) {
+      toast(error.message || '添加失败，请重试')
+      return
+    }
     closeModal(this, {
       addVisible: false,
       newMaterial: {},
@@ -986,7 +993,6 @@ Page({
       showMoreOptions: false,
       moreOptionsToggleText: '补充训练方法'
     }, () => this.syncFiltered())
-    await createMaterial(material)
     toast('已加入素材库，可稍后继续完善')
   }
 })

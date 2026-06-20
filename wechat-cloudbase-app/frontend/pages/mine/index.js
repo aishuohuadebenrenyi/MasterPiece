@@ -2,8 +2,8 @@ const { createMethodCard, listMethodCards, deleteMethodCard, updateMethodCard } 
 const { listInspirations, deleteInspiration, updateInspiration } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
 const { listPracticeRecords } = require('../../services/practice-record')
-const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
-const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, setPendingIntentMarks, toggleThemeMode } = require('../../store/index')
+const { DEFAULT_PROFILE, deleteAccount, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
+const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, setPendingIntentMarks, setState, toggleThemeMode } = require('../../store/index')
 const { closeModal, openModal } = require('../../utils/modal')
 const { syncTabBar } = require('../../utils/tabbar')
 const { getLayoutStyle } = require('../../utils/layout')
@@ -275,6 +275,7 @@ Page({
     sedimentSaving: false,
     layoutStyle: '',
     themeClass: 'theme-default',
+    loadErrorText: '',
     showIntroState: false,
     profileName: DEFAULT_PROFILE.displayName,
     profileAvatar: DEFAULT_PROFILE.avatarUrl,
@@ -371,6 +372,8 @@ Page({
       listPracticeRecords(),
       getProfile()
     ])
+    const hasLoadError = [sedimentsResult, inspirationsResult, rehearsalsResult, practiceRecordsResult, profileResult]
+      .some((result) => result.status === 'rejected')
     this.setData(buildMineViewData({
       sediments: sedimentsResult.status === 'fulfilled' ? sedimentsResult.value : localSediments,
       inspirations: inspirationsResult.status === 'fulfilled' ? inspirationsResult.value : localInspirations,
@@ -384,6 +387,7 @@ Page({
       discardedPendingKeys: getState().dismissedPendingKeys || this.data.discardedPendingKeys,
       pendingIntentMarks: getState().pendingIntentMarks || this.data.pendingIntentMarks
     }))
+    this.setData({ loadErrorText: hasLoadError ? '部分云端数据加载失败，下拉可重试。' : '' })
   },
 
   async onShow() {
@@ -631,7 +635,8 @@ Page({
     }
     this.setData({ sedimentSaving: true })
     try {
-      await createMethodCard({
+      const result = await createMethodCard({
+        id: item.id,
         sourceType: item.sourceType,
         sourceId: item.sourceId,
         sourceTitle: item.sourceTitle,
@@ -640,7 +645,7 @@ Page({
         desc: item.desc,
         meta: item.meta
       })
-      addMethodCard(item)
+      addMethodCard(result.item)
       const sourceKey = getSourceKey(source)
       const sediments = [item].concat(this.data.sediments)
       const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
@@ -653,19 +658,8 @@ Page({
       this.closeDetail()
       toast('已沉淀为方法卡')
     } catch (error) {
-      const pendingItem = Object.assign({}, item, { syncStatus: 'pending' })
-      addMethodCard(pendingItem)
-      const sourceKey = getSourceKey(source)
-      const sediments = [pendingItem].concat(this.data.sediments)
-      const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
-      setDismissedPendingKeys(discardedPendingKeys)
-      this.refreshMineView({
-        sediments,
-        discardedPendingKeys,
-        sedimentSaving: false
-      })
-      this.closeDetail()
-      toast('已本地保存，待同步')
+      this.setData({ sedimentSaving: false })
+      toast('沉淀失败，请重试')
     }
   },
 
@@ -738,8 +732,7 @@ Page({
       let avatarUrl = this.data.profileDraftAvatar || ''
       if (this.data.profileDraftAvatarTemp) {
         if (!wx.cloud || !wx.cloud.uploadFile) {
-          // 云开发未初始化时，降级使用本地临时路径
-          avatarUrl = this.data.profileDraftAvatarTemp
+          throw new Error('云开发未初始化')
         } else {
           try {
             const extMatch = this.data.profileDraftAvatarTemp.match(/\.([a-zA-Z0-9]+)(?:\?|$)/)
@@ -748,10 +741,11 @@ Page({
               cloudPath: `improv/profile-avatar/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`,
               filePath: this.data.profileDraftAvatarTemp
             })
-            avatarUrl = upload.fileID || this.data.profileDraftAvatarTemp
+            if (!upload.fileID) throw new Error('头像上传未返回文件 ID')
+            avatarUrl = upload.fileID
           } catch (uploadError) {
-            console.warn('[improv-cloud] upload avatar failed, fallback to local temp path', uploadError)
-            avatarUrl = this.data.profileDraftAvatarTemp
+            console.warn('[improv-cloud] upload avatar failed', uploadError)
+            throw new Error('头像上传失败，请重试')
           }
         }
       }
@@ -776,6 +770,39 @@ Page({
     } catch (error) {
       this.setData({ profileSaving: false })
       toast('保存失败，请稍后再试')
+    }
+  },
+
+  async deleteMyAccount() {
+    const confirmed = await new Promise((resolve) => wx.showModal({
+      title: '注销账号',
+      content: '将删除你的灵感、排练、练习记录、方法卡和自定义素材，且无法恢复。',
+      confirmText: '确认注销',
+      confirmColor: '#D64545',
+      success: (res) => resolve(res.confirm),
+      fail: () => resolve(false)
+    }))
+    if (!confirmed) return
+    try {
+      await deleteAccount()
+      setState({
+        todayInspirations: [],
+        todayRehearsals: [],
+        methodCards: [],
+        rehearsalHistory: [],
+        practiceRecordsHistory: [],
+        currentRehearsal: null,
+        pausedRehearsal: null,
+        currentMaterial: null,
+        savedMaterialIds: [],
+        playedMaterialIds: [],
+        profile: null
+      })
+      closeModal(this, { profileEditVisible: false })
+      toast('账号数据已删除')
+      await this.loadAllData()
+    } catch (error) {
+      toast((error && error.message) || '注销失败，请重试')
     }
   },
 
@@ -807,14 +834,10 @@ Page({
     })
     if (!confirmed) return
     try {
-      const result = await deleteInspiration(id)
-      if (result.code === 0) {
-        const inspirations = this.data.inspirations.filter(item => item.id !== id)
-        this.refreshMineView({ inspirations })
-        toast('已删除')
-      } else {
-        toast(result.message || '删除失败')
-      }
+      await deleteInspiration(id)
+      const inspirations = this.data.inspirations.filter(item => item.id !== id)
+      this.refreshMineView({ inspirations })
+      toast('已删除')
     } catch (err) {
       toast('删除失败')
     }
@@ -841,14 +864,10 @@ Page({
     })
     if (!confirmed) return
     try {
-      const result = await deleteMethodCard(id)
-      if (result.code === 0) {
-        const sediments = this.data.sediments.filter(item => item.id !== id)
-        this.refreshMineView({ sediments })
-        toast('已删除')
-      } else {
-        toast(result.message || '删除失败')
-      }
+      await deleteMethodCard(id)
+      const sediments = this.data.sediments.filter(item => item.id !== id)
+      this.refreshMineView({ sediments })
+      toast('已删除')
     } catch (err) {
       toast('删除失败')
     }
@@ -884,17 +903,13 @@ Page({
       toast('请填写完整')
       return
     }
-    updateMethodCard(id, { title, content }).then((result) => {
-      if (result.code === 0) {
-        const sediments = this.data.sediments.map(item =>
-          item.id === id ? Object.assign({}, item, { title, desc: content, content }) : item
-        )
-        this.setData({ showMethodCardEditSheet: false })
-        this.refreshMineView({ sediments })
-        toast('已保存')
-      } else {
-        toast(result.message || '保存失败')
-      }
+    updateMethodCard(id, { title, desc: content }).then((result) => {
+      const sediments = this.data.sediments.map(item =>
+        item.id === id ? Object.assign({}, item, result.item) : item
+      )
+      this.setData({ showMethodCardEditSheet: false })
+      this.refreshMineView({ sediments })
+      toast('已保存')
     }).catch(() => {
       toast('保存失败')
     })

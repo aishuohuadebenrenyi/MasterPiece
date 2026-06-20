@@ -11,8 +11,8 @@
     </view>
     <view class="record-card-body {{primaryActionText ? 'has-action' : ''}}">
       <view class="record-card-copy">
-        <view class="section-title">{{title}}</view>
-        <view wx:if="{{bodyText}}" class="muted record-card-body-text">{{bodyText}}</view>
+        <text class="section-title">{{title}}</text>
+        <text wx:if="{{bodyText}}" class="muted record-card-body-text">{{bodyText}}</text>
       </view>
     </view>
     <view class="record-card-footer record-card-footer-{{layoutKind}}" wx:if="{{metaPills.length}}">

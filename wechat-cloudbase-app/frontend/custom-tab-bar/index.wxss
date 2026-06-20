@@ -42,8 +42,6 @@ text {
   border-radius: 40rpx;
   background: var(--improv-card-glass);
   border: 1px solid var(--improv-line-light);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   box-shadow: var(--improv-shadow-sm);
   pointer-events: auto;
   overflow: visible;

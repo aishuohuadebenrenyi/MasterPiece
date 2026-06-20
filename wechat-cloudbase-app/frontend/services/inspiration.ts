@@ -1,4 +1,4 @@
-import { callImprovAction } from './cloud'
+import { callImprovData } from './cloud'
 
 export interface InspirationItem {
   id?: string
@@ -6,26 +6,27 @@ export interface InspirationItem {
   desc: string
   meta?: string[]
   linkedMaterialTitle?: string
+  linkedMaterialId?: string
   linkedRehearsalTitle?: string
+  linkedRehearsalId?: string
   sourceType?: string
   sourceId?: string
   sourceTitle?: string
 }
 
 export async function listInspirations(filters: Record<string, unknown> = {}): Promise<InspirationItem[]> {
-  const response = await callImprovAction<{ items: InspirationItem[] }>('inspiration.list', filters)
-  if (response.code === 0 && response.data && response.data.items) return response.data.items
-  throw new Error(response.message || '加载灵感失败')
+  const data = await callImprovData<{ items: InspirationItem[] }>('inspiration.list', filters)
+  return data.items || []
 }
 
 export async function createInspiration(payload: InspirationItem): Promise<any> {
-  return callImprovAction('inspiration.create', payload as unknown as Record<string, unknown>)
+  return callImprovData<{ item: InspirationItem }>('inspiration.create', payload as unknown as Record<string, unknown>)
 }
 
 export async function updateInspiration(id: string, patch: Partial<InspirationItem>): Promise<any> {
-  return callImprovAction('inspiration.update', { id, patch })
+  return callImprovData<{ item: InspirationItem }>('inspiration.update', { id, patch })
 }
 
 export async function deleteInspiration(id: string): Promise<any> {
-  return callImprovAction('inspiration.delete', { id })
+  return callImprovData<{ id: string }>('inspiration.delete', { id })
 }

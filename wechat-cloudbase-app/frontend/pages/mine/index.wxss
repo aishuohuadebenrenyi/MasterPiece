@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999rpx;
   background: var(--improv-action-gradient);
   color: var(--improv-on-brand);
   font-size: 40rpx;
@@ -399,7 +399,7 @@ form-field.profile-preference-field {
   max-width: 140rpx;
   min-height: 140rpx;
   max-height: 140rpx;
-  border-radius: 50% !important;
+  border-radius: 999rpx !important;
   font-size: 44rpx;
   line-height: 1;
   margin: 0 auto;
@@ -409,6 +409,7 @@ form-field.profile-preference-field {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .profile-editor-avatar text {
@@ -453,11 +454,22 @@ form-field.profile-preference-field {
   margin-top: 14rpx;
 }
 
-.profile-save-btn {
-  width: 320rpx;
-  max-width: 72%;
-  margin: 28rpx auto 0;
-  align-self: center;
+.profile-action-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24rpx;
+  margin-top: 28rpx;
+  width: 100%;
+}
+
+.profile-save-btn,
+.profile-delete-btn {
+  flex: 1 1 0;
+  margin: 0;
+  width: auto !important;
+  max-width: none !important;
 }
 
 .detail-card {

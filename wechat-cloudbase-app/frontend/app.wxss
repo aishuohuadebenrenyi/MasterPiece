@@ -43,7 +43,6 @@ button {
   font: inherit;
   line-height: 1.2;
   text-align: center;
-  vertical-align: middle;
   overflow: visible;
 }
 
@@ -97,6 +96,8 @@ button::after {
 }
 
 .card {
+  width: 100%;
+  box-sizing: border-box;
   border-radius: 40rpx;
   background: #ffffff;
   background: var(--improv-card-strong, #ffffff);
@@ -120,6 +121,13 @@ button::after {
   line-height: 1.1;
 }
 
+.title, .card-title, .section-title, .mini-title, .kicker, .desc {
+  display: block;
+  word-break: break-all;
+  white-space: normal;
+  max-width: 100%;
+}
+
 .kicker,
 .mini-title {
   display: block;
@@ -130,9 +138,13 @@ button::after {
 }
 
 .muted {
+  display: block;
   color: var(--improv-muted-strong);
   font-size: 25rpx;
   line-height: 1.7;
+  word-break: break-all;
+  white-space: normal;
+  max-width: 100%;
 }
 
 .primary-btn,
@@ -140,7 +152,9 @@ button::after {
 .small-btn,
 .mini-action-btn,
 .chip,
-.pill {
+.pill,
+.danger-btn,
+.button-danger-quiet {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -154,17 +168,16 @@ button::after {
   transition: transform var(--improv-anim-fast) ease, box-shadow var(--improv-anim-fast) ease, opacity var(--improv-anim-fast) ease;
 }
 
-.primary-btn[disabled],
-.ghost-btn[disabled],
-.small-btn[disabled],
-.mini-action-btn[disabled] {
+.primary-btn.btn-disabled,
+.ghost-btn.btn-disabled,
+.small-btn.btn-disabled,
+.mini-action-btn.btn-disabled,
+.danger-btn.btn-disabled,
+.button-danger-quiet.btn-disabled {
   opacity: 0.48;
 }
 
-.primary-btn:active,
-.ghost-btn:active,
-.small-btn:active,
-.mini-action-btn:active {
+.btn-active {
   transform: scale(0.98);
 }
 
@@ -426,7 +439,6 @@ button.share-btn::after {
   background: var(--improv-toast-bg);
   box-shadow: 0 18rpx 40rpx var(--improv-shadow-toast-color);
   transform: translateX(-50%);
-  backdrop-filter: blur(18rpx);
   pointer-events: none;
 }
 
@@ -436,6 +448,8 @@ button.share-btn::after {
   line-height: 1.35;
   font-weight: 700;
   text-align: center;
+  word-break: break-all;
+  white-space: normal;
 }
 
 .app-toast-warm {
@@ -578,7 +592,7 @@ form-field {
 .button-row-equal > .primary-btn,
 .button-row-equal > .ghost-btn,
 .button-row-equal > .small-btn {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -723,6 +737,8 @@ form-field {
 
 .state-note-card,
 .notice-note-card {
+  width: 100%;
+  box-sizing: border-box;
   padding: 28rpx;
   border-radius: 30rpx;
   font-size: 26rpx;
@@ -742,6 +758,8 @@ form-field {
 }
 
 .empty-state-card {
+  width: 100%;
+  box-sizing: border-box;
   padding: var(--improv-card-padding-md, 40rpx);
   border-radius: 40rpx;
   background: var(--improv-card-strong);
@@ -751,17 +769,31 @@ form-field {
 
 .empty-state-card .section-title {
   margin-bottom: 10rpx;
+  white-space: normal;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.empty-state-card .muted {
+  display: block;
+  white-space: normal;
+  word-break: break-all;
+  max-width: 100%;
 }
 
 .empty-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   gap: 16rpx;
   margin-top: 28rpx;
 }
 
 .empty-action-btn {
-  flex: 1 1 0;
+  flex: 0 0 auto;
+  min-width: 240rpx;
+  max-width: 360rpx;
 }
 
 .record-form-card {
@@ -808,17 +840,12 @@ form-field {
   border-radius: 44rpx;
   background: var(--improv-card);
   box-shadow: 0 18rpx 42rpx var(--improv-shadow-fixed-color);
-  backdrop-filter: blur(16rpx);
 }
 
 .form-actions button,
 .fixed-actions button {
   flex: 1 1 0;
   min-width: 0;
-}
-
-.form-actions button,
-.fixed-actions button {
   min-height: var(--fixed-action-button-height);
 }
 

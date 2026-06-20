@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "syntax-check": "node tools/syntax-check.js",
-    "typecheck": "tsc --noEmit --pretty false"
+    "typecheck": "tsc --noEmit --pretty false",
+    "contract-check": "node tools/contract-check.js"
   },
   "devDependencies": {
     "miniprogram-api-typings": "^4.1.3",

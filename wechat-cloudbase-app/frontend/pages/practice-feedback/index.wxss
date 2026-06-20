@@ -3,7 +3,12 @@
 }
 
 .feedback {
-  padding-bottom: calc(var(--fixed-action-spacer) + 72rpx);
+  /* padding-bottom may not work on scroll-view in Skyline */
+}
+
+.bottom-spacer {
+  height: calc(var(--fixed-action-spacer) + 72rpx);
+  width: 100%;
 }
 
 .feedback-object-summary {
@@ -105,7 +110,6 @@
   border-radius: 44rpx;
   background: var(--improv-card);
   box-shadow: 0 18rpx 42rpx var(--improv-shadow-fixed-color);
-  backdrop-filter: blur(16rpx);
 }
 
 .action-note {
@@ -126,7 +130,7 @@
 }
 
 .form-actions {
-  position: static;
+  position: relative;
   left: auto;
   right: auto;
   bottom: auto;
@@ -136,7 +140,6 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  backdrop-filter: none;
   flex-direction: row;
   gap: 20rpx;
 }

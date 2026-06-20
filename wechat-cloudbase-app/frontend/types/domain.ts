@@ -61,7 +61,6 @@ export interface TodayItem {
   title: string
   desc: string
   status?: string
-  syncStatus?: 'pending' | 'synced'
   meta?: string[]
   createdAt?: unknown
 }
@@ -102,11 +101,16 @@ export interface RehearsalRecord extends TodayItem {
   source: string
   status: RehearsalStatus
   plan: RehearsalPlanItem[]
+  reviewKeep?: string
+  reviewTry?: string
+  reviewReminder?: string
 }
 
 export interface PracticeRecord extends TodayItem {
   materialId: string
   rehearsalId?: string
+  materialTitle?: string
+  rehearsalTitle?: string
   effect?: string
   keep?: string
   try?: string
