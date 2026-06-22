@@ -10,6 +10,14 @@ const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理'
 const abilityOptions = ['自发性', 'Yes And', '积极聆听', '角色塑造', '情绪表达', '身体空间', '叙事构建', '失败复原', '主持', '团队协作']
 const sceneOptions = ['临场速查', '备课', '排练', '演出']
 
+function getCustomMaterialTags(categories: string[]) {
+  return categories.filter((item) => (
+    !materialTypes.includes(item as MaterialType)
+    && !abilityOptions.includes(item)
+    && !sceneOptions.includes(item)
+  ))
+}
+
 type EditMaterialDraft = Partial<Material> & {
   people?: string
   duration?: string
@@ -542,8 +550,7 @@ Page({
       toast('只能修改自己创建的素材')
       return
     }
-    const tags: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
-    if (!tags.length) tags.push('自定义')
+    const categories: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
 
     const currentMaterial = { ...(this.data.material as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string; ownerOpenId?: string }) }
     delete currentMaterial.fit
@@ -551,9 +558,10 @@ Page({
     delete currentMaterial.avoid
     delete currentMaterial.verdict
 
-    const materialType = (materialTypes.find((item) => tags.includes(item)) || currentMaterial.type || '游戏') as MaterialType
-    const abilities = abilityOptions.filter((item) => tags.includes(item))
-    const scenes = sceneOptions.filter((item) => tags.includes(item))
+    const materialType = (materialTypes.find((item) => categories.includes(item)) || currentMaterial.type || '游戏') as MaterialType
+    const abilities = abilityOptions.filter((item) => categories.includes(item))
+    const scenes = sceneOptions.filter((item) => categories.includes(item))
+    const tags = getCustomMaterialTags(categories)
     const steps = typeof this.data.editMaterial.steps === 'string' && this.data.editMaterial.steps.trim()
       ? this.data.editMaterial.steps.split('\n').map((item: string) => item.trim()).filter(Boolean)
       : []

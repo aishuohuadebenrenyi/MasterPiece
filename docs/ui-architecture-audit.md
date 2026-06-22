@@ -6,7 +6,7 @@
 
 本报告以 2026-06-20 当前工作树中的生产小程序 `wechat-cloudbase-app/` 为审计对象。`prototype/`、`素材整理/`、`.trae/documents/` 不计入页面、组件和样式统计；它们分别属于探索原型、素材辅助工具和历史归档。
 
-审计覆盖：11 个页面、15 个通用组件、1 个自定义 TabBar、8 个前端服务模块、轻量 store、领域类型、7 个 CloudBase 集合和 25 个云函数 action。结论基于源码静态扫描与微信开发者工具运行态观察；统计结果是当前工作树快照，不代表 Git 基线。
+审计覆盖：13 个页面、15 个通用组件、1 个自定义 TabBar、9 个前端服务模块、轻量 store、领域类型、8 个 CloudBase 集合和 29 个云函数 action。结论基于源码静态扫描与微信开发者工具运行态观察；统计结果是当前工作树快照，不代表 Git 基线。
 
 总体判断：
 
@@ -123,7 +123,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  Pages["11 个页面"] --> Foundation["基础：bottom-sheet / state-panel / subpage-header"]
+  Pages["13 个页面"] --> Foundation["基础：bottom-sheet / state-panel / subpage-header"]
   Pages --> Forms["表单：form-card / form-field / material-form"]
   Pages --> Lists["列表：material-card / record-card / selection-card"]
   Pages --> Detail["详情：floating-card / asset-detail-panel / record-detail-panel"]

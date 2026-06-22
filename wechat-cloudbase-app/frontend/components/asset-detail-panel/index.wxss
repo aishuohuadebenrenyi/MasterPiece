@@ -18,6 +18,7 @@
 }
 
 .detail-content-wrapper {
+  position: relative;
   flex: 1 1 auto;
   min-height: 390rpx;
   display: flex;
@@ -31,12 +32,34 @@
   box-shadow: var(--improv-shadow-xs);
 }
 
+.detail-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  width: 100%;
+}
+
 .detail-top-tags {
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 16rpx;
-  width: 100%;
+}
+
+.detail-edit-btn {
+  position: absolute;
+  top: var(--improv-card-padding-md, 40rpx);
+  right: var(--improv-card-padding-md, 40rpx);
+  flex: 0 0 104rpx;
+  width: 104rpx;
+  min-width: 104rpx;
+  max-width: 104rpx;
+  min-height: 48rpx;
+  margin: 0;
+  padding: 0 16rpx;
+  font-size: 22rpx;
 }
 
 .detail-middle {
@@ -112,6 +135,11 @@
   background: var(--improv-secondary-soft);
   font-size: 24rpx;
   line-height: 54rpx;
+}
+
+.detail-intent-chip.active {
+  color: var(--improv-on-brand, #ffffff);
+  background: var(--improv-secondary-strong);
 }
 
 .detail-action-note {

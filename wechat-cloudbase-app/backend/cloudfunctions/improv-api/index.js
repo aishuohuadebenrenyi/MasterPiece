@@ -15,7 +15,8 @@ const COLLECTIONS = {
   inspirations: 'improv_inspirations',
   rehearsals: 'improv_rehearsals',
   practiceRecords: 'improv_practice_records',
-  methodCards: 'improv_method_cards'
+  methodCards: 'improv_method_cards',
+  feedback: 'improv_feedback'
 }
 
 // 分页常量
@@ -96,6 +97,41 @@ function validateOwnedPayload(collectionName, payload, requestId, isUpdate = fal
     return fail('缺少合法 materialId', requestId, 400)
   }
   return null
+}
+
+async function createFeedback(payload, requestId) {
+  const whitelist = ['category', 'content', 'contact', 'sourcePage', 'appVersion']
+  const invalid = validateFields(payload, whitelist, requestId)
+  if (invalid) return invalid
+
+  const categories = ['bug', 'suggestion', 'content', 'other']
+  const category = typeof payload.category === 'string' ? payload.category.trim() : ''
+  const content = typeof payload.content === 'string' ? payload.content.trim() : ''
+  const contact = typeof payload.contact === 'string' ? payload.contact.trim() : ''
+  const sourcePage = typeof payload.sourcePage === 'string' ? payload.sourcePage.trim() : ''
+  const appVersion = typeof payload.appVersion === 'string' ? payload.appVersion.trim() : ''
+
+  if (!categories.includes(category)) return fail('请选择反馈类型', requestId, 400)
+  if (content.length < 10 || content.length > 500) return fail('反馈内容需为 10–500 字', requestId, 400)
+  if (contact.length > 100) return fail('联系方式不能超过 100 字', requestId, 400)
+  if (sourcePage.length > 200) return fail('来源页面过长', requestId, 400)
+  if (appVersion.length > 40) return fail('版本信息过长', requestId, 400)
+
+  const feedback = {
+    id: `feedback-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    category,
+    content,
+    contact,
+    sourcePage,
+    appVersion,
+    status: 'new',
+    ownerOpenId: getOpenId(),
+    createdAt: now(),
+    updatedAt: now(),
+    deletedAt: null
+  }
+  const result = await db.collection(COLLECTIONS.feedback).add({ data: feedback })
+  return ok({ item: { id: feedback.id, _id: result._id } }, requestId)
 }
 
 async function getAllByWhere(collectionName, where, orderField, maxItems = MAX_MATERIAL_SCAN) {
@@ -615,6 +651,7 @@ async function deleteAccount(requestId) {
     COLLECTIONS.rehearsals,
     COLLECTIONS.practiceRecords,
     COLLECTIONS.methodCards,
+    COLLECTIONS.feedback,
     COLLECTIONS.materials
   ]
   await Promise.all(privateCollections.map(collectionName => db.collection(collectionName)
@@ -660,6 +697,7 @@ const routes = {
   'practiceRecord.delete': (payload, requestId) => deleteOwned(COLLECTIONS.practiceRecords, payload, requestId),
   'practice.complete': (payload, requestId) => completePractice(payload, requestId),
   'rehearsal.complete': (payload, requestId) => completeRehearsal(payload, requestId),
+  'feedback.create': (payload, requestId) => createFeedback(payload, requestId),
   'account.delete': (_payload, requestId) => deleteAccount(requestId)
 }
 

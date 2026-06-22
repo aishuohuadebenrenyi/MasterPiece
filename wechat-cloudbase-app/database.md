@@ -1,6 +1,6 @@
 # CloudBase 数据库与接口说明
 
-更新时间：2026-06-19
+更新时间：2026-06-21
 
 本小程序使用 `improv_` 前缀集合。当前版本采用重建策略，素材体系以 `Material` 为上位对象，不兼容旧游戏集合数据。
 
@@ -13,6 +13,7 @@
 - `improv_rehearsals`：排练记录。
 - `improv_practice_records`：单次素材练习复盘。
 - `improv_method_cards`：个人沉淀方法卡。
+- `improv_feedback`：用户主动提交的产品反馈，仅由云函数写入并由开发者在 CloudBase 控制台处理。
 
 ## 2. improv_materials
 
@@ -82,6 +83,7 @@
 - `improv_rehearsals`
 - `improv_practice_records`
 - `improv_method_cards`
+- `improv_feedback`
 
 ### improv_rehearsals
 
@@ -160,6 +162,24 @@
 - `updatedAt`
 - `deletedAt`
 
+### improv_feedback
+
+固定字段：
+
+- `id`
+- `category`：`bug`、`suggestion`、`content`、`other`
+- `content`：反馈正文，10–500 字
+- `contact`：选填联系方式，最多 100 字
+- `sourcePage`
+- `appVersion`
+- `status`：首版固定为 `new`
+- `ownerOpenId`
+- `createdAt`
+- `updatedAt`
+- `deletedAt`
+
+前端只提交 `category`、`content`、`contact`、`sourcePage`、`appVersion`；其余字段由云函数生成。首版不提供用户侧反馈列表、编辑接口或管理后台。
+
 ## 5. 云函数 action
 
 统一云函数：`improv-api`
@@ -194,7 +214,8 @@
 | `practiceRecord.delete` | 软删除当前用户单次素材练习复盘。 |
 | `practice.complete` | 事务化保存练习记录、可选当前排练计划、练过状态与方法卡。 |
 | `rehearsal.complete` | 事务化完成排练复盘，可选同步创建方法卡。 |
-| `account.delete` | 软删除当前用户的私有业务数据，删除素材状态和当前头像文件。 |
+| `feedback.create` | 校验并创建当前用户反馈。 |
+| `account.delete` | 软删除当前用户的私有业务数据和反馈，删除素材状态和当前头像文件。 |
 
 `material.list` 可选 `payload`：
 

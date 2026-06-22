@@ -10,6 +10,8 @@
     "pages/rehearsal-review/index",
     "pages/team-records/index",
     "pages/practice-records/index",
+    "pages/settings/index",
+    "pages/help/index",
     "pages/privacy/index"
   ],
   "window": {

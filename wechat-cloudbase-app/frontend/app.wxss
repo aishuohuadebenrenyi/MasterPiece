@@ -730,7 +730,8 @@ form-field {
 
 .icon-search,
 .icon-random,
-.icon-favorite {
+.icon-favorite,
+.icon-settings {
   min-width: 32rpx;
   min-height: 32rpx;
 }

@@ -26,5 +26,9 @@
   "improv_method_cards": {
     ".read": false,
     ".write": false
+  },
+  "improv_feedback": {
+    ".read": false,
+    ".write": false
   }
 }

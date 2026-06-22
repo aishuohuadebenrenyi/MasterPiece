@@ -1,6 +1,6 @@
 # 数据架构与接口说明
 
-更新时间：2026-06-19
+更新时间：2026-06-21
 
 本文档从“数据流转”与“接口架构”视角整理当前项目的正式文档入口、技术架构、数据对象、集合与云函数 action 规则。工程实现事实仍以 `wechat-cloudbase-app/database.md` 为准。
 
@@ -34,6 +34,7 @@
 | `improv_rehearsals` | 排练记录。 |
 | `improv_practice_records` | 单次素材练习复盘。 |
 | `improv_method_cards` | 个人沉淀方法卡。 |
+| `improv_feedback` | 用户主动提交的产品反馈。 |
 
 ## 3. 核心数据对象
 
@@ -54,6 +55,9 @@
 ### 3.5 MethodCard
 方法卡字段：`id`, `title`, `desc`, `type`, `sourceType`, `tags`, `meta`, `createdAt`, `updatedAt`。
 
+### 3.6 Feedback
+反馈字段：`id`, `category`, `content`, `contact`, `sourcePage`, `appVersion`, `status`, `ownerOpenId`, `createdAt`, `updatedAt`, `deletedAt`。首版只支持创建，由开发者在 CloudBase 控制台处理。
+
 ## 4. 按用户链路的数据归属
 
 1. **找素材**：操作 `improv_materials`, `improv_user_material_states`。
@@ -62,6 +66,7 @@
 4. **开启并进行排练**：操作 `improv_rehearsals`, `improv_materials`, `improv_user_material_states`。
 5. **结束排练并复盘**：操作 `improv_rehearsals`，可手动触发 `improv_method_cards`。
 6. **回看个人与团队资产**：查询方法卡、灵感、排练记录、练习记录。
+7. **提交产品反馈**：设置页通过 `feedback.create` 写入 `improv_feedback`；失败时保留表单内容。
 
 ## 5. 云函数 action (`improv-api`)
 
@@ -76,6 +81,9 @@
 | `methodCard.*` | 方法卡 CRUD。 |
 | `rehearsal.*` | 排练记录 CRUD，含 `updateMaterialStatus`。 |
 | `practiceRecord.*` | 单次素材练习复盘 CRUD。 |
+| `practice.complete/rehearsal.complete` | 事务化保存练习或排练完成链路。 |
+| `feedback.create` | 校验类型、正文和选填联系方式后创建用户反馈。 |
+| `account.delete` | 删除当前用户私有业务数据、反馈、素材状态和头像文件。 |
 
 ## 6. 权限与隔离规则
 

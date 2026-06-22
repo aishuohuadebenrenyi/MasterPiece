@@ -99,13 +99,20 @@
       </view>
 
       <empty-state-panel
+        wx:elif="{{showEmptyCategoryState}}"
+        customClass="matchless-card"
+        title="{{activeCategory}}分类还没有素材"
+        desc="添加一条常用{{activeCategory}}素材，之后可以从这里快速查找和训练。"
+        primaryText="添加{{activeCategory}}素材"
+        bind:primary="openAddForActiveCategory"
+      />
+
+      <empty-state-panel
         wx:elif="{{showFilterNoMatchState}}"
         customClass="matchless-card"
         tone="notice"
         title="当前条件下没有匹配素材"
-        desc="可以放宽筛选条件，或者先从全部素材里继续浏览。"
-        secondaryText="清空条件"
-        bind:secondary="clearFilters"
+        desc="可以调整搜索内容或筛选条件后继续查找。"
       />
 
       <view wx:else class="material-list">
@@ -163,11 +170,9 @@
       />
     </block>
     <block wx:else>
-      <scroll-view class="chip-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}" style="margin-bottom: 8rpx;">
-        <view class="chip-row">
-          <button class="chip active">{{currentRandomMaterial.type}}</button>
-          <button wx:for="{{currentRandomMaterial.abilities}}" wx:key="*this" class="chip active">{{item}}</button>
-          <button wx:for="{{currentRandomMaterial.tags}}" wx:key="*this" class="chip active">{{item}}</button>
+      <scroll-view class="chip-scroll random-tag-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
+        <view class="chip-row random-tag-row">
+          <text wx:for="{{randomTagLabels}}" wx:key="*this" class="pill orange">{{item}}</text>
         </view>
       </scroll-view>
       <view class="recommend card">

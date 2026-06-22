@@ -15,6 +15,11 @@
       <view class="form-chip-row context-chip-row">
         <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
       </view>
+      <text wx:if="{{contextLoading}}" class="context-load-note">正在加载可关联的排练…</text>
+      <view wx:if="{{contextLoadFailed}}" class="context-load-error">
+        <text>未能加载云端排练，当前仍可单独保存。</text>
+        <button class="small-btn context-retry-btn" bindtap="retryHistoricalRehearsals">重试</button>
+      </view>
       <view class="feedback-status-card context-status-card">
         <text class="feedback-status-title">{{contextSummaryTitle}}</text>
         <text class="feedback-helper">{{contextSummaryDesc}}</text>
@@ -36,11 +41,14 @@
       <form-field label="Try">
         <textarea class="app-textarea" value="{{tryValue}}" data-field="tryValue" bindblur="updateField" />
       </form-field>
+      <form-field label="下次提醒">
+        <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" />
+      </form-field>
     </view>
     <view class="more-toggle" bindtap="toggleMore">
       <view>
         <text class="mini-title">更多信息</text>
-        <text class="muted">人数和下次提醒按需展开填写。</text>
+        <text class="muted">人数按需展开填写。</text>
       </view>
       <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
     </view>
@@ -48,9 +56,6 @@
       <view class="form-field-stack">
         <form-field label="人数">
           <input class="app-input" value="{{attendanceText}}" data-field="attendanceText" bindblur="updateField" />
-        </form-field>
-        <form-field label="下次提醒">
-          <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" />
         </form-field>
       </view>
     </view>

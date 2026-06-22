@@ -96,7 +96,7 @@
 
 后续优先强化现有组件和交互基础设施，不建议为了局部问题整体迁移到 Taro、React、Vue 或大型 UI 框架。
 
-前端配色以 `frontend/styles/theme.wxss` 的 `--improv-*` 变量作为主题 token 契约，页面和组件不再直接维护散落色值。当前默认主题延续橙色主品牌、蓝色辅助色、浅色卡片和柔和阴影体系；`theme.wxss` 内提供了 `.theme-vivid` 高对比度沉浸主题覆盖块，用户可在“我的页”一键切换。主题模式属于纯 UI 偏好：当前通过 `store/index.ts` 统一管理，并使用本地 Storage 持久化到当前设备；不新增 CloudBase 字段，不参与业务事实同步。所有页面根节点、TabBar 以及弹层组件均需绑定 `themeClass`，依赖 CSS 变量继承机制实现全局主题一致。自定义组件存在样式隔离边界，凡是在组件 WXSS 中使用主题变量的组件，必须显式 `@import` 主题文件；凡是组件内部需要复用全局按钮、输入框或页面传入 `customClass` 的场景，必须显式打开全局类共享。受 Skyline / Glass-Easel 兼容性影响，底部导航、发现页空态卡片、素材卡片、弹层和浮层等关键视觉属性必须保留直接色值兜底，再使用 `var(--improv-*, fallback)` 覆盖；运行关键样式不应只引用复合渐变 token。
+前端配色以 `frontend/styles/theme.wxss` 的 `--improv-*` 变量作为主题 token 契约，页面和组件不再直接维护散落色值。当前默认主题延续橙色主品牌、蓝色辅助色、浅色卡片和柔和阴影体系；`theme.wxss` 内提供了 `.theme-vivid` 高对比度沉浸主题覆盖块，用户可在“设置 -> 外观主题”切换。主题模式属于纯 UI 偏好：当前通过 `store/index.ts` 统一管理，并使用本地 Storage 持久化到当前设备；不新增 CloudBase 字段，不参与业务事实同步。所有页面根节点、TabBar 以及弹层组件均需绑定 `themeClass`，依赖 CSS 变量继承机制实现全局主题一致。自定义组件存在样式隔离边界，凡是在组件 WXSS 中使用主题变量的组件，必须显式 `@import` 主题文件；凡是组件内部需要复用全局按钮、输入框或页面传入 `customClass` 的场景，必须显式打开全局类共享。受 Skyline / Glass-Easel 兼容性影响，底部导航、发现页空态卡片、素材卡片、弹层和浮层等关键视觉属性必须保留直接色值兜底，再使用 `var(--improv-*, fallback)` 覆盖；运行关键样式不应只引用复合渐变 token。
 
 半弹窗组件当前通过 `sheetClass` 区分 `compact-sheet`、`task-sheet`、`full-sheet` 等用途规格。轻量选择使用较低高度，任务型弹层保持标题区稳定；底部操作区通过 `showActions` 可选启用，添加素材这类原型化快速表单不启用独立底栏，主按钮放在内容流末尾。任务型弹层必须显式设置 `closeOnMask="{{false}}"`，避免用户误点遮罩丢失正在填写或编辑的内容；轻量查看、筛选和详情弹层可保留遮罩关闭。超过单一任务或长表单的场景进入子页面。
 
@@ -108,6 +108,7 @@
 - 保持扁平，尽量使用 Tab 切换或 BottomSheet。
 - TabBar 包含：发现（素材发现）、记录（排练与打卡）、我的（沉淀与归档）。
 - 半弹窗用于：添加素材、排练快捷操作、筛选和关联选择。
+- 设置和静态帮助使用独立子页面；意见反馈使用设置页内任务型半弹窗。
 
 ### 6.2 生命周期与任务互斥机制 (Task Mutex)
 为了保持用户认知清晰和底层状态机简单，全局在同一时间只能存在一个“活跃”的任务；这里的活跃既包括进行中，也包括暂停中、等待恢复的任务。
@@ -166,6 +167,7 @@
 - 业务服务统一使用 `callImprovData<T>()`；传输失败或 `code !== 0` 统一抛出 `ImprovActionError`，页面不再解释原始响应码。
 - `practice.complete` 和 `rehearsal.complete` 承载跨集合的事务化完成链路，业务 `id` 同时作为幂等键。
 - 私有数据由云函数通过 `cloud.getWXContext()` 获取 `OPENID` 并写入 `ownerOpenId`
+- 用户反馈通过 `feedback.create` 写入私有集合 `improv_feedback`，前端无直接数据库读写权限；首版不建设反馈管理端。
 
 详细集合和 action 见 [data-architecture.md](data-architecture.md) 与 [wechat-cloudbase-app/database.md](../wechat-cloudbase-app/database.md)。
 

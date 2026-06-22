@@ -793,6 +793,16 @@
   gap: var(--improv-form-gap-related, 24rpx);
 }
 
+.random-tag-scroll {
+  height: 72rpx;
+  margin-bottom: 8rpx;
+}
+
+.random-tag-row {
+  gap: 12rpx;
+  padding-bottom: 8rpx;
+}
+
 .recommend {
   position: relative;
   margin-top: 24rpx;
@@ -846,6 +856,12 @@
 
 .random-state-card .empty-actions {
   padding-top: 28rpx;
+}
+
+.random-state-card .empty-action-btn {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
 }
 
 .add-submit-btn {

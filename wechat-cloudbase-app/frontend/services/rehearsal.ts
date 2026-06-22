@@ -23,8 +23,11 @@ export function nextMaterialStatus(status: string): string {
   return MATERIAL_STATUS[(index + 1) % MATERIAL_STATUS.length]
 }
 
-export async function listRehearsals(filters: Record<string, unknown> = {}): Promise<RehearsalRecord[]> {
-  const data = await callImprovData<{ items: RehearsalRecord[] }>('rehearsal.list', filters)
+export async function listRehearsals(
+  filters: Record<string, unknown> = {},
+  options: { silent?: boolean } = {}
+): Promise<RehearsalRecord[]> {
+  const data = await callImprovData<{ items: RehearsalRecord[] }>('rehearsal.list', filters, options)
   return (data.items || []).map(normalizeRehearsal)
 }
 

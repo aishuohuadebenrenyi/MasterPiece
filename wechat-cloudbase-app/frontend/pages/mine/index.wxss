@@ -11,6 +11,27 @@
   padding: var(--content-safe-top) var(--page-side) var(--page-bottom);
 }
 
+.settings-entry-btn {
+  position: fixed;
+  z-index: 12;
+  top: var(--nav-row-top);
+  left: var(--page-side);
+  width: 64rpx !important;
+  min-width: 64rpx !important;
+  height: 64rpx !important;
+  min-height: 64rpx !important;
+  padding: 0 !important;
+  border-radius: 32rpx !important;
+  background: var(--improv-btn-toolbar-bg);
+  color: var(--improv-btn-toolbar-text);
+  border: 2rpx solid var(--improv-btn-toolbar-border);
+  font-size: 32rpx;
+  font-weight: 800;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .mine-content-intro {
   height: 100vh;
   min-height: 100vh;
@@ -372,13 +393,8 @@
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 }
 
-form-field.profile-tags-field,
-form-field.profile-preference-field {
+form-field.profile-tags-field {
   display: block;
-}
-
-form-field.profile-preference-field {
-  margin-top: var(--improv-form-gap-related, 28rpx);
 }
 
 .profile-edit-avatar-container {
@@ -457,19 +473,17 @@ form-field.profile-preference-field {
 .profile-action-bar {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 24rpx;
   margin-top: 28rpx;
   width: 100%;
 }
 
-.profile-save-btn,
-.profile-delete-btn {
-  flex: 1 1 0;
+.profile-save-btn {
+  flex: 0 0 320rpx;
   margin: 0;
-  width: auto !important;
-  max-width: none !important;
+  width: 320rpx !important;
 }
 
 .detail-card {
@@ -614,7 +628,9 @@ form-field.profile-preference-field {
 }
 
 .edit-form-submit {
-  margin-top: 32rpx;
+  display: flex;
+  width: 320rpx;
+  margin: 32rpx auto 0;
   border-radius: 40rpx;
   font-size: 28rpx;
 }

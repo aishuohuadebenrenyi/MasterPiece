@@ -12,6 +12,22 @@ const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理'
 const abilityOptions = ['自发性', 'Yes And', '积极聆听', '角色塑造', '情绪表达', '身体空间', '叙事构建', '失败复原', '主持', '团队协作']
 const sceneOptions = ['临场速查', '备课', '排练', '演出']
 
+function getCustomMaterialTags(categories: string[]) {
+  return categories.filter((item) => (
+    !materialTypes.includes(item as MaterialType)
+    && !abilityOptions.includes(item)
+    && !sceneOptions.includes(item)
+  ))
+}
+
+function buildRandomTagLabels(material: Material | null) {
+  if (!material) return []
+  const labels: string[] = [material.type, ...(material.abilities || []), ...(material.tags || [])]
+  return Array.from(new Set(
+    labels.map((item) => String(item || '').trim()).filter(Boolean)
+  ))
+}
+
 type NewMaterialDraft = Partial<Material> & {
   people?: string
   duration?: string
@@ -212,6 +228,7 @@ Page({
     drawnCount: 1,
     randomUseAllMaterials: false,
     currentRandomMaterial: null as Material | null,
+    randomTagLabels: [] as string[],
     newMaterial: {} as NewMaterialDraft,
     selectedCategoryTags: ['游戏'] as string[],
     customCategoryVisible: false,
@@ -234,6 +251,7 @@ Page({
     loadingMaterials: true,
     loadErrorText: '',
     showEmptyState: false,
+    showEmptyCategoryState: false,
     showLoadErrorState: false,
     showFilterNoMatchState: false,
     hasMore: true,
@@ -295,23 +313,30 @@ Page({
   syncFiltered() {
     const filteredMaterials = this.getFilteredMaterials()
     const randomCandidates = this.getRandomCandidates()
+    const currentRandomMaterial = randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null
     const categoryCards = this.buildCategoryCards()
     const isCategoryDetail = !!this.data.activeCategory
+    const activeCategoryMaterialCount = isCategoryDetail
+      ? this.data.materials.filter((material: Material) => material.type === this.data.activeCategory).length
+      : 0
     const showLoadErrorState = !this.data.loadingMaterials && !!this.data.loadErrorText && this.data.materials.length === 0
     const showEmptyState = !this.data.loadingMaterials && !this.data.loadErrorText && this.data.materials.length === 0
-    const showFilterNoMatchState = !this.data.loadingMaterials && this.data.materials.length > 0 && (this.data.view === 'all' || isCategoryDetail) && filteredMaterials.length === 0
+    const showEmptyCategoryState = !this.data.loadingMaterials && !this.data.loadErrorText && isCategoryDetail && activeCategoryMaterialCount === 0
+    const showFilterNoMatchState = !showEmptyCategoryState && !this.data.loadingMaterials && this.data.materials.length > 0 && (this.data.view === 'all' || isCategoryDetail) && filteredMaterials.length === 0
     this.setData({
       filteredMaterials,
       categoryCards,
       categoryRows: buildCategoryRows(categoryCards),
       pathEntries: buildPathEntries(this.data.materials),
-      currentRandomMaterial: randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null,
+      currentRandomMaterial,
+      randomTagLabels: buildRandomTagLabels(currentRandomMaterial),
       allActiveClass: this.data.view === 'all' ? 'active' : '',
       categoryActiveClass: this.data.view === 'category' ? 'active' : '',
       isCategoryDetail,
       discoverTitle: isCategoryDetail ? this.data.activeCategory : '全部素材',
       searchPlaceholder: isCategoryDetail ? `在${this.data.activeCategory}里搜索` : '搜索素材、能力或场景',
       showEmptyState,
+      showEmptyCategoryState,
       showLoadErrorState,
       showFilterNoMatchState,
       typeFilters: [{ value: 'all', label: '全部' }].concat(materialTypes.map((item) => ({ value: item, label: item }))).map((item) => {
@@ -755,9 +780,11 @@ Page({
       return
     }
     const randomIndex = this.data.randomIndex + 1
+    const currentRandomMaterial = candidates[randomIndex % candidates.length]
     this.setData({
       randomIndex,
-      currentRandomMaterial: candidates[randomIndex % candidates.length],
+      currentRandomMaterial,
+      randomTagLabels: buildRandomTagLabels(currentRandomMaterial),
       drawnCount: this.data.drawnCount + 1
     })
   },
@@ -815,6 +842,12 @@ Page({
       filterVisible: false,
       addVisible: true
     })
+  },
+
+  openAddForActiveCategory() {
+    const activeCategory = this.data.activeCategory
+    if (!activeCategory) return
+    this.setData({ selectedCategoryTags: [activeCategory] }, () => this.openAdd())
   },
 
   closeSheet() {
@@ -950,10 +983,11 @@ Page({
       toast('先写素材名称')
       return
     }
-    const tags = Array.from(new Set<string>(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
-    const materialType = (materialTypes.find((item) => tags.includes(item)) || '游戏') as MaterialType
-    const abilities = abilityOptions.filter((item) => tags.includes(item))
-    const scenes = sceneOptions.filter((item) => tags.includes(item))
+    const categories = Array.from(new Set<string>(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
+    const materialType = (materialTypes.find((item) => categories.includes(item)) || '游戏') as MaterialType
+    const abilities = abilityOptions.filter((item) => categories.includes(item))
+    const scenes = sceneOptions.filter((item) => categories.includes(item))
+    const tags = getCustomMaterialTags(categories)
     const steps = typeof this.data.newMaterial.steps === 'string' && this.data.newMaterial.steps.trim()
       ? this.data.newMaterial.steps.split('\n').map((item) => item.trim()).filter(Boolean)
       : []

@@ -1,4 +1,5 @@
 <scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" bindscroll="onScroll" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="page mine {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <button class="icon-text icon-settings settings-entry-btn" aria-label="设置" bindtap="goSettings">⚙︎</button>
   <view class="mine-content {{showIntroState ? 'mine-content-intro' : ''}}">
     <empty-state-panel wx:if="{{loadErrorText}}" tone="error" title="数据未完全加载" desc="{{loadErrorText}}" />
     <block wx:if="{{showIntroState}}">
@@ -141,7 +142,7 @@
   </bottom-sheet>
 
   <floating-card visible="{{detailVisible}}" title="{{detailTitle}}" count="{{detailCount}}" bind:close="closeDetail" bind:prev="prevDetail" bind:next="nextDetail">
-    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '素材练习' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" canMarkIntent="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" loading="{{sedimentSaving}}" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" bind:markintent="markCurrentDetailIntent" />
+    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '素材练习' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" canMarkIntent="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" selectedIntent="{{detailSelectedIntent}}" canEdit="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" loading="{{sedimentSaving}}" bind:edit="editCurrentPendingInspiration" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" bind:markintent="markCurrentDetailIntent" />
   </floating-card>
 
   <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" closeOnMask="{{false}}" bind:close="closeSheet">
@@ -168,14 +169,7 @@
         </view>
       </form-field>
 
-      <form-field class="profile-preference-field" label="偏好设置" desc="点击切换主题，即时生效并保存在本机">
-        <view class="profile-tag-line info-primary">
-          <view class="role-pill" catchtap="toggleTheme" style="padding: 10rpx 32rpx; min-height: 64rpx; background: var(--improv-card); color: var(--improv-text); border: 2rpx solid var(--improv-line-soft);">当前主题：{{themeClass === 'theme-vivid' ? '沉浸模式' : '默认模式'}}</view>
-        </view>
-      </form-field>
-
       <view class="profile-action-bar">
-        <button class="ghost-btn profile-delete-btn" disabled="{{profileSaving}}" bindtap="deleteMyAccount">注销</button>
         <button class="primary-btn profile-save-btn" loading="{{profileSaving}}" bindtap="saveProfile">保存</button>
       </view>
     </view>

@@ -1,6 +1,7 @@
 import type { Material, TodayItem, PracticeRecord } from '../../types/domain'
 import { findLocalMaterial } from '../../services/material'
 import { completePractice } from '../../services/practice-record'
+import { listRehearsals } from '../../services/rehearsal'
 import {
   addMethodCard,
   addPracticeRecord,
@@ -20,6 +21,8 @@ Page({
     contextType: 'single',
     historicalRehearsals: [] as Array<{ id: string; title: string }>,
     selectedHistoricalRehearsalId: '',
+    contextLoading: false,
+    contextLoadFailed: false,
     contextSummaryTitle: '',
     contextSummaryDesc: '',
     attendanceText: '',
@@ -147,6 +150,48 @@ Page({
       this.syncContextSummary()
     })
     this.syncOptions()
+    this.loadHistoricalRehearsals()
+  },
+
+  async loadHistoricalRehearsals() {
+    if (this.data.contextLoading) return
+    const state = getState()
+    const currentRehearsal = state.currentRehearsal
+    const localRehearsals = state.rehearsalHistory || []
+    this.setData({ contextLoading: true, contextLoadFailed: false })
+    try {
+      const remoteRehearsals = await listRehearsals({ limit: 100 }, { silent: true })
+      const merged = localRehearsals.concat(remoteRehearsals).reduce((map, item) => {
+        if (item && item.id && !map.has(item.id)) map.set(item.id, item)
+        return map
+      }, new Map<string, { id: string; title: string }>())
+      const historicalRehearsals = Array.from(merged.values())
+        .filter((item) => !currentRehearsal || item.id !== currentRehearsal.id)
+        .map((item) => ({ id: item.id, title: item.title }))
+      const selectedStillExists = historicalRehearsals.some((item) => item.id === this.data.selectedHistoricalRehearsalId)
+      const selectedHistoricalRehearsalId = selectedStillExists
+        ? this.data.selectedHistoricalRehearsalId
+        : (historicalRehearsals[0] ? historicalRehearsals[0].id : '')
+      const selected = historicalRehearsals.find((item) => item.id === selectedHistoricalRehearsalId)
+      const historyUnavailable = this.data.contextType === 'history' && !selected
+      this.setData({
+        historicalRehearsals,
+        selectedHistoricalRehearsalId,
+        contextType: historyUnavailable ? 'single' : this.data.contextType,
+        linkedRehearsal: historyUnavailable ? '单独记录' : (this.data.contextType === 'history' && selected ? selected.title : this.data.linkedRehearsal),
+        contextLoading: false,
+        contextLoadFailed: false
+      }, () => {
+        this.syncOptions()
+        this.syncContextSummary()
+      })
+    } catch (error) {
+      this.setData({ contextLoading: false, contextLoadFailed: true }, () => this.syncOptions())
+    }
+  },
+
+  retryHistoricalRehearsals() {
+    this.loadHistoricalRehearsals()
   },
 
   onShow() {

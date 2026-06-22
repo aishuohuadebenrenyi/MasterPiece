@@ -2,8 +2,8 @@ const { createMethodCard, listMethodCards, deleteMethodCard, updateMethodCard } 
 const { listInspirations, deleteInspiration, updateInspiration } = require('../../services/inspiration')
 const { listRehearsals } = require('../../services/rehearsal')
 const { listPracticeRecords } = require('../../services/practice-record')
-const { DEFAULT_PROFILE, deleteAccount, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
-const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, setPendingIntentMarks, setState, toggleThemeMode } = require('../../store/index')
+const { DEFAULT_PROFILE, getProfile, normalizeProfile, updateProfile } = require('../../services/profile')
+const { addMethodCard, getState, getThemeClass, setDismissedPendingKeys, setPendingIntentMarks } = require('../../store/index')
 const { closeModal, openModal } = require('../../utils/modal')
 const { syncTabBar } = require('../../utils/tabbar')
 const { getLayoutStyle } = require('../../utils/layout')
@@ -114,10 +114,6 @@ function buildMethodFilterOptions(sediments = [], activeFilter = 'all') {
 function filterSediments(sediments = [], methodFilter = 'all') {
   if (methodFilter === 'all') return sediments
   return sediments.filter((item) => normalizeMethodSourceType(item.sourceType) === methodFilter)
-}
-
-function getIntentLabel(intent = '') {
-  return intent === 'rehearsal' ? '排练线索' : '训练线索'
 }
 
 function getIntentMap(pendingIntentMarks = []) {
@@ -272,6 +268,7 @@ Page({
     detailItem: null,
     detailCount: '1 / 1',
     detailCanSediment: false,
+    detailSelectedIntent: '',
     sedimentSaving: false,
     layoutStyle: '',
     themeClass: 'theme-default',
@@ -494,12 +491,13 @@ Page({
       detailVisible: false,
       profileEditVisible: false,
       profileSaving: false,
-      sedimentSaving: false
+      sedimentSaving: false,
+      detailSelectedIntent: ''
     })
   },
 
   closeDetail() {
-    closeModal(this, { detailVisible: false, detailItem: null, detailCanSediment: false, sedimentSaving: false })
+    closeModal(this, { detailVisible: false, detailItem: null, detailCanSediment: false, detailSelectedIntent: '', sedimentSaving: false })
   },
 
   noop() {},
@@ -528,7 +526,8 @@ Page({
       this.setData({
         detailItem: null,
         detailCount: '0 / 0',
-        detailCanSediment: false
+        detailCanSediment: false,
+        detailSelectedIntent: ''
       })
       return
     }
@@ -539,7 +538,8 @@ Page({
       detailItem,
       detailTitle: this.data.currentKind === 'sediments' ? '沉淀详情' : (this.data.currentKind === 'pending' ? '待整理详情' : '灵感详情'),
       detailCount: `${currentIndex + 1} / ${items.length}`,
-      detailCanSediment: this.data.currentKind === 'pending'
+      detailCanSediment: this.data.currentKind === 'pending',
+      detailSelectedIntent: ''
     })
   },
 
@@ -566,6 +566,22 @@ Page({
     const currentIndex = normalizeDetailIndex(this.data.currentIndex, items)
     const next = (currentIndex + 1) % items.length
     this.setData({ currentIndex: next }, () => this.syncDetail())
+  },
+
+  editCurrentPendingInspiration() {
+    const source = this.data.detailItem
+    if (!source || this.data.currentKind !== 'pending' || normalizeMethodSourceType(source.sourceType) !== 'inspiration') return
+    const inspirationId = source.sourceId || source.id
+    if (!inspirationId) return
+    closeModal(this, {
+      detailVisible: false,
+      detailItem: null,
+      detailCanSediment: false,
+      detailSelectedIntent: '',
+      sedimentSaving: false
+    }, () => {
+      wx.navigateTo({ url: `/pages/inspiration-edit/index?id=${inspirationId}` })
+    })
   },
 
   discardCurrentDetail() {
@@ -595,32 +611,16 @@ Page({
   markCurrentDetailIntent(event) {
     const source = this.data.detailItem
     const intent = event.detail && event.detail.intent === 'rehearsal' ? 'rehearsal' : 'training'
-    if (!source || this.data.currentKind !== 'pending' || normalizeMethodSourceType(source.sourceType) !== 'inspiration') return
-    const sourceKey = getSourceKey(source)
-    const pendingIntentMarks = (this.data.pendingIntentMarks || []).filter((entry) => entry.key !== sourceKey)
-      .concat({ key: sourceKey, intent })
-    setPendingIntentMarks(pendingIntentMarks)
-    const nextPendingItems = this.data.pendingItems.filter((entry) => getSourceKey(entry) !== sourceKey)
-    if (!nextPendingItems.length) {
-      this.refreshMineView({
-        pendingIntentMarks,
-        currentIndex: 0
-      })
-      this.closeDetail()
-      toast(`已标记为${getIntentLabel(intent)}，原记录仍保留`)
-      return
-    }
-    const currentIndex = Math.min(this.data.currentIndex, nextPendingItems.length - 1)
-    this.refreshMineView({
-      pendingIntentMarks,
-      currentIndex
-    }, () => this.syncDetail())
-    toast(`已标记为${getIntentLabel(intent)}，原记录仍保留`)
+    if (!source || this.data.sedimentSaving || this.data.currentKind !== 'pending' || normalizeMethodSourceType(source.sourceType) !== 'inspiration') return
+    this.setData({
+      detailSelectedIntent: this.data.detailSelectedIntent === intent ? '' : intent
+    })
   },
 
   async sedimentCurrentDetail() {
     const source = this.data.detailItem
     if (!source || this.data.sedimentSaving) return
+    const selectedIntent = this.data.detailSelectedIntent
     const sourceType = normalizeMethodSourceType(source.sourceType)
     const sourceLabel = getSourceLabel(sourceType)
     const item = {
@@ -649,10 +649,16 @@ Page({
       const sourceKey = getSourceKey(source)
       const sediments = [item].concat(this.data.sediments)
       const discardedPendingKeys = Array.from(new Set((this.data.discardedPendingKeys || []).concat(sourceKey)))
+      const pendingIntentMarks = selectedIntent
+        ? (this.data.pendingIntentMarks || []).filter((entry) => entry.key !== sourceKey).concat({ key: sourceKey, intent: selectedIntent })
+        : this.data.pendingIntentMarks
       setDismissedPendingKeys(discardedPendingKeys)
+      if (selectedIntent) setPendingIntentMarks(pendingIntentMarks)
       this.refreshMineView({
         sediments,
         discardedPendingKeys,
+        pendingIntentMarks,
+        detailSelectedIntent: '',
         sedimentSaving: false
       })
       this.closeDetail()
@@ -773,39 +779,6 @@ Page({
     }
   },
 
-  async deleteMyAccount() {
-    const confirmed = await new Promise((resolve) => wx.showModal({
-      title: '注销账号',
-      content: '将删除你的灵感、排练、练习记录、方法卡和自定义素材，且无法恢复。',
-      confirmText: '确认注销',
-      confirmColor: '#D64545',
-      success: (res) => resolve(res.confirm),
-      fail: () => resolve(false)
-    }))
-    if (!confirmed) return
-    try {
-      await deleteAccount()
-      setState({
-        todayInspirations: [],
-        todayRehearsals: [],
-        methodCards: [],
-        rehearsalHistory: [],
-        practiceRecordsHistory: [],
-        currentRehearsal: null,
-        pausedRehearsal: null,
-        currentMaterial: null,
-        savedMaterialIds: [],
-        playedMaterialIds: [],
-        profile: null
-      })
-      closeModal(this, { profileEditVisible: false })
-      toast('账号数据已删除')
-      await this.loadAllData()
-    } catch (error) {
-      toast((error && error.message) || '注销失败，请重试')
-    }
-  },
-
   goRecord() {
     wx.switchTab({ url: '/pages/record/index' })
   },
@@ -814,9 +787,8 @@ Page({
     wx.switchTab({ url: '/pages/discover/index' })
   },
 
-  toggleTheme() {
-    toggleThemeMode()
-    this.setData({ themeClass: getThemeClass() })
+  goSettings() {
+    wx.navigateTo({ url: '/pages/settings/index' })
   },
 
   async onDeleteInspiration(e) {

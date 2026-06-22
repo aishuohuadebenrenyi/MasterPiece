@@ -29,6 +29,7 @@ const requiredActions = [
   'methodCard.create',
   'practice.complete',
   'rehearsal.complete',
+  'feedback.create',
   'account.delete'
 ]
 
@@ -58,6 +59,12 @@ wxmlFiles.forEach((file) => {
   assert(!/bind:?input=/.test(source), `Skyline input rule violation: ${path.relative(root, file)}`)
 })
 
+const wxssFiles = collectFiles(path.join(root, 'frontend'), '.wxss')
+wxssFiles.forEach((file) => {
+  const source = fs.readFileSync(file, 'utf8')
+  assert(!/max-width:\s*none/.test(source), `Skyline unsupported max-width remains: ${path.relative(root, file)}`)
+})
+
 const pageFiles = collectFiles(path.join(root, 'frontend/pages'), '.js')
   .concat(collectFiles(path.join(root, 'frontend/pages'), '.ts'))
 pageFiles.forEach((file) => {
@@ -70,4 +77,12 @@ const discover = read('frontend/pages/discover/index.ts')
 assert(discover.includes('listMaterialsPage'), 'discover page does not use paged material API')
 assert(discover.includes('currentOffset'), 'discover page does not track material offset')
 
-console.log(`Checked ${requiredActions.length} actions, ${pageFiles.length} page scripts and ${wxmlFiles.length} templates`)
+const feedbackService = read('frontend/services/feedback.ts')
+const settingsPage = read('frontend/pages/settings/index.js')
+const settingsTemplate = read('frontend/pages/settings/index.wxml')
+assert(feedbackService.includes("'feedback.create'"), 'feedback service does not call feedback.create')
+assert(settingsPage.includes("require('../../services/feedback')"), 'settings page does not import feedback service')
+assert(settingsPage.includes('await createFeedback('), 'settings page does not submit feedback')
+assert(settingsTemplate.includes('bindtap="submitFeedback"'), 'settings template does not bind feedback submit action')
+
+console.log(`Checked ${requiredActions.length} actions, ${pageFiles.length} page scripts, ${wxmlFiles.length} templates and ${wxssFiles.length} stylesheets`)

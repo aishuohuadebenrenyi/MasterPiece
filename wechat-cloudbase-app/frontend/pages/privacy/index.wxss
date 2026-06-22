@@ -1,8 +1,27 @@
 @import '../../styles/theme.wxss';
 
+.privacy-page {
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--nav-row-top) var(--page-side) 0;
+  background: linear-gradient(180deg, #fff5ef 0%, #f7f9ff 54%, #eef5ff 100%);
+  background: linear-gradient(180deg, var(--improv-bg-top, #fff5ef) 0%, var(--improv-bg-mid, #f7f9ff) 54%, var(--improv-bg-bottom, #eef5ff) 100%);
+  color: var(--improv-text);
+}
+
+.privacy-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 24rpx;
+}
+
 .privacy-content {
   display: flex;
   flex-direction: column;
+  padding: 8rpx 0 calc(60rpx + env(safe-area-inset-bottom));
 }
 
 .privacy-title {
@@ -31,4 +50,10 @@
   color: var(--improv-text-soft);
   line-height: 1.7;
   margin-bottom: 8rpx;
+}
+
+.privacy-feedback-btn {
+  align-self: center;
+  min-width: 240rpx;
+  margin-top: 24rpx;
 }

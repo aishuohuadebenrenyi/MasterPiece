@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "设置",
+  "disableScroll": true,
+  "usingComponents": {
+    "bottom-sheet": "../../components/bottom-sheet/index",
+    "form-field": "../../components/form-field/index",
+    "subpage-header": "../../components/subpage-header/index"
+  }
+}

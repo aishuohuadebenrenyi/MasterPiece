@@ -91,6 +91,9 @@ export async function callImprovData<T>(
 ): Promise<T> {
   const response = await callImprovAction<T>(action, payload, options)
   if (response.code !== 0) {
+    if (response.code === 404 && response.message && response.message.includes('未知 action')) {
+      throw new ImprovActionError('云函数版本未更新，请重新部署 improv-api', response.code, response.requestId)
+    }
     throw new ImprovActionError(response.message || '操作失败，请稍后再试', response.code, response.requestId)
   }
   if (response.data === undefined || response.data === null) {
