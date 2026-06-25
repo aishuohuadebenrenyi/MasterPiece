@@ -2,7 +2,7 @@ const { createCanvas, registerFont } = require('/tmp/share-covers/node_modules/c
 const fs = require('fs');
 const path = require('path');
 
-const OUTPUT_DIR = __dirname;
+const OUTPUT_DIR = path.resolve(__dirname, '../frontend/assets/share');
 const W = 500;
 const H = 400;
 

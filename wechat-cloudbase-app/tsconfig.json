@@ -16,6 +16,7 @@
   "include": [
     "frontend/**/*.ts",
     "frontend/**/*.d.ts",
+    "types/**/*.d.ts",
     "backend/cloudfunctions/improv-api/**/*.js"
   ],
   "exclude": [
