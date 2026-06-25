@@ -695,7 +695,8 @@ Page({
       const result = await wx.chooseMedia({
         count: 1,
         mediaType: ['image'],
-        sourceType: ['album', 'camera']
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed']
       })
       const file = result.tempFiles && result.tempFiles[0]
       const tempFilePath = file ? file.tempFilePath : ''

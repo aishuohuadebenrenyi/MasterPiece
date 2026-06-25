@@ -34,6 +34,15 @@ const MAX_LIMIT = 100
 const MAX_MATERIAL_SCAN = 500
 const TODAY_LIMIT = 20
 const RECOMMEND_POOL_SIZE = 5
+const CONTENT_SECURITY_SCENE = 2
+const TEXT_SECURITY_MAX_CHUNK = 1800
+const IMAGE_CONTENT_TYPES = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp'
+}
 
 // 各集合允许写入的字段白名单
 const FIELD_WHITELISTS = {
@@ -73,6 +82,127 @@ function ownerWhere(extra = {}) {
     ownerOpenId: getOpenId(),
     deletedAt: null
   }, extra)
+}
+
+function normalizeSecurityError(error) {
+  const errCode = Number(error && (error.errCode || error.errcode || error.code))
+  if (errCode === 87014) return '内容含有不适合公开展示的信息，请修改后再保存'
+  return '内容安全检查暂不可用，请稍后再试'
+}
+
+function isRiskySecurityResult(result) {
+  if (!result) return false
+  const errCode = Number(result.errCode || result.errcode)
+  if (errCode === 87014) return true
+  const suggest = result.result && result.result.suggest
+  return suggest === 'risky'
+}
+
+function collectTextValues(value, items = []) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed) items.push(trimmed)
+    return items
+  }
+  if (Array.isArray(value)) {
+    value.forEach(item => collectTextValues(item, items))
+    return items
+  }
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach(key => collectTextValues(value[key], items))
+  }
+  return items
+}
+
+function chunkTextValues(values) {
+  const chunks = []
+  let current = ''
+  const uniqueValues = Array.from(new Set(values.filter(Boolean)))
+  for (const value of uniqueValues) {
+    if (value.length > TEXT_SECURITY_MAX_CHUNK) {
+      if (current) {
+        chunks.push(current)
+        current = ''
+      }
+      for (let index = 0; index < value.length; index += TEXT_SECURITY_MAX_CHUNK) {
+        chunks.push(value.slice(index, index + TEXT_SECURITY_MAX_CHUNK))
+      }
+      continue
+    }
+    const next = current ? `${current}\n${value}` : value
+    if (next.length > TEXT_SECURITY_MAX_CHUNK) {
+      chunks.push(current)
+      current = value
+    } else {
+      current = next
+    }
+  }
+  if (current) chunks.push(current)
+  return chunks
+}
+
+async function checkTextSecurity(values, requestId) {
+  const chunks = chunkTextValues(collectTextValues(values))
+  if (!chunks.length) return null
+  if (!cloud.openapi || !cloud.openapi.security || !cloud.openapi.security.msgSecCheck) {
+    return fail('内容安全检查暂不可用，请稍后再试', requestId, 503)
+  }
+  const openid = getOpenId()
+  try {
+    for (const content of chunks) {
+      const result = await cloud.openapi.security.msgSecCheck({
+        content,
+        version: 2,
+        scene: CONTENT_SECURITY_SCENE,
+        openid
+      })
+      if (isRiskySecurityResult(result)) {
+        return fail('内容含有不适合公开展示的信息，请修改后再保存', requestId, 400)
+      }
+    }
+  } catch (error) {
+    console.warn('[improv-api] text security check failed', error)
+    return fail(normalizeSecurityError(error), requestId, Number(error && (error.errCode || error.errcode)) === 87014 ? 400 : 503)
+  }
+  return null
+}
+
+function inferImageContentType(fileID) {
+  const matched = String(fileID || '').toLowerCase().match(/\.([a-z0-9]+)(?:\?|$)/)
+  const ext = matched ? matched[1] : ''
+  return IMAGE_CONTENT_TYPES[ext] || 'image/jpeg'
+}
+
+async function checkImageSecurity(fileID, requestId) {
+  if (!fileID || typeof fileID !== 'string' || !fileID.startsWith('cloud://')) return null
+  if (!cloud.openapi || !cloud.openapi.security || !cloud.openapi.security.imgSecCheck) {
+    return fail('图片安全检查暂不可用，请稍后再试', requestId, 503)
+  }
+  try {
+    const downloaded = await cloud.downloadFile({ fileID })
+    const result = await cloud.openapi.security.imgSecCheck({
+      media: {
+        contentType: inferImageContentType(fileID),
+        value: downloaded.fileContent
+      }
+    })
+    if (isRiskySecurityResult(result)) {
+      await cloud.deleteFile({ fileList: [fileID] }).catch(error => {
+        console.warn('[improv-api] delete unsafe image failed', error)
+      })
+      return fail('图片内容未通过安全检查，请更换后再试', requestId, 400)
+    }
+  } catch (error) {
+    console.warn('[improv-api] image security check failed', error)
+    const isRisky = Number(error && (error.errCode || error.errcode)) === 87014
+    if (isRisky) {
+      await cloud.deleteFile({ fileList: [fileID] }).catch(deleteError => {
+        console.warn('[improv-api] delete unsafe image failed', deleteError)
+      })
+    }
+    return fail(isRisky ? '图片内容未通过安全检查，请更换后再试' : '图片安全检查暂不可用，请稍后再试', requestId, isRisky ? 400 : 503)
+  }
+  return null
 }
 
 // 从 payload 中只提取白名单中的字段
@@ -232,6 +362,8 @@ async function createFeedback(payload, requestId) {
   if (contact.length > 100) return fail('联系方式不能超过 100 字', requestId, 400)
   if (sourcePage.length > 200) return fail('来源页面过长', requestId, 400)
   if (appVersion.length > 40) return fail('版本信息过长', requestId, 400)
+  const unsafeContent = await checkTextSecurity({ content, contact }, requestId)
+  if (unsafeContent) return unsafeContent
 
   const feedback = {
     id: `feedback-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -302,6 +434,19 @@ function validateMaterialPayload(payload, requestId) {
     return fail('包含非法使用场景', requestId, 400)
   }
   return null
+}
+
+function getMaterialSecurityPayload(payload) {
+  return {
+    title: payload.title,
+    desc: payload.desc,
+    tags: payload.tags,
+    meta: payload.meta,
+    steps: payload.steps,
+    tips: payload.tips,
+    variant: payload.variant,
+    issue: payload.issue
+  }
 }
 
 async function listMaterials(payload, requestId) {
@@ -402,6 +547,8 @@ async function createMaterial(payload, requestId) {
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
   const invalidMaterial = validateMaterialPayload(payload, requestId)
   if (invalidMaterial) return invalidMaterial
+  const unsafeContent = await checkTextSecurity(getMaterialSecurityPayload(payload), requestId)
+  if (unsafeContent) return unsafeContent
   const ownerOpenId = getOpenId()
   const existing = await db.collection(COLLECTIONS.materials).where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
   if (existing.data.length) return ok({ item: existing.data[0] }, requestId)
@@ -417,6 +564,8 @@ async function updateMaterial(payload, requestId) {
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
   const invalidMaterial = validateMaterialPayload(payload, requestId)
   if (invalidMaterial) return invalidMaterial
+  const unsafeContent = await checkTextSecurity(getMaterialSecurityPayload(payload), requestId)
+  if (unsafeContent) return unsafeContent
   const ownerOpenId = getOpenId()
 
   const collection = db.collection(COLLECTIONS.materials)
@@ -498,6 +647,8 @@ async function createOwned(collectionName, payload, requestId) {
   const invalid = validateOwnedPayload(collectionName, payload, requestId)
   if (invalid) return invalid
   const safeData = pickFields(payload, whitelist)
+  const unsafeContent = await checkTextSecurity(safeData, requestId)
+  if (unsafeContent) return unsafeContent
   const collection = db.collection(collectionName)
   const existing = await collection.where(ownerWhere({ id: safeData.id })).limit(1).get()
   if (existing.data.length) return ok({ item: existing.data[0] }, requestId)
@@ -531,6 +682,8 @@ async function updateOwned(collectionName, payload, requestId) {
   if (invalid) return invalid
   if (!Object.keys(rawPatch).length) return fail('没有可更新字段', requestId, 400)
   const safePatch = pickFields(rawPatch, whitelist)
+  const unsafeContent = await checkTextSecurity(safePatch, requestId)
+  if (unsafeContent) return unsafeContent
   const patch = Object.assign({}, safePatch, { updatedAt: now() })
   await collection.doc(result.data[0]._id).update({ data: patch })
   return ok({ item: Object.assign({}, result.data[0], safePatch) }, requestId)
@@ -560,6 +713,13 @@ async function updateProfile(payload, requestId) {
 
   const collection = db.collection(COLLECTIONS.profiles)
   const existing = await collection.where(ownerWhere()).limit(1).get()
+  const unsafeContent = await checkTextSecurity({ displayName, troupeName }, requestId)
+  if (unsafeContent) return unsafeContent
+  const currentAvatarUrl = existing.data[0] && existing.data[0].avatarUrl
+  if (avatarUrl && avatarUrl.startsWith('cloud://') && avatarUrl !== currentAvatarUrl) {
+    const unsafeImage = await checkImageSecurity(avatarUrl, requestId)
+    if (unsafeImage) return unsafeImage
+  }
   const patch = {
     displayName,
     avatarUrl,
@@ -598,6 +758,8 @@ async function updateRehearsalMaterialStatus(payload, requestId) {
         try: typeof payload.try === 'string' ? payload.try : item.try || ''
       })
     : item)
+  const unsafeContent = await checkTextSecurity({ keep: payload.keep, try: payload.try }, requestId)
+  if (unsafeContent) return unsafeContent
   await collection.doc(rehearsal._id).update({
     data: {
       plan,
@@ -672,6 +834,12 @@ async function completePractice(payload, requestId) {
     const invalid = validateOwnedPayload(COLLECTIONS.methodCards, methodCardPayload, requestId)
     if (invalid) return invalid
   }
+  const unsafeContent = await checkTextSecurity({
+    practiceRecord: pickFields(recordPayload, FIELD_WHITELISTS[COLLECTIONS.practiceRecords]),
+    rehearsalPatch,
+    methodCard: methodCardPayload ? pickFields(methodCardPayload, FIELD_WHITELISTS[COLLECTIONS.methodCards]) : null
+  }, requestId)
+  if (unsafeContent) return unsafeContent
 
   const ownerOpenId = getOpenId()
   const result = await db.runTransaction(async transaction => {
@@ -774,6 +942,11 @@ async function completeRehearsal(payload, requestId) {
     const invalid = validateOwnedPayload(COLLECTIONS.methodCards, methodCardPayload, requestId)
     if (invalid) return invalid
   }
+  const unsafeContent = await checkTextSecurity({
+    patch: pickFields(patch, UPDATE_WHITELISTS[COLLECTIONS.rehearsals]),
+    methodCard: methodCardPayload ? pickFields(methodCardPayload, FIELD_WHITELISTS[COLLECTIONS.methodCards]) : null
+  }, requestId)
+  if (unsafeContent) return unsafeContent
   const ownerOpenId = getOpenId()
   const result = await db.runTransaction(async transaction => {
     const rehearsalCollection = transaction.collection(COLLECTIONS.rehearsals)
