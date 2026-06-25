@@ -174,8 +174,14 @@
 .plan-submit {
   width: 320rpx;
   max-width: 72%;
-  margin: 24rpx auto 0;
+  margin: 0 auto;
   align-self: center;
+}
+
+.plan-sheet-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .inspiration-list {

@@ -1,4 +1,4 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="page subpage-page rehearsal {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}">
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="page subpage-page rehearsal {{modalOpen ? 'modal-open' : ''}} {{themeClass}}" style="{{layoutStyle}}">
   <subpage-header kicker="排练记录" title="{{title}}" bind:back="back" />
 
   <form-card title="今晚排练 · {{duration}} 分钟" kicker="本次排练" actionText="编辑" bind:action="openPlan">
@@ -7,7 +7,7 @@
   </form-card>
 
   <form-card title="素材计划与反馈" kicker="素材计划" actionText="加素材" bind:action="openAdd">
-    <empty-state-panel wx:if="{{!planMaterials.length}}" customClass="plan-empty-card" title="先加几个这次想练的素材" desc="没有计划时，不需要先把页面填满。先加入 1-3 条素材，排练会更容易开始。" primaryText="加素材" bind:primary="openAdd" />
+    <empty-state-panel wx:if="{{!planMaterials.length}}" customClass="plan-empty-card" title="先加几个这次想练的素材" desc="先加入 1–3 条素材。" primaryText="加素材" bind:primary="openAdd" />
     <view wx:for="{{planMaterials}}" wx:key="id" class="card rehearsal-material">
       <view class="plan-item">
         <view class="index">{{index + 1}}</view>
@@ -69,7 +69,7 @@
     />
   </bottom-sheet>
 
-  <bottom-sheet visible="{{planVisible}}" title="调整排练计划" closeOnMask="{{false}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{planVisible}}" title="调整排练计划" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="card plan-sheet-summary">
       <text class="mini-title">当前排练</text>
       <view class="section-title">{{title}} · {{duration}} 分钟</view>
@@ -86,7 +86,7 @@
       actionText="切换状态"
       bind:action="toggleStatus"
     />
-    <button class="primary-btn plan-submit" bindtap="savePlan">保存计划</button>
+    <view slot="actions" class="plan-sheet-actions"><button class="primary-btn plan-submit" bindtap="savePlan">保存计划</button></view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">

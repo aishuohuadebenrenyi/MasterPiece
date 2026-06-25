@@ -239,8 +239,14 @@
 .start-btn {
   width: 320rpx;
   max-width: 72%;
-  margin: 24rpx auto 0;
+  margin: 0 auto;
   align-self: center;
+}
+
+.record-sheet-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .start-rehearsal-form {
@@ -277,7 +283,14 @@
   max-width: 240rpx;
 }
 
-.custom-goal-panel {
+.custom-duration-chip {
+  flex: 0 0 auto;
+  max-width: 220rpx;
+  white-space: nowrap;
+}
+
+.custom-goal-panel,
+.custom-duration-panel {
   margin-top: var(--improv-form-gap-inline, 16rpx);
 }
 

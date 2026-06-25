@@ -68,6 +68,10 @@
   color: var(--improv-primary);
 }
 
+.custom-category-chip {
+  margin: 0 !important;
+}
+
 .custom-category-panel {
   margin-top: var(--improv-form-gap-inline, 16rpx);
   padding: 18rpx;

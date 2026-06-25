@@ -28,7 +28,7 @@
   padding: var(--improv-card-padding-md, 40rpx);
   background:
     linear-gradient(160deg, var(--improv-card-translucent, rgba(255, 255, 255, 0.92)), var(--improv-card-muted, rgba(255, 255, 255, 0.74))),
-    linear-gradient(135deg, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)), var(--improv-secondary-wash-soft, rgba(79, 140, 255, 0.14)));
+    linear-gradient(135deg, var(--improv-primary-wash, rgba(168, 176, 79, 0.18)), var(--improv-secondary-wash-soft, rgba(120, 154, 178, 0.14)));
 }
 
 .large .stripe {

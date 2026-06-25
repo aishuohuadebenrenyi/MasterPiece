@@ -12,13 +12,9 @@ Component({
     canSediment: { type: Boolean, value: false },
     canMarkIntent: { type: Boolean, value: false },
     selectedIntent: { type: String, value: '' },
-    canEdit: { type: Boolean, value: false },
     loading: { type: Boolean, value: false }
   },
   methods: {
-    onEdit() {
-      this.triggerEvent('edit')
-    },
     onDiscard() {
       this.triggerEvent('discard')
     },

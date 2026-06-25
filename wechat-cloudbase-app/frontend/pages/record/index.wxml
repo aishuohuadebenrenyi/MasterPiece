@@ -6,13 +6,12 @@
         <textarea
           class="record-inspiration-input"
           value="{{inspirationText}}"
-          placeholder="把刚刚闪过的想法先写下来，也可以用输入法语音转文字。"
+          placeholder="记下刚刚闪过的想法"
           maxlength="-1"
           bindblur="updateInspirationText"
         ></textarea>
         <button class="primary-btn record-save-btn" bindtap="saveInspirationDraft">保存灵感</button>
       </view>
-      <text class="record-intro muted">先留下原始片段，整理可以稍后再做。</text>
       <view class="record-actions">
         <button class="small-btn record-action-btn" bindtap="openStartPractice">记录练习</button>
         <button class="small-btn record-action-btn" bindtap="openStartRehearsal">记录排练</button>
@@ -71,7 +70,7 @@
     </view>
   </view>
 
-  <bottom-sheet visible="{{startPracticeVisible}}" title="快速开始练习" maskVariant="light" sheetClass="start-practice-sheet task-sheet" bodyMode="fit" closeOnMask="{{false}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{startPracticeVisible}}" title="快速开始练习" maskVariant="light" sheetClass="start-practice-sheet task-sheet" bodyMode="fit" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="start-practice-picker">
       <search-bar customClass="start-practice-search" value="{{materialSearchQuery}}" placeholder="搜索素材、能力或目标" showClear="{{true}}" bind:focus="showStartPracticeList" bind:blur="onMaterialSearchInput" bind:confirm="onMaterialSearchInput" bind:clear="clearMaterialSearch" />
       <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="start-material-list">
@@ -94,7 +93,7 @@
         <empty-state-panel wx:if="{{filteredMaterialsList.length === 0}}" customClass="start-practice-empty" title="{{startPracticeEmptyTitle}}" desc="{{startPracticeEmptyDesc}}" />
       </scroll-view>
     </view>
-    <button class="primary-btn start-btn {{!startPracticeSelectedId ? 'disabled-btn' : ''}}" bindtap="startPracticeFromRecord" disabled="{{!startPracticeSelectedId}}">开始练习</button>
+    <view slot="actions" class="record-sheet-actions"><button class="primary-btn start-btn {{!startPracticeSelectedId ? 'disabled-btn' : ''}}" bindtap="startPracticeFromRecord" disabled="{{!startPracticeSelectedId}}">开始练习</button></view>
   </bottom-sheet>
 
   <bottom-sheet visible="{{todayVisible}}" title="{{todayTitle}}" maskVariant="light" bodyMode="fit" bind:close="closeSheet">
@@ -110,14 +109,21 @@
     />
   </bottom-sheet>
 
-  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" bodyMode="fit" sheetClass="start-rehearsal-sheet task-sheet" closeOnMask="{{false}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{startRehearsalVisible}}" title="快速开启排练" maskVariant="light" sheetClass="start-rehearsal-sheet task-sheet" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="start-rehearsal-form">
-      <form-field class="start-rehearsal-section" label="团队">
-        <input class="app-input" value="{{teamName}}" data-field="teamName" bindblur="updateStartForm" bindconfirm="updateStartForm" />
+      <form-field class="start-rehearsal-section" label="排练名称（可选）">
+        <input class="app-input" value="{{teamName}}" data-field="teamName" placeholder="例如：周二晚排练" bindblur="updateStartForm" bindconfirm="updateStartForm" />
       </form-field>
-      <filter-section label="时长" options="{{durationOptions}}" customClass="start-rehearsal-section" rowClass="start-rehearsal-chips" bind:select="setDuration" />
+      <filter-section label="时长" options="{{durationOptions}}" customClass="start-rehearsal-section" rowClass="start-rehearsal-chips" bind:select="setDuration">
+        <button slot="suffix" class="chip compact-filter-chip custom-duration-chip {{customDurationSelected ? 'active' : ''}}" bindtap="toggleCustomDuration">{{customDurationInput ? customDurationInput + ' 分钟' : '+ 自定义'}}</button>
+        <view wx:if="{{customDurationVisible}}" class="custom-duration-panel">
+          <form-field label="自定义时长">
+            <input class="app-input" type="number" value="{{customDurationInput}}" placeholder="输入分钟数" bindblur="updateCustomDuration" bindconfirm="updateCustomDuration" />
+          </form-field>
+        </view>
+      </filter-section>
       <filter-section label="本次目标" options="{{goalOptions}}" customClass="start-rehearsal-section start-goal-section" rowClass="start-rehearsal-goal-row" chipClass="start-rehearsal-goal-chip" bind:select="toggleGoal">
-        <button slot="suffix" class="chip compact-filter-chip start-rehearsal-goal-chip custom-goal-chip {{customGoalInput ? 'active' : ''}}" bindtap="toggleCustomGoal">{{customGoalInput ? customGoalInput : '+ 自定义'}}</button>
+        <button slot="suffix" class="chip compact-filter-chip start-rehearsal-goal-chip custom-goal-chip {{customGoalSelected ? 'active' : ''}}" bindtap="toggleCustomGoal">{{customGoalInput ? customGoalInput : '+ 自定义'}}</button>
         <view wx:if="{{customGoalVisible}}" class="custom-goal-panel">
           <form-field label="自定义目标">
             <input class="app-input" value="{{customGoalInput}}" placeholder="例如：默契升温" bindblur="updateCustomGoal" bindconfirm="updateCustomGoal" />
@@ -126,8 +132,8 @@
       </filter-section>
       <filter-section label="添加素材" options="{{sourceOptions}}" customClass="start-rehearsal-section start-rehearsal-section-last" rowClass="start-rehearsal-chips" bind:select="setSource" />
       <text wx:if="{{rehearsalSourceHint}}" class="muted start-rehearsal-hint">{{rehearsalSourceHint}}</text>
-      <button class="primary-btn start-btn start-rehearsal-submit {{savedSourceUnavailable ? 'disabled-btn' : ''}}" bindtap="startRehearsal" disabled="{{savedSourceUnavailable}}">开始排练</button>
     </view>
+    <view slot="actions" class="record-sheet-actions"><button class="primary-btn start-btn start-rehearsal-submit {{savedSourceUnavailable ? 'disabled-btn' : ''}}" bindtap="startRehearsal" disabled="{{savedSourceUnavailable}}">开始排练</button></view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">

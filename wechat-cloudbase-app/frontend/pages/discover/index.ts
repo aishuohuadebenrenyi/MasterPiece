@@ -1,16 +1,17 @@
 import type { Material, MaterialType, ViewMode } from '../../types/domain'
 import { createMaterial, listMaterialsPage, updateMaterial, updateSaved } from '../../services/material'
+import type { MaterialFacets } from '../../services/material'
 import { getState, setMaterials, setState, subscribe, toggleSaved, getThemeClass } from '../../store/index'
 import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
 import { getLayoutStyle } from '../../utils/layout'
 import { DEFAULT_PAGE_LIMIT, DEFAULT_SORT_ORDER, CATEGORY_SUGGESTION_LIMIT } from '../../config/constants'
+import { MATERIAL_ABILITIES, MATERIAL_SCENES, MATERIAL_STATUSES, MATERIAL_TYPES } from '../../config/material'
 
-const materialTypes: MaterialType[] = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
-const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
-const abilityOptions = ['自发性', 'Yes And', '积极聆听', '角色塑造', '情绪表达', '身体空间', '叙事构建', '失败复原', '主持', '团队协作']
-const sceneOptions = ['临场速查', '备课', '排练', '演出']
+const materialTypes = MATERIAL_TYPES
+const abilityOptions = MATERIAL_ABILITIES
+const sceneOptions = MATERIAL_SCENES
 
 function getCustomMaterialTags(categories: string[]) {
   return categories.filter((item) => (
@@ -92,10 +93,36 @@ type PathDraft = {
   tips: string
 }
 
-const fabSizeRpx = 116
-const fabRightRpx = 42
-const fabBottomRpx = 160
+const fabSizeRpx = 120
+const fabEdgeRpx = 28
+const fabBottomRpx = 154
+const fabTopGapRpx = 24
 const fabDragThreshold = 6
+const fabPositionStorageKey = 'improv_discover_fab_position'
+
+type FabWindow = {
+  minX: number
+  maxX: number
+  minY: number
+  maxY: number
+}
+
+type FabPositionPreference = {
+  side: 'left' | 'right'
+  yRatio: number
+}
+
+function getFabPositionPreference(): FabPositionPreference | null {
+  try {
+    const value = wx.getStorageSync(fabPositionStorageKey)
+    if (!value || (value.side !== 'left' && value.side !== 'right')) return null
+    const yRatio = Number(value.yRatio)
+    if (!Number.isFinite(yRatio)) return null
+    return { side: value.side, yRatio: Math.min(1, Math.max(0, yRatio)) }
+  } catch (error) {
+    return null
+  }
+}
 const categoryHints: Record<MaterialType, string> = {
   游戏: '热身、短篇和限制玩法',
   角色: '身份、关系和状态素材',
@@ -162,6 +189,16 @@ function buildCategoryRows(cards: CategoryCard[]): CategoryCardRow[] {
   return rows
 }
 
+function buildFacetOptions(values: string[], counts: Record<string, number>, selected: string, labels: Record<string, string> = {}) {
+  return [{ value: 'all', label: '全部' }].concat(values
+    .filter((value) => value === selected || Number(counts[value]) > 0)
+    .map((value) => ({ value, label: labels[value] || value })))
+    .map((item) => ({
+      ...item,
+      activeClass: selected === item.value ? 'active' : ''
+    }))
+}
+
 function getPathPreset(key: string) {
   return pathPresets.find((preset) => preset.key === key) || pathPresets[0]
 }
@@ -199,7 +236,12 @@ Page({
   data: {
     themeClass: 'theme-default',
     materials: [] as Material[],
+    allMaterials: [] as Material[],
     filteredMaterials: [] as Material[],
+    resultTotal: 0,
+    availableTotal: 0,
+    categoryCounts: {} as Record<string, number>,
+    facets: { types: {}, abilities: {}, scenes: {}, statuses: {} } as MaterialFacets,
     categoryCards: [] as CategoryCard[],
     categoryRows: [] as CategoryCardRow[],
     pathEntries: buildPathEntries([]) as PathEntry[],
@@ -230,7 +272,7 @@ Page({
     currentRandomMaterial: null as Material | null,
     randomTagLabels: [] as string[],
     newMaterial: {} as NewMaterialDraft,
-    selectedCategoryTags: ['游戏'] as string[],
+    selectedCategoryTags: [] as string[],
     customCategoryVisible: false,
     customCategoryFocus: false,
     customCategoryInput: '',
@@ -240,11 +282,13 @@ Page({
     typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    tagCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     typeFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     abilityFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     sceneFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     statusFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
     fabReady: false,
+    fabHidden: false,
     fabX: 0,
     fabY: 0,
     layoutStyle: '',
@@ -264,50 +308,37 @@ Page({
   unsubscribePrivacy: null as null | (() => void),
   fabStartTouch: null as null | { x: number; y: number },
   fabTouchOffset: null as null | { x: number; y: number },
-  fabWindow: null as null | { width: number; height: number; size: number },
+  fabWindow: null as FabWindow | null,
   fabMoved: false,
   fabIgnoreTapUntil: 0,
   currentLimit: DEFAULT_PAGE_LIMIT,
   currentOffset: 0,
 
   getRandomCandidates() {
-    const source = this.data.randomUseAllMaterials ? this.data.materials : this.data.filteredMaterials
+    const source = this.data.randomUseAllMaterials ? this.data.allMaterials : this.data.filteredMaterials
     return source.filter((material: Material) => !material.referenceOnly)
   },
 
   syncFromStore() {
     const state = getState()
     this.setData({
-      materials: state.materials,
+      allMaterials: state.materials,
       view: state.viewMode
     }, () => this.syncFiltered())
   },
 
   getFilteredMaterials() {
-    const { materials, query, type, ability, scene, status, activeCategory } = this.data
-    const lowerQuery = query.trim().toLowerCase()
-    return materials.filter((material: Material) => {
-      const effectiveType = activeCategory || type
-      const inType = effectiveType === 'all' || material.type === effectiveType
-      const inAbility = ability === 'all' || (material.abilities || []).includes(ability) || (material.tags || []).includes(ability)
-      const inScene = scene === 'all' || (material.scenes || []).includes(scene) || (material.tags || []).includes(scene)
-      const inStatus = status === 'all'
-        || (status === 'saved' && material.saved)
-        || (status === 'played' && material.played)
-        || (status === 'unplayed' && !material.played && !material.referenceOnly)
-      const text = `${material.title} ${material.desc} ${material.type} ${(material.tags || []).join(' ')} ${(material.abilities || []).join(' ')} ${(material.scenes || []).join(' ')} ${(material.meta || []).join(' ')}`.toLowerCase()
-      return inType && inAbility && inScene && inStatus && (!lowerQuery || text.includes(lowerQuery))
-    })
+    return this.data.materials
   },
 
   buildCategoryCards() {
     const tones = ['orange', 'blue', 'mint', 'orange', 'blue', 'mint', 'orange', 'blue']
     return materialTypes.map((type, index) => ({
       type,
-      count: this.data.materials.filter((material: Material) => material.type === type).length,
+      count: Number(this.data.categoryCounts[type]) || 0,
       tone: tones[index],
       hint: categoryHints[type]
-    }))
+    })).filter((item) => item.count > 0)
   },
 
   syncFiltered() {
@@ -316,13 +347,11 @@ Page({
     const currentRandomMaterial = randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null
     const categoryCards = this.buildCategoryCards()
     const isCategoryDetail = !!this.data.activeCategory
-    const activeCategoryMaterialCount = isCategoryDetail
-      ? this.data.materials.filter((material: Material) => material.type === this.data.activeCategory).length
-      : 0
-    const showLoadErrorState = !this.data.loadingMaterials && !!this.data.loadErrorText && this.data.materials.length === 0
-    const showEmptyState = !this.data.loadingMaterials && !this.data.loadErrorText && this.data.materials.length === 0
-    const showEmptyCategoryState = !this.data.loadingMaterials && !this.data.loadErrorText && isCategoryDetail && activeCategoryMaterialCount === 0
-    const showFilterNoMatchState = !showEmptyCategoryState && !this.data.loadingMaterials && this.data.materials.length > 0 && (this.data.view === 'all' || isCategoryDetail) && filteredMaterials.length === 0
+    const activeCategoryMaterialCount = isCategoryDetail ? Number(this.data.categoryCounts[this.data.activeCategory]) || 0 : 0
+    const showLoadErrorState = !this.data.loadingMaterials && !!this.data.loadErrorText && this.data.availableTotal === 0
+    const showEmptyState = !this.data.loadingMaterials && !this.data.loadErrorText && this.data.availableTotal === 0
+    const showEmptyCategoryState = !this.data.loadingMaterials && !this.data.loadErrorText && isCategoryDetail && activeCategoryMaterialCount === 0 && this.data.resultTotal === 0
+    const showFilterNoMatchState = !showEmptyCategoryState && !this.data.loadingMaterials && this.data.availableTotal > 0 && (this.data.view === 'all' || isCategoryDetail) && this.data.resultTotal === 0
     this.setData({
       filteredMaterials,
       categoryCards,
@@ -339,32 +368,10 @@ Page({
       showEmptyCategoryState,
       showLoadErrorState,
       showFilterNoMatchState,
-      typeFilters: [{ value: 'all', label: '全部' }].concat(materialTypes.map((item) => ({ value: item, label: item }))).map((item) => {
-        const effectiveType = this.data.activeCategory || this.data.type
-        return Object.assign({}, item, {
-          activeClass: effectiveType === item.value ? 'active' : ''
-        })
-      }),
-      abilityFilters: [{ value: 'all', label: '全部' }].concat(abilityOptions.map((item) => ({ value: item, label: item }))).map((item) => Object.assign({}, item, {
-        activeClass: this.data.ability === item.value ? 'active' : ''
-      })),
-      sceneFilters: [
-        { value: 'all', label: '全部' },
-        { value: '临场速查', label: '临场速查' },
-        { value: '备课', label: '备课' },
-        { value: '排练', label: '排练' },
-        { value: '演出', label: '演出' }
-      ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.scene === item.value ? 'active' : ''
-      })),
-      statusFilters: [
-        { value: 'all', label: '全部' },
-        { value: 'played', label: '练过' },
-        { value: 'unplayed', label: '未练过' },
-        { value: 'saved', label: '收藏' }
-      ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.status === item.value ? 'active' : ''
-      })),
+      typeFilters: buildFacetOptions(materialTypes, this.data.facets.types, this.data.activeCategory || this.data.type),
+      abilityFilters: buildFacetOptions(abilityOptions, this.data.facets.abilities, this.data.ability),
+      sceneFilters: buildFacetOptions(sceneOptions, this.data.facets.scenes, this.data.scene),
+      statusFilters: buildFacetOptions(MATERIAL_STATUSES, this.data.facets.statuses, this.data.status, { saved: '收藏', played: '练过', unplayed: '未练过' }),
       typeCategoryOptions: materialTypes.map((value) => ({
         value,
         label: value,
@@ -380,17 +387,19 @@ Page({
         label: value,
         activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
       })),
+      tagCategoryOptions: getCustomMaterialTags(this.data.selectedCategoryTags).map((value) => ({
+        value,
+        label: value,
+        activeClass: 'active'
+      })),
       categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
     })
   },
 
   getCategoryPool() {
     const categories: string[] = []
-    defaultCategoryOptions.forEach((item) => categories.push(item))
-    this.data.materials.forEach((material: Material) => {
-      categories.push(material.type)
+    this.data.allMaterials.forEach((material: Material) => {
       ;(material.tags || []).forEach((tag) => categories.push(tag))
-      ;(material.abilities || []).forEach((ability) => categories.push(ability))
     })
     return Array.from(new Set(categories.map((item) => String(item).trim()).filter(Boolean)))
   },
@@ -414,11 +423,31 @@ Page({
       this.setData({ loadingMaterials: true, loadErrorText: '', hasMore: true }, () => this.syncFiltered())
     }
     try {
-      const page = await listMaterialsPage({ limit: DEFAULT_PAGE_LIMIT, offset: loadMore ? this.currentOffset : 0 })
-      const items = loadMore ? getState().materials.concat(page.items) : page.items
+      const effectiveType = this.data.activeCategory || this.data.type
+      const filters = {
+        query: this.data.query,
+        type: effectiveType,
+        ability: this.data.ability,
+        scene: this.data.scene,
+        status: this.data.status,
+        limit: DEFAULT_PAGE_LIMIT,
+        offset: loadMore ? this.currentOffset : 0
+      }
+      const page = await listMaterialsPage(filters)
+      const items = loadMore ? this.data.materials.concat(page.items) : page.items
       this.currentOffset = page.nextOffset === null ? items.length : page.nextOffset
-      setMaterials(items)
-      this.setData({ hasMore: page.hasMore })
+      const isUnfiltered = !this.data.query && !this.data.activeCategory
+        && this.data.type === 'all' && this.data.ability === 'all'
+        && this.data.scene === 'all' && this.data.status === 'all'
+      if (isUnfiltered) setMaterials(items)
+      this.setData({
+        materials: items,
+        resultTotal: page.total,
+        availableTotal: page.availableTotal,
+        categoryCounts: page.categoryCounts,
+        facets: page.facets,
+        hasMore: page.hasMore
+      })
     } catch (error) {
       this.syncFromStore()
       const loadErrorText = getState().materials.length
@@ -434,10 +463,12 @@ Page({
   onScroll(e: any) {
     const deltaY = e.detail.deltaY
     if (Math.abs(deltaY) > 10) {
+      const hidden = deltaY > 0
       const tabbar = this.getTabBar()
       if (tabbar && typeof tabbar.setHidden === 'function') {
-        tabbar.setHidden(deltaY > 0)
+        tabbar.setHidden(hidden)
       }
+      if (this.data.fabHidden !== hidden) this.setData({ fabHidden: hidden })
     }
   },
 
@@ -515,14 +546,39 @@ Page({
     const wxApi = wx as any
     const info = wxApi.getWindowInfo ? wxApi.getWindowInfo() : wxApi.getSystemInfoSync()
     const rpxRatio = info.windowWidth / 750
+    const menu = wxApi.getMenuButtonBoundingClientRect ? wxApi.getMenuButtonBoundingClientRect() : null
     const safeBottom = info.safeArea && typeof info.safeArea.bottom === 'number'
       ? Math.max(0, (info.screenHeight || info.windowHeight) - info.safeArea.bottom)
       : 0
     const fabSize = fabSizeRpx * rpxRatio
-    const x = Math.max(0, info.windowWidth - fabSize - fabRightRpx * rpxRatio)
-    const y = Math.max(0, info.windowHeight - fabSize - fabBottomRpx * rpxRatio - safeBottom)
-    this.fabWindow = { width: info.windowWidth, height: info.windowHeight, size: fabSize }
+    const edge = fabEdgeRpx * rpxRatio
+    const minX = edge
+    const maxX = Math.max(minX, info.windowWidth - fabSize - edge)
+    const safeTop = menu && typeof menu.bottom === 'number'
+      ? menu.bottom
+      : (info.safeArea && typeof info.safeArea.top === 'number' ? info.safeArea.top : 0)
+    const minY = Math.max(edge, safeTop + fabTopGapRpx * rpxRatio)
+    const maxY = Math.max(minY, info.windowHeight - fabSize - fabBottomRpx * rpxRatio - safeBottom)
+    const savedPosition = getFabPositionPreference()
+    const x = savedPosition?.side === 'left' ? minX : maxX
+    const y = savedPosition
+      ? minY + (maxY - minY) * savedPosition.yRatio
+      : maxY
+    this.fabWindow = { minX, maxX, minY, maxY }
     this.setData({ fabReady: true, fabX: x, fabY: y })
+  },
+
+  saveFabPosition() {
+    if (!this.fabWindow) return
+    const { minX, maxX, minY, maxY } = this.fabWindow
+    const side = Math.abs(this.data.fabX - minX) <= Math.abs(this.data.fabX - maxX) ? 'left' : 'right'
+    const yRange = maxY - minY
+    const yRatio = yRange > 0 ? (this.data.fabY - minY) / yRange : 0
+    try {
+      wx.setStorageSync(fabPositionStorageKey, { side, yRatio })
+    } catch (error) {
+      // UI 偏好写入失败时保留当前会话位置。
+    }
   },
 
   switchView(event: WechatMiniprogram.TouchEvent) {
@@ -535,17 +591,18 @@ Page({
       drawnCount: 1,
       randomUseAllMaterials: false
     }
-    this.setData(patch, () => {
+    this.setData(patch, async () => {
       setState({ viewMode: view })
+      await this.loadMaterials()
     })
   },
 
   search(event: WechatMiniprogram.Input) {
-    this.setData({ query: event.detail.value }, () => this.syncFiltered())
+    this.setData({ query: event.detail.value }, () => this.loadMaterials())
   },
 
   clearSearchQuery() {
-    this.setData({ query: '' }, () => this.syncFiltered())
+    this.setData({ query: '' }, () => this.loadMaterials())
   },
 
   openCategoryDetail(event: WechatMiniprogram.TouchEvent) {
@@ -559,9 +616,9 @@ Page({
       randomIndex: 0,
       drawnCount: 1,
       randomUseAllMaterials: false
-    }, () => {
+    }, async () => {
       setState({ viewMode: 'category' })
-      this.syncFiltered()
+      await this.loadMaterials()
     })
   },
 
@@ -573,7 +630,7 @@ Page({
       randomIndex: 0,
       drawnCount: 1,
       randomUseAllMaterials: false
-    }, () => this.syncFiltered())
+    }, () => this.loadMaterials())
   },
 
   buildActivePath(key: string): PathSheetState {
@@ -696,22 +753,22 @@ Page({
 
   filterType(event: WechatMiniprogram.TouchEvent) {
     const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ type: value, activeCategory: '' }, () => this.syncFiltered())
+    this.setData({ type: value, activeCategory: '' }, () => this.loadMaterials())
   },
 
   filterAbility(event: WechatMiniprogram.TouchEvent) {
     const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ ability: value }, () => this.syncFiltered())
+    this.setData({ ability: value }, () => this.loadMaterials())
   },
 
   filterScene(event: WechatMiniprogram.TouchEvent) {
     const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ scene: value }, () => this.syncFiltered())
+    this.setData({ scene: value }, () => this.loadMaterials())
   },
 
   filterStatus(event: WechatMiniprogram.TouchEvent) {
     const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ status: value }, () => this.syncFiltered())
+    this.setData({ status: value }, () => this.loadMaterials())
   },
 
   openMaterial(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
@@ -728,6 +785,7 @@ Page({
     const nextValue = toggleSaved(id)
     try {
       await updateSaved(id, nextValue)
+      await this.loadMaterials()
     } catch (error) {
       toggleSaved(id, !nextValue)
       toast('收藏状态同步失败，请稍后再试')
@@ -736,7 +794,7 @@ Page({
 
   openRandom() {
     if (Date.now() < this.fabIgnoreTapUntil) return
-    if (!this.data.materials.filter((material: Material) => !material.referenceOnly).length) return
+    if (!this.data.filteredMaterials.filter((material: Material) => !material.referenceOnly).length) return
     this.setData({
       drawnCount: 1,
       randomIndex: 0,
@@ -760,15 +818,19 @@ Page({
     const distanceX = Math.abs(touch.clientX - this.fabStartTouch.x)
     const distanceY = Math.abs(touch.clientY - this.fabStartTouch.y)
     if (distanceX > fabDragThreshold || distanceY > fabDragThreshold) this.fabMoved = true
-    const maxX = Math.max(0, this.fabWindow.width - this.fabWindow.size)
-    const maxY = Math.max(0, this.fabWindow.height - this.fabWindow.size)
-    const x = Math.min(maxX, Math.max(0, touch.clientX - this.fabTouchOffset.x))
-    const y = Math.min(maxY, Math.max(0, touch.clientY - this.fabTouchOffset.y))
+    const { minX, maxX, minY, maxY } = this.fabWindow
+    const x = Math.min(maxX, Math.max(minX, touch.clientX - this.fabTouchOffset.x))
+    const y = Math.min(maxY, Math.max(minY, touch.clientY - this.fabTouchOffset.y))
     this.setData({ fabX: x, fabY: y })
   },
 
   onFabTouchEnd() {
-    if (this.fabMoved) this.fabIgnoreTapUntil = Date.now() + 250
+    if (this.fabMoved && this.fabWindow) {
+      this.fabIgnoreTapUntil = Date.now() + 250
+      const { minX, maxX } = this.fabWindow
+      const x = Math.abs(this.data.fabX - minX) <= Math.abs(this.data.fabX - maxX) ? minX : maxX
+      this.setData({ fabX: x }, () => this.saveFabPosition())
+    }
     this.fabStartTouch = null
     this.fabTouchOffset = null
   },
@@ -802,7 +864,7 @@ Page({
 
   applyFilter() {
     closeModal(this, { filterVisible: false })
-    const count = this.getFilteredMaterials().length
+    const count = this.data.resultTotal
     toast(count ? `已筛选出 ${count} 条素材` : '当前条件下没有匹配素材')
   },
 
@@ -816,7 +878,7 @@ Page({
       randomIndex: 0,
       drawnCount: 1,
       randomUseAllMaterials: false
-    }, () => this.syncFiltered())
+    }, () => this.loadMaterials())
   },
 
   clearFiltersForRandom() {
@@ -865,7 +927,7 @@ Page({
       categorySuggestions: [],
       newMaterial: {},
       randomUseAllMaterials: false,
-      selectedCategoryTags: ['游戏'],
+      selectedCategoryTags: [],
       showMoreOptions: false,
       moreOptionsToggleText: '补充训练方法'
     })
@@ -891,6 +953,10 @@ Page({
   },
 
   toggleNewMaterialScene(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleNewMaterialTag(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
     this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
   },
 
@@ -945,7 +1011,11 @@ Page({
     const inputValue = event && event.detail ? event.detail.value : this.data.customCategoryInput
     const category = String(inputValue || '').trim()
     if (!category) {
-      toast('先输入分类')
+      toast('先输入标签')
+      return
+    }
+    if (materialTypes.includes(category as MaterialType) || abilityOptions.includes(category) || sceneOptions.includes(category)) {
+      toast('请在对应的类型、能力或场景中选择')
       return
     }
     this.setData({
@@ -984,7 +1054,11 @@ Page({
       return
     }
     const categories = Array.from(new Set<string>(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
-    const materialType = (materialTypes.find((item) => categories.includes(item)) || '游戏') as MaterialType
+    const materialType = materialTypes.find((item) => categories.includes(item)) as MaterialType | undefined
+    if (!materialType) {
+      toast('请选择素材类型')
+      return
+    }
     const abilities = abilityOptions.filter((item) => categories.includes(item))
     const scenes = sceneOptions.filter((item) => categories.includes(item))
     const tags = getCustomMaterialTags(categories)
@@ -1019,14 +1093,14 @@ Page({
     closeModal(this, {
       addVisible: false,
       newMaterial: {},
-      selectedCategoryTags: ['游戏'],
+      selectedCategoryTags: [],
       customCategoryVisible: false,
       customCategoryFocus: false,
       customCategoryInput: '',
       categorySuggestions: [],
       showMoreOptions: false,
       moreOptionsToggleText: '补充训练方法'
-    }, () => this.syncFiltered())
+    }, () => this.loadMaterials())
     toast('已加入素材库，可稍后继续完善')
   }
 })

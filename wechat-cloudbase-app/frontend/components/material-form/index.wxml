@@ -8,6 +8,16 @@
       <filter-section label="类型" options="{{typeOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectType" />
       <filter-section label="能力" options="{{abilityOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectAbility" />
       <filter-section label="场景" options="{{sceneOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectScene" />
+      <filter-section label="标签（可选）" options="{{tagOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectTag">
+        <button slot="suffix" class="chip compact-filter-chip custom-category-chip" catchtap="toggleCustomCategory">+ 添加标签</button>
+        <view wx:if="{{customCategoryVisible}}" class="custom-category-panel">
+          <input class="app-input custom-category-input" value="{{customCategoryInput}}" focus="{{customCategoryFocus}}" placeholder="例如：热身、双人、新手" bindfocus="customCategoryFocus" bindblur="customCategoryBlur" bindconfirm="customCategoryConfirm" />
+          <view wx:if="{{categorySuggestions.length}}" class="category-suggestions">
+            <button wx:for="{{categorySuggestions}}" wx:key="value" class="category-suggestion" data-category="{{item.value}}" catchtap="selectSuggestion">{{item.label}}</button>
+          </view>
+          <button class="ghost-btn custom-category-confirm" catchtap="customCategoryConfirm">添加标签</button>
+        </view>
+      </filter-section>
     </view>
 
     <view class="form-grid">
@@ -20,7 +30,7 @@
     </view>
 
     <form-field label="简短描述">
-      <textarea class="app-textarea" value="{{value.desc}}" data-field="desc" placeholder="用一句话说清它适合什么时候使用" bindblur="emitFieldChange"></textarea>
+      <textarea class="app-textarea" value="{{value.desc}}" data-field="desc" placeholder="一句话描述" bindblur="emitFieldChange"></textarea>
     </form-field>
   </view>
 
@@ -30,16 +40,16 @@
 
   <view wx:if="{{showMoreOptions}}" class="material-form-group advanced-group">
     <form-field label="补充玩法步骤">
-      <textarea class="app-textarea steps-textarea" value="{{value.steps}}" data-field="steps" placeholder="每行一步，例如：先围成一圈..." bindblur="emitFieldChange"></textarea>
+      <textarea class="app-textarea steps-textarea" value="{{value.steps}}" data-field="steps" placeholder="每行一个步骤" bindblur="emitFieldChange"></textarea>
     </form-field>
     <form-field label="带领提示">
-      <textarea class="app-textarea steps-textarea" value="{{value.tips}}" data-field="tips" placeholder="第一次带领时需要注意什么？" bindblur="emitFieldChange"></textarea>
+      <textarea class="app-textarea steps-textarea" value="{{value.tips}}" data-field="tips" placeholder="带练提醒" bindblur="emitFieldChange"></textarea>
     </form-field>
     <form-field label="变体玩法">
-      <textarea class="app-textarea steps-textarea" value="{{value.variant}}" data-field="variant" placeholder="这张素材还有什么变体用法？" bindblur="emitFieldChange"></textarea>
+      <textarea class="app-textarea steps-textarea" value="{{value.variant}}" data-field="variant" placeholder="变体用法" bindblur="emitFieldChange"></textarea>
     </form-field>
     <form-field label="可能翻车点">
-      <textarea class="app-textarea steps-textarea" value="{{value.issue}}" data-field="issue" placeholder="大家最容易在哪个环节卡住？" bindblur="emitFieldChange"></textarea>
+      <textarea class="app-textarea steps-textarea" value="{{value.issue}}" data-field="issue" placeholder="易卡住的环节" bindblur="emitFieldChange"></textarea>
     </form-field>
   </view>
 </view>

@@ -2,9 +2,9 @@
   <view class="privacy-mask" catchtap="noop"></view>
   <view class="privacy-dialog" catchtap="noop">
     <text class="privacy-dialog-title">用户隐私保护提示</text>
-    <text class="privacy-dialog-desc">在使用即兴工具箱服务之前，请仔细阅读</text>
+    <text class="privacy-dialog-desc">请阅读</text>
     <text class="privacy-dialog-link" bindtap="openPrivacy">《即兴工具箱隐私政策》</text>
-    <text class="privacy-dialog-desc">。如您同意，请点击"同意"开始使用。</text>
+    <text class="privacy-dialog-desc">。同意后即可继续使用。</text>
     <view class="privacy-dialog-actions">
       <button class="button-danger-quiet privacy-btn-refuse" bindtap="onRefuse">拒绝</button>
       <button class="primary-btn privacy-btn-agree" id="agree-btn" open-type="agreePrivacyAuthorization" bindagreeprivacyauthorization="onAgree">同意</button>

@@ -1,7 +1,17 @@
 import type { Material } from '../types/domain'
 import { callImprovData } from './cloud'
 import { getState } from '../store/index'
-import { DEFAULT_SORT_ORDER } from '../config/constants'
+import { DEFAULT_SORT_ORDER, MATERIAL_LIST_TIMEOUT_MS } from '../config/constants'
+import { MATERIAL_TYPES } from '../config/material'
+
+export type MaterialFacetCounts = Record<string, number>
+
+export interface MaterialFacets {
+  types: MaterialFacetCounts
+  abilities: MaterialFacetCounts
+  scenes: MaterialFacetCounts
+  statuses: MaterialFacetCounts
+}
 
 export type MaterialListFilters = {
   query?: string
@@ -16,13 +26,17 @@ export type MaterialListFilters = {
 export interface MaterialListResult {
   items: Material[]
   total: number
+  availableTotal: number
+  categoryCounts: MaterialFacetCounts
+  facets: MaterialFacets
+  capacity?: { scanLimit: number; scanLimitReached: boolean }
   hasMore: boolean
   nextOffset: number | null
 }
 
 export function normalizeMaterial(raw: Partial<Material> & { _id?: string }): Material {
   const id = raw.id || raw._id || 'unknown-material'
-  const type = raw.type || '游戏'
+  const type = raw.type as Material['type']
   return Object.assign({
     id,
     title: '',
@@ -59,13 +73,28 @@ export async function listMaterials(filters: MaterialListFilters = {}) {
 }
 
 export async function listMaterialsPage(filters: MaterialListFilters = {}): Promise<MaterialListResult> {
-  const data = await callImprovData<{ items: Material[]; total: number; hasMore: boolean; nextOffset: number | null }>('material.list', filters, { silent: true })
+  const data = await callImprovData<{ items: Material[]; total: number; availableTotal: number; categoryCounts: MaterialFacetCounts; facets: MaterialFacets; capacity?: { scanLimit: number; scanLimitReached: boolean }; hasMore: boolean; nextOffset: number | null }>('material.list', filters, {
+    silent: true,
+    timeoutMs: MATERIAL_LIST_TIMEOUT_MS
+  })
   return {
-    items: (data.items || []).map(normalizeMaterial).sort((a, b) => a.sortOrder - b.sortOrder),
+    items: (data.items || []).filter((item) => MATERIAL_TYPES.includes(item.type)).map(normalizeMaterial).sort((a, b) => a.sortOrder - b.sortOrder),
     total: Number(data.total) || 0,
+    availableTotal: Number(data.availableTotal) || 0,
+    categoryCounts: data.categoryCounts || {},
+    facets: data.facets || { types: {}, abilities: {}, scenes: {}, statuses: {} },
+    capacity: data.capacity,
     hasMore: !!data.hasMore,
     nextOffset: typeof data.nextOffset === 'number' ? data.nextOffset : null
   }
+}
+
+export async function getMaterial(id: string) {
+  const data = await callImprovData<{ item: Material }>('material.get', { id }, {
+    silent: true,
+    timeoutMs: MATERIAL_LIST_TIMEOUT_MS
+  })
+  return normalizeMaterial(data.item)
 }
 
 export async function createMaterial(payload: Partial<Material>) {

@@ -1,7 +1,7 @@
 <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{themeClass}}" style="{{layoutStyle}}" wx:if="{{material}}">
   <subpage-header kicker="{{duration > 0 ? '本次练习时长：' + durationText : '素材练习复盘'}}" title="{{material.title}}" bind:back="back" />
 
-  <form-card title="本次记录对象">
+  <form-card title="关联方式">
     <view class="feedback-object-summary">
       <view class="feedback-object-title">{{material.title}}</view>
       <text class="muted feedback-object-desc">{{material.desc}}</text>
@@ -9,15 +9,15 @@
     <view class="meta-row feedback-object-meta"><text wx:for="{{material.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
   </form-card>
 
-  <form-card title="记录本次反馈">
+  <form-card title="本次反馈">
     <view class="feedback-section context-inline-section">
       <text class="feedback-section-title">归属场景</text>
       <view class="form-chip-row context-chip-row">
         <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
       </view>
-      <text wx:if="{{contextLoading}}" class="context-load-note">正在加载可关联的排练…</text>
+      <text wx:if="{{contextLoading}}" class="context-load-note">正在加载排练…</text>
       <view wx:if="{{contextLoadFailed}}" class="context-load-error">
-        <text>未能加载云端排练，当前仍可单独保存。</text>
+        <text>排练加载失败，可单独保存。</text>
         <button class="small-btn context-retry-btn" bindtap="retryHistoricalRehearsals">重试</button>
       </view>
       <view class="feedback-status-card context-status-card">
@@ -48,7 +48,6 @@
     <view class="more-toggle" bindtap="toggleMore">
       <view>
         <text class="mini-title">更多信息</text>
-        <text class="muted">人数按需展开填写。</text>
       </view>
       <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
     </view>
@@ -65,7 +64,6 @@
 
   <root-portal>
     <view class="action-stack">
-      <text class="action-note">点击“保存并沉淀”会同时保存这次记录。</text>
     <view class="form-actions">
         <button class="ghost-btn" loading="{{savingMode === 'method'}}" disabled="{{!!savingMode}}" bindtap="saveMethodCard">保存并沉淀</button>
         <button class="primary-btn" loading="{{savingMode === 'record'}}" disabled="{{!!savingMode}}" bindtap="saveRecord">保存记录</button>

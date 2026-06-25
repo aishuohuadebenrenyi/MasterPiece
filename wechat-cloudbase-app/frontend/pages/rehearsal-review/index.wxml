@@ -33,13 +33,13 @@
     </view>
   </root-portal>
 
-  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" closeOnMask="{{false}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{insightVisible}}" title="个人沉淀" bodyMode="fit" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="card insight-card">
       <text class="pill orange">带领提醒</text>
       <view class="section-title insight-title">{{methodTitle}}</view>
       <text class="muted">{{reminderValue}}</text>
     </view>
-    <button class="primary-btn sheet-submit" bindtap="saveMethodCard">保存为方法卡</button>
+    <view slot="actions" class="insight-sheet-actions"><button class="primary-btn sheet-submit" bindtap="saveMethodCard">保存为方法卡</button></view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">

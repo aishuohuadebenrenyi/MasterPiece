@@ -188,6 +188,7 @@
 | --- | --- |
 | `material.seed` | 已停用代码内 seed，调用时提示改为手动导入 `mock_data/improv_materials.json`。 |
 | `material.list` | 返回素材列表，并合并当前用户收藏/练过状态。 |
+| `material.get` | 按素材 `id` 返回单条公共系统素材或当前用户自定义素材，并合并当前用户收藏/练过状态。 |
 | `material.create` | 创建自定义素材。 |
 | `material.update` | 更新当前用户创建的自定义素材。 |
 | `material.delete` | 软删除当前用户创建的自定义素材。 |
@@ -215,7 +216,7 @@
 | `practice.complete` | 事务化保存练习记录、可选当前排练计划、练过状态与方法卡。 |
 | `rehearsal.complete` | 事务化完成排练复盘，可选同步创建方法卡。 |
 | `feedback.create` | 校验并创建当前用户反馈。 |
-| `account.delete` | 软删除当前用户的私有业务数据和反馈，删除素材状态和当前头像文件。 |
+| `account.delete` | 软删除当前用户的私有业务数据、反馈和自定义素材，删除素材状态和当前头像文件；逐项返回删除结果，部分失败时返回可重试状态。 |
 
 `material.list` 可选 `payload`：
 
@@ -225,12 +226,17 @@
 - `scene`：使用场景；`all` 或空值表示不限。
 - `status`：`all`、`saved`、`played`、`unplayed`。
 - `limit`：单页数量上限，当前最大 100。
-- `offset`：分页起点。返回值包含 `total`、`hasMore` 和 `nextOffset`。当前 MVP 会最多扫描 500 条可见素材后再搜索、筛选和切页。
+- `offset`：分页起点。返回值包含 `total`、`availableTotal`、`categoryCounts`、`facets`、`capacity`、`hasMore` 和 `nextOffset`。当前 MVP 会最多扫描 500 条可见素材后再搜索、筛选和切页。
+
+`categoryCounts` 是不受搜索、筛选和分页影响的固定类型总数，供分类总览使用。`facets` 包含 `types`、`abilities`、`scenes`、`statuses` 四组动态数量；计算某一组时会应用搜索词及其他组条件，但忽略本组当前条件。`availableTotal` 表示忽略搜索和筛选后的合法可见素材总数。`capacity.scanLimitReached` 为 `true` 时表示素材规模已触达当前 500 条扫描门禁，发布前必须评估扩容方案。
 
 说明：
 
 - `material.list` 只返回公共系统素材（`ownerOpenId: "system"`）和当前用户自己的自定义素材。
+- `material.list` 只返回 `游戏`、`角色`、`才艺`、`格式`、`主理`、`技巧`、`复盘`、`路径` 八种合法类型；创建和更新时 `type` 必填，`abilities` 使用固定训练能力数组，`scenes` 使用固定场景数组，`tags` 允许自由文本数组。
 - `saved`、`played`、`unplayed` 依赖当前用户状态，云函数会先合并 `improv_user_material_states` 再过滤。
+
+`material.get` 必填 `payload.id`，只返回 `ownerOpenId: "system"` 或当前用户自己的未删除素材；找不到或类型非法时返回 404。素材详情页和分享冷启动应使用该 action，不依赖 `material.list` 默认分页结果。
 
 说明：当前云函数 action 只以 `material.*`、`practiceRecord.*`、`rehearsal.updateMaterialStatus` 等素材语义作为正式入口；旧 `game.*`、`gameRecord.*` 和 `rehearsal.updateGameStatus` 不再作为当前工程口径。
 

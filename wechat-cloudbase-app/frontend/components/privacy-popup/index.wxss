@@ -25,9 +25,9 @@
   position: relative;
   width: 600rpx;
   background: var(--improv-sheet-bg, var(--improv-card-strong, #ffffff));
-  border: 2rpx solid var(--improv-line-soft, rgba(255, 122, 69, 0.14));
+  border: 2rpx solid var(--improv-line-soft, rgba(108, 118, 134, 0.1));
   border-radius: var(--improv-radius-xl, 40rpx);
-  padding: 48rpx 40rpx 40rpx;
+  padding: 44rpx 40rpx 28rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -50,14 +50,14 @@
 
 .privacy-dialog-link {
   font-size: 26rpx;
-  color: var(--improv-primary, #ff7a45);
+  color: var(--improv-secondary, #2f6f93);
   text-decoration: underline;
 }
 
 .privacy-dialog-actions {
   display: flex;
   flex-direction: row;
-  margin-top: 40rpx;
+  margin-top: 32rpx;
   width: 100%;
   gap: 24rpx;
 }

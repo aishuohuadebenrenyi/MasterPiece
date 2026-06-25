@@ -1,7 +1,6 @@
 <view class="tabbar-shell {{themeClass}} {{hidden ? 'is-hidden' : ''}}">
   <view class="tabbar">
     <button wx:for="{{tabs}}" wx:key="pagePath" class="tab-item {{item.activeClass}}" data-index="{{index}}" bindtap="switchTab">
-      <image class="tab-icon" src="{{item.currentIcon || item.icon}}" mode="aspectFit" />
       <text class="tab-text">{{item.text}}</text>
     </button>
   </view>

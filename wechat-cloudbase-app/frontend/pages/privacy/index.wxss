@@ -7,8 +7,8 @@
   display: flex;
   flex-direction: column;
   padding: var(--nav-row-top) var(--page-side) 0;
-  background: linear-gradient(180deg, #fff5ef 0%, #f7f9ff 54%, #eef5ff 100%);
-  background: linear-gradient(180deg, var(--improv-bg-top, #fff5ef) 0%, var(--improv-bg-mid, #f7f9ff) 54%, var(--improv-bg-bottom, #eef5ff) 100%);
+  background: linear-gradient(180deg, #fafaf7 0%, #f7f8f3 54%, #f3f7f5 100%);
+  background: linear-gradient(180deg, var(--improv-bg-top, #fafaf7) 0%, var(--improv-bg-mid, #f7f8f3) 54%, var(--improv-bg-bottom, #f3f7f5) 100%);
   color: var(--improv-text);
 }
 
@@ -50,10 +50,4 @@
   color: var(--improv-text-soft);
   line-height: 1.7;
   margin-bottom: 8rpx;
-}
-
-.privacy-feedback-btn {
-  align-self: center;
-  min-width: 240rpx;
-  margin-top: 24rpx;
 }

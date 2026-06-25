@@ -32,7 +32,8 @@ Page({
     query: '',
     addEmptyTitle: '',
     addEmptyDesc: '',
-    layoutStyle: ''
+    layoutStyle: '',
+    isRefreshing: false
   },
 
   onShareAppMessage() {
@@ -127,12 +128,22 @@ Page({
     }
     this.unsubscribeStore = subscribe(() => this.syncPlan())
     this.syncPlan()
+    await this.loadMaterials()
+  },
+
+  async loadMaterials() {
     try {
       const cloudMaterials = await listMaterials()
       this.setData({ materials: cloudMaterials }, () => this.syncPlan())
     } catch (error) {
       this.syncPlan()
     }
+  },
+
+  async onPullDownRefresh() {
+    await this.loadMaterials()
+    this.setData({ isRefreshing: false })
+    wx.stopPullDownRefresh()
   },
 
   onUnload() {

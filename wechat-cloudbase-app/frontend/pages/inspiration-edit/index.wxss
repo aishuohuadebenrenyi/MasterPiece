@@ -49,13 +49,47 @@
 }
 
 .field-picker {
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 16rpx;
 }
 
-.field-picker input {
-  flex: 1;
+.field-picker .app-input {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.field-picker .small-btn {
+  flex: 0 0 132rpx;
+  width: 132rpx;
+  min-width: 132rpx;
+  padding: 0 12rpx;
+}
+
+.form-field-stack {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-field-stack form-field,
+.form-field-stack .app-input,
+.form-field-stack .app-textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-field-stack .app-textarea {
+  height: 220rpx;
+  min-height: 220rpx;
+  max-height: 220rpx;
+  overflow: auto;
 }
 
 .filter-section-stack {
@@ -77,13 +111,7 @@
   font-size: 34rpx;
 }
 
-.sheet-submit {
-  width: 100%;
-  margin-top: 24rpx;
-}
-
-.option-card,
-.insight-card {
+.option-card {
   padding: 28rpx;
   margin-top: 20rpx;
 }
@@ -97,11 +125,4 @@
   display: block;
   margin-top: 8rpx;
   line-height: 1.6;
-}
-
-.insight-list .entry-title {
-  margin: 14rpx 0 10rpx;
-  color: var(--improv-text);
-  font-size: 34rpx;
-  font-weight: 900;
 }

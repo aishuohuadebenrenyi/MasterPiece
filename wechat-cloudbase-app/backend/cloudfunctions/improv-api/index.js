@@ -1,4 +1,13 @@
 const cloud = require('wx-server-sdk')
+const {
+  MATERIAL_TYPES,
+  MATERIAL_ABILITIES,
+  MATERIAL_SCENES,
+  MATERIAL_STATUSES,
+  matchesMaterialFilters,
+  buildMaterialFacets,
+  buildMaterialTypeCounts
+} = require('./material-policy')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -87,10 +96,117 @@ function validateFields(payload, whitelist, requestId) {
   return null
 }
 
+function validateStringField(payload, field, requestId, maxLength, required = false) {
+  const value = payload[field]
+  if (value === undefined || value === null) {
+    return required ? fail(`缺少合法 ${field}`, requestId, 400) : null
+  }
+  if (typeof value !== 'string') return fail(`${field} 必须为字符串`, requestId, 400)
+  if (required && !value.trim()) return fail(`缺少合法 ${field}`, requestId, 400)
+  if (value.length > maxLength) return fail(`${field} 不能超过 ${maxLength} 字`, requestId, 400)
+  return null
+}
+
+function validateStringArrayField(payload, field, requestId, maxItems = 20, maxItemLength = 40) {
+  const value = payload[field]
+  if (value === undefined || value === null) return null
+  if (!Array.isArray(value)) return fail(`${field} 必须为数组`, requestId, 400)
+  if (value.length > maxItems) return fail(`${field} 不能超过 ${maxItems} 项`, requestId, 400)
+  if (value.some(item => typeof item !== 'string' || item.length > maxItemLength)) {
+    return fail(`${field} 包含非法内容`, requestId, 400)
+  }
+  return null
+}
+
+function validateRehearsalPlan(plan, requestId) {
+  if (plan === undefined || plan === null) return null
+  if (!Array.isArray(plan)) return fail('plan 必须为数组', requestId, 400)
+  if (plan.length > 50) return fail('plan 不能超过 50 项', requestId, 400)
+  const statuses = ['未开始', '进行中', '暂停中', '已完成']
+  for (const item of plan) {
+    if (!item || typeof item !== 'object') return fail('plan 包含非法素材项', requestId, 400)
+    if (typeof item.materialId !== 'string' || !item.materialId.trim() || item.materialId.length > 100) return fail('plan 缺少合法 materialId', requestId, 400)
+    if (item.status !== undefined && !statuses.includes(item.status)) return fail('plan 包含非法状态', requestId, 400)
+    if (item.keep !== undefined && (typeof item.keep !== 'string' || item.keep.length > 1000)) return fail('plan.keep 不能超过 1000 字', requestId, 400)
+    if (item.try !== undefined && (typeof item.try !== 'string' || item.try.length > 1000)) return fail('plan.try 不能超过 1000 字', requestId, 400)
+  }
+  return null
+}
+
+function validateOwnedSchema(collectionName, payload, requestId, isUpdate = false) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return fail('请求数据无效', requestId, 400)
+  const checks = []
+  if (!isUpdate) checks.push(validateStringField(payload, 'id', requestId, 100, true))
+  if (!isUpdate) checks.push(validateStringField(payload, 'title', requestId, 80, true))
+
+  if (collectionName === COLLECTIONS.inspirations) {
+    checks.push(
+      validateStringField(payload, 'title', requestId, 80, !isUpdate),
+      validateStringField(payload, 'desc', requestId, 2000),
+      validateStringArrayField(payload, 'meta', requestId, 20, 40),
+      validateStringField(payload, 'linkedMaterialId', requestId, 100),
+      validateStringField(payload, 'linkedMaterialTitle', requestId, 80),
+      validateStringField(payload, 'linkedRehearsalId', requestId, 100),
+      validateStringField(payload, 'linkedRehearsalTitle', requestId, 80),
+      validateStringField(payload, 'sourceType', requestId, 40),
+      validateStringField(payload, 'sourceId', requestId, 100),
+      validateStringField(payload, 'sourceTitle', requestId, 80)
+    )
+  }
+  if (collectionName === COLLECTIONS.methodCards) {
+    checks.push(
+      validateStringField(payload, 'type', requestId, 40),
+      validateStringField(payload, 'title', requestId, 80, !isUpdate),
+      validateStringField(payload, 'desc', requestId, 2000),
+      validateStringArrayField(payload, 'meta', requestId, 20, 40),
+      validateStringField(payload, 'sourceType', requestId, 40),
+      validateStringField(payload, 'sourceId', requestId, 100),
+      validateStringField(payload, 'sourceTitle', requestId, 80)
+    )
+  }
+  if (collectionName === COLLECTIONS.rehearsals) {
+    const statuses = ['未开始', '进行中', '暂停中', '已完成']
+    checks.push(
+      validateStringField(payload, 'title', requestId, 80, !isUpdate),
+      validateStringField(payload, 'desc', requestId, 1000),
+      validateStringField(payload, 'teamName', requestId, 80),
+      validateStringField(payload, 'duration', requestId, 40),
+      validateStringArrayField(payload, 'goals', requestId, 20, 40),
+      validateStringField(payload, 'source', requestId, 40),
+      validateRehearsalPlan(payload.plan, requestId),
+      validateStringField(payload, 'reviewKeep', requestId, 1000),
+      validateStringField(payload, 'reviewTry', requestId, 1000),
+      validateStringField(payload, 'reviewReminder', requestId, 500)
+    )
+    if (payload.status !== undefined && !statuses.includes(payload.status)) checks.push(fail('排练状态无效', requestId, 400))
+  }
+  if (collectionName === COLLECTIONS.practiceRecords) {
+    checks.push(
+      validateStringField(payload, 'materialId', requestId, 100, !isUpdate),
+      validateStringField(payload, 'materialTitle', requestId, 80),
+      validateStringField(payload, 'rehearsalId', requestId, 100),
+      validateStringField(payload, 'rehearsalTitle', requestId, 80),
+      validateStringField(payload, 'title', requestId, 80, !isUpdate),
+      validateStringField(payload, 'desc', requestId, 1000),
+      validateStringField(payload, 'effect', requestId, 40),
+      validateStringField(payload, 'keep', requestId, 1000),
+      validateStringField(payload, 'try', requestId, 1000),
+      validateStringField(payload, 'reminder', requestId, 500),
+      validateStringArrayField(payload, 'meta', requestId, 20, 40)
+    )
+    if (payload.duration !== undefined && (!Number.isFinite(Number(payload.duration)) || Number(payload.duration) < 0 || Number(payload.duration) > 86400)) {
+      checks.push(fail('duration 必须为 0–86400 秒', requestId, 400))
+    }
+  }
+  return checks.find(Boolean) || null
+}
+
 function validateOwnedPayload(collectionName, payload, requestId, isUpdate = false) {
   const whitelist = isUpdate ? UPDATE_WHITELISTS[collectionName] : FIELD_WHITELISTS[collectionName]
   const invalid = validateFields(payload, whitelist, requestId)
   if (invalid) return invalid
+  const invalidSchema = validateOwnedSchema(collectionName, payload, requestId, isUpdate)
+  if (invalidSchema) return invalidSchema
   if (!isUpdate && (!payload.id || typeof payload.id !== 'string')) return fail('缺少合法 id', requestId, 400)
   if (!isUpdate && (!payload.title || typeof payload.title !== 'string')) return fail('缺少合法 title', requestId, 400)
   if (!isUpdate && collectionName === COLLECTIONS.practiceRecords && (!payload.materialId || typeof payload.materialId !== 'string')) {
@@ -150,7 +266,7 @@ async function getAllByWhere(collectionName, where, orderField, maxItems = MAX_M
 }
 
 function normalizeMaterialPayload(payload, ownerOpenId) {
-  const type = payload.type || '游戏'
+  const type = payload.type
   return {
     id: payload.id || `custom-${Date.now()}`,
     title: payload.title,
@@ -175,6 +291,19 @@ function normalizeMaterialPayload(payload, ownerOpenId) {
   }
 }
 
+function validateMaterialPayload(payload, requestId) {
+  if (!MATERIAL_TYPES.includes(payload.type)) return fail('请选择合法素材类型', requestId, 400)
+  if (payload.tags !== undefined && !Array.isArray(payload.tags)) return fail('tags 必须为数组', requestId, 400)
+  if (payload.abilities !== undefined && !Array.isArray(payload.abilities)) return fail('abilities 必须为数组', requestId, 400)
+  if (payload.scenes !== undefined && !Array.isArray(payload.scenes)) return fail('scenes 必须为数组', requestId, 400)
+  if (Array.isArray(payload.tags) && payload.tags.some(item => typeof item !== 'string' || !item.trim())) return fail('包含非法标签', requestId, 400)
+  if (Array.isArray(payload.abilities) && payload.abilities.some(item => !MATERIAL_ABILITIES.includes(item))) return fail('包含非法训练能力', requestId, 400)
+  if (Array.isArray(payload.scenes) && payload.scenes.some(item => !MATERIAL_SCENES.includes(item))) {
+    return fail('包含非法使用场景', requestId, 400)
+  }
+  return null
+}
+
 async function listMaterials(payload, requestId) {
   const invalid = validateFields(payload, ['query', 'type', 'ability', 'scene', 'status', 'limit', 'offset'], requestId)
   if (invalid) return invalid
@@ -186,12 +315,16 @@ async function listMaterials(payload, requestId) {
   const ability = typeof payload.ability === 'string' ? payload.ability.trim() : ''
   const scene = typeof payload.scene === 'string' ? payload.scene.trim() : ''
   const status = typeof payload.status === 'string' ? payload.status.trim() : ''
+  if (type && type !== 'all' && !MATERIAL_TYPES.includes(type)) return fail('素材类型筛选无效', requestId, 400)
+  if (ability && ability !== 'all' && !MATERIAL_ABILITIES.includes(ability)) return fail('训练能力筛选无效', requestId, 400)
+  if (scene && scene !== 'all' && !MATERIAL_SCENES.includes(scene)) return fail('使用场景筛选无效', requestId, 400)
+  if (status && status !== 'all' && !MATERIAL_STATUSES.includes(status)) return fail('素材状态筛选无效', requestId, 400)
   const visibleOwners = ownerOpenId ? ['system', ownerOpenId] : ['system']
-  const materialWhere = Object.assign(
-    { deletedAt: null, ownerOpenId: _.in(visibleOwners) },
-    type && type !== 'all' ? { type } : {}
-  )
-  const materials = await getAllByWhere(COLLECTIONS.materials, materialWhere, 'sortOrder')
+  const materialWhere = { deletedAt: null, ownerOpenId: _.in(visibleOwners) }
+  const scannedMaterials = await getAllByWhere(COLLECTIONS.materials, materialWhere, 'sortOrder', MAX_MATERIAL_SCAN + 1)
+  const scanLimitReached = scannedMaterials.length > MAX_MATERIAL_SCAN
+  const materials = scannedMaterials.slice(0, MAX_MATERIAL_SCAN)
+    .filter(material => MATERIAL_TYPES.includes(material.type))
 
   // 无 OPENID 时（如云控制台测试）跳过用户状态合并
   const statesResult = ownerOpenId
@@ -202,7 +335,8 @@ async function listMaterials(payload, requestId) {
     map[item.materialId] = item
     return map
   }, {})
-  const filteredItems = materials.map((material) => {
+  const filters = { type, query, ability, scene, status }
+  const visibleItems = materials.map((material) => {
     const state = states[material.id] || {}
     return Object.assign({}, material, {
       saved: !!state.saved,
@@ -211,35 +345,54 @@ async function listMaterials(payload, requestId) {
       lastPlayedAt: state.lastPlayedAt || null,
       lastRehearsalAt: state.lastRehearsalAt || null
     })
-  }).filter((material) => {
-    const abilities = Array.isArray(material.abilities) ? material.abilities : []
-    const scenes = Array.isArray(material.scenes) ? material.scenes : []
-    const tags = Array.isArray(material.tags) ? material.tags : []
-    const meta = Array.isArray(material.meta) ? material.meta : []
-    const inAbility = !ability || ability === 'all' || abilities.includes(ability) || tags.includes(ability)
-    const inScene = !scene || scene === 'all' || scenes.includes(scene) || tags.includes(scene)
-    const inStatus = !status || status === 'all'
-      || (status === 'saved' && material.saved)
-      || (status === 'played' && material.played)
-      || (status === 'unplayed' && !material.played && !material.referenceOnly)
-    const text = [
-      material.title,
-      material.desc,
-      material.type,
-      tags.join(' '),
-      abilities.join(' '),
-      scenes.join(' '),
-      meta.join(' ')
-    ].join(' ').toLowerCase()
-    return inAbility && inScene && inStatus && (!query || text.includes(query))
   })
+  const filteredItems = visibleItems.filter(material => matchesMaterialFilters(material, filters))
+  const facets = buildMaterialFacets(visibleItems, filters)
+  const categoryCounts = buildMaterialTypeCounts(visibleItems)
   const items = filteredItems.slice(offset, offset + limit)
   const nextOffset = offset + items.length
   return ok({
     items,
     total: filteredItems.length,
+    availableTotal: visibleItems.length,
+    categoryCounts,
+    facets,
+    capacity: {
+      scanLimit: MAX_MATERIAL_SCAN,
+      scanLimitReached
+    },
     hasMore: nextOffset < filteredItems.length,
     nextOffset: nextOffset < filteredItems.length ? nextOffset : null
+  }, requestId)
+}
+
+async function getMaterial(payload, requestId) {
+  const invalid = validateFields(payload, ['id'], requestId)
+  if (invalid) return invalid
+  const id = typeof payload.id === 'string' ? payload.id.trim() : ''
+  if (!id) return fail('缺少素材 ID', requestId, 400)
+
+  const ownerOpenId = getOpenId()
+  const visibleOwners = ownerOpenId ? ['system', ownerOpenId] : ['system']
+  const result = await db.collection(COLLECTIONS.materials)
+    .where({ id, deletedAt: null, ownerOpenId: _.in(visibleOwners) })
+    .limit(1)
+    .get()
+  const material = result.data[0]
+  if (!material || !MATERIAL_TYPES.includes(material.type)) return fail('没有找到这条素材', requestId, 404)
+
+  const stateResult = ownerOpenId
+    ? await db.collection(COLLECTIONS.userMaterialStates).where({ ownerOpenId, materialId: id }).limit(1).get()
+    : { data: [] }
+  const state = stateResult.data[0] || {}
+  return ok({
+    item: Object.assign({}, material, {
+      saved: !!state.saved,
+      played: !!state.playedCount,
+      playedCount: state.playedCount || 0,
+      lastPlayedAt: state.lastPlayedAt || null,
+      lastRehearsalAt: state.lastRehearsalAt || null
+    })
   }, requestId)
 }
 
@@ -247,6 +400,8 @@ async function createMaterial(payload, requestId) {
   const invalid = validateFields(payload, ['id', 'title', 'desc', 'type', 'tags', 'abilities', 'scenes', 'meta', 'steps', 'tips', 'variant', 'issue', 'relatedMaterialId', 'referenceOnly', 'stripeTone', 'sortOrder'], requestId)
   if (invalid) return invalid
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
+  const invalidMaterial = validateMaterialPayload(payload, requestId)
+  if (invalidMaterial) return invalidMaterial
   const ownerOpenId = getOpenId()
   const existing = await db.collection(COLLECTIONS.materials).where({ id: payload.id, ownerOpenId, deletedAt: null }).limit(1).get()
   if (existing.data.length) return ok({ item: existing.data[0] }, requestId)
@@ -260,6 +415,8 @@ async function updateMaterial(payload, requestId) {
   if (invalid) return invalid
   if (!payload.id) return fail('缺少素材 ID', requestId, 400)
   if (!payload.title) return fail('缺少素材名称', requestId, 400)
+  const invalidMaterial = validateMaterialPayload(payload, requestId)
+  if (invalidMaterial) return invalidMaterial
   const ownerOpenId = getOpenId()
 
   const collection = db.collection(COLLECTIONS.materials)
@@ -388,10 +545,18 @@ async function getProfile(requestId) {
 }
 
 async function updateProfile(payload, requestId) {
+  const invalid = validateFields(payload, ['displayName', 'avatarUrl', 'troupeName'], requestId)
+  if (invalid) return invalid
   const displayName = typeof payload.displayName === 'string' ? payload.displayName.trim() : ''
   const avatarUrl = typeof payload.avatarUrl === 'string' ? payload.avatarUrl.trim() : ''
   const troupeName = typeof payload.troupeName === 'string' ? payload.troupeName.trim() : ''
   if (!displayName) return fail('缺少 displayName', requestId, 400)
+  if (displayName.length > 40) return fail('昵称不能超过 40 字', requestId, 400)
+  if (troupeName.length > 80) return fail('剧团名不能超过 80 字', requestId, 400)
+  if (avatarUrl.length > 500) return fail('头像地址过长', requestId, 400)
+  if (avatarUrl && !avatarUrl.startsWith('cloud://') && !avatarUrl.startsWith('wxfile://') && !avatarUrl.startsWith('http')) {
+    return fail('头像地址无效', requestId, 400)
+  }
 
   const collection = db.collection(COLLECTIONS.profiles)
   const existing = await collection.where(ownerWhere()).limit(1).get()
@@ -654,23 +819,45 @@ async function deleteAccount(requestId) {
     COLLECTIONS.feedback,
     COLLECTIONS.materials
   ]
-  await Promise.all(privateCollections.map(collectionName => db.collection(collectionName)
-    .where({ ownerOpenId, deletedAt: null })
-    .update({ data: { deletedAt: now(), updatedAt: now() } })))
-  await db.collection(COLLECTIONS.userMaterialStates).where({ ownerOpenId }).remove()
+  const results = []
+  for (const collectionName of privateCollections) {
+    try {
+      const result = await db.collection(collectionName)
+        .where({ ownerOpenId, deletedAt: null })
+        .update({ data: { deletedAt: now(), updatedAt: now() } })
+      results.push({ target: collectionName, ok: true, updated: result.updated || 0 })
+    } catch (error) {
+      console.warn('[improv-api] delete account collection failed', collectionName, error)
+      results.push({ target: collectionName, ok: false, message: error.message || 'collection delete failed' })
+    }
+  }
+  try {
+    const stateResult = await db.collection(COLLECTIONS.userMaterialStates).where({ ownerOpenId }).remove()
+    results.push({ target: COLLECTIONS.userMaterialStates, ok: true, deleted: stateResult.deleted || 0 })
+  } catch (error) {
+    console.warn('[improv-api] delete account material states failed', error)
+    results.push({ target: COLLECTIONS.userMaterialStates, ok: false, message: error.message || 'material states delete failed' })
+  }
   if (typeof avatarUrl === 'string' && avatarUrl.startsWith('cloud://')) {
     try {
       await cloud.deleteFile({ fileList: [avatarUrl] })
+      results.push({ target: 'avatarFile', ok: true })
     } catch (error) {
       console.warn('[improv-api] delete avatar failed', error)
+      results.push({ target: 'avatarFile', ok: false, message: error.message || 'avatar delete failed' })
     }
   }
-  return ok({ deleted: true }, requestId)
+  const failed = results.filter(item => !item.ok)
+  if (failed.length) {
+    return { code: 207, message: '部分数据删除未完成，请稍后重试', data: { deleted: false, retryable: true, results }, requestId }
+  }
+  return ok({ deleted: true, results }, requestId)
 }
 
 // 路由表
 const routes = {
   'material.list': (payload, requestId) => listMaterials(payload, requestId),
+  'material.get': (payload, requestId) => getMaterial(payload, requestId),
   'material.create': (payload, requestId) => createMaterial(payload, requestId),
   'material.update': (payload, requestId) => updateMaterial(payload, requestId),
   'material.delete': (payload, requestId) => deleteMaterial(payload, requestId),

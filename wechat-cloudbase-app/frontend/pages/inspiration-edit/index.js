@@ -1,13 +1,11 @@
 const { toast } = require('../../utils/page')
-const { createInspiration, updateInspiration, listInspirations } = require('../../services/inspiration')
-const { createMethodCard: createMethodCardRecord } = require('../../services/method-card')
+const { updateInspiration, listInspirations } = require('../../services/inspiration')
 const { getLayoutStyle } = require('../../utils/layout')
 const { closeModal, openModal } = require('../../utils/modal')
 const {
-  addInspiration,
-  addMethodCard,
   getState,
-  getThemeClass
+  getThemeClass,
+  upsertInspiration
 } = require('../../store/index')
 
 Page({
@@ -20,10 +18,8 @@ Page({
     linkedMaterialId: '',
     linkedRehearsal: '',
     linkedRehearsalId: '',
-    arrangementValue: '带领提醒',
     selectedTags: [],
     linkVisible: false,
-    insightVisible: false,
     modalOpen: false,
     linkKind: 'material',
     linkSheetTitle: '选择关联素材',
@@ -31,9 +27,8 @@ Page({
     linkEmptyTitle: '',
     linkEmptyDesc: '',
     showLinkSection: true,
-    arrangementOptions: [],
     tagOptions: [],
-    arrangementLabel: '带领提醒',
+    saving: false,
     layoutStyle: ''
   },
 
@@ -65,14 +60,6 @@ Page({
   },
   syncOptions() {
     this.setData({
-      arrangementOptions: [
-        { value: '带领提醒', label: '带领提醒' },
-        { value: '素材变体', label: '素材变体' },
-        { value: '台词想法', label: '台词想法' },
-        { value: '复盘片段', label: '复盘片段' }
-      ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.arrangementValue === item.value ? 'active' : ''
-      })),
       tagOptions: [
         { value: '关系', label: '关系' },
         { value: '新手', label: '新手' },
@@ -80,8 +67,7 @@ Page({
         { value: '身体', label: '身体' }
       ].map((item) => Object.assign({}, item, {
         activeClass: this.data.selectedTags.includes(item.value) ? 'active' : ''
-      })),
-      arrangementLabel: this.data.arrangementValue
+      }))
     })
   },
 
@@ -137,11 +123,6 @@ Page({
     this.setData({ [field]: event.detail.value })
   },
 
-  setArrangement(event) {
-    const value = (event.detail && event.detail.value) || event.currentTarget.dataset.value
-    this.setData({ arrangementValue: value }, () => this.syncOptions())
-  },
-
   toggleTag(event) {
     const value = (event.detail && event.detail.value) || event.currentTarget.dataset.value
     const exists = this.data.selectedTags.includes(value)
@@ -181,16 +162,17 @@ Page({
     })
   },
 
-  openInsight() {
-    openModal(this, { insightVisible: true })
-  },
-
   closeSheet() {
-    closeModal(this, { linkVisible: false, insightVisible: false })
+    closeModal(this, { linkVisible: false })
   },
 
   async save() {
+    if (this.data.saving) return
     const editingId = this.data.editingId
+    if (!editingId) {
+      toast('未找到灵感记录')
+      return
+    }
     const payload = {
       title: this.data.titleValue,
       desc: this.data.contentValue,
@@ -200,58 +182,15 @@ Page({
       linkedRehearsalId: this.data.linkedRehearsalId,
       linkedRehearsalTitle: this.data.linkedRehearsal
     }
-    if (editingId) {
-      try {
-        await updateInspiration(editingId, payload)
-        toast('已更新灵感')
-      } catch (error) {
-        toast('保存失败，请重试')
-        return
-      }
-    } else {
-      const item = {
-        id: `inspiration-${Date.now()}`,
-        type: '灵感',
-        title: this.data.titleValue,
-        desc: this.data.contentValue,
-        meta: this.data.selectedTags,
-        linkedMaterialId: this.data.linkedMaterialId,
-        linkedMaterialTitle: this.data.linkedMaterial,
-        linkedRehearsalId: this.data.linkedRehearsalId,
-        linkedRehearsalTitle: this.data.linkedRehearsal
-      }
-      try {
-        const result = await createInspiration(Object.assign({}, payload, { id: item.id }))
-        addInspiration(result.item)
-        toast('已保存灵感')
-      } catch (error) {
-        toast('保存失败，请重试')
-        return
-      }
-    }
-    wx.navigateBack()
-  },
-  async createMethodCard() {
-    this.closeSheet()
-    const item = {
-      id: `method-${Date.now()}`,
-      type: this.data.arrangementValue,
-      title: this.data.titleValue || '未命名方法卡',
-      desc: this.data.contentValue || '待补充',
-      meta: (this.data.selectedTags.length ? this.data.selectedTags : []).concat('可复用')
-    }
+    this.setData({ saving: true })
     try {
-      const result = await createMethodCardRecord({
-        id: item.id,
-        sourceType: 'inspiration',
-        title: item.title,
-        desc: item.desc,
-        meta: item.meta
-      })
-      addMethodCard(result.item)
-      toast('已沉淀为方法卡')
+      const result = await updateInspiration(editingId, payload)
+      if (result && result.item) upsertInspiration(result.item)
+      toast('已更新灵感')
+      wx.navigateBack()
     } catch (error) {
-      toast('沉淀失败，请重试')
+      this.setData({ saving: false })
+      toast('保存失败，请重试')
     }
   }
 })

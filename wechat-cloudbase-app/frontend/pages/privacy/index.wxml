@@ -6,34 +6,26 @@
     <text class="privacy-updated">更新日期：2026年6月</text>
 
     <text class="privacy-section-title">一、我们收集的信息</text>
-    <text class="privacy-text">即兴工具箱是一款即兴训练辅助工具，我们仅收集为您提供服务所必需的信息：</text>
-    <text class="privacy-text">1. 微信登录标识（OpenID）：用于区分用户身份，保存您的个人数据。</text>
-    <text class="privacy-text">2. 您主动创建的内容：包括灵感记录、排练记录、练习复盘、方法卡、自定义素材等。</text>
-    <text class="privacy-text">3. 操作状态：包括素材收藏、练过标记等。</text>
-    <text class="privacy-text">4. 您主动提交的反馈：包括反馈类型、内容、选填联系方式、来源页面和小程序版本，仅用于定位问题与反馈沟通。</text>
+    <text class="privacy-text">1. 微信登录标识（OpenID），用于区分用户并隔离个人数据。</text>
+    <text class="privacy-text">2. 你主动填写的个人资料，包括昵称、剧团名和头像。头像由你从相册或相机中主动选择，上传后以 cloud:// 文件形式存储在微信云开发。</text>
+    <text class="privacy-text">3. 你主动创建的灵感、排练、练习复盘、方法卡和自定义素材。</text>
+    <text class="privacy-text">4. 素材收藏、练过标记、最近练习等操作状态。</text>
+    <text class="privacy-text">5. 你主动提交的反馈，包括类型、内容、选填联系方式、来源页面和小程序版本，仅用于定位问题与沟通。</text>
 
-    <text class="privacy-section-title">二、信息存储</text>
-    <text class="privacy-text">您的数据存储在微信云开发（CloudBase）服务器上，通过您的微信 OpenID 隔离，其他用户无法访问您的私有数据。</text>
+    <text class="privacy-section-title">二、使用与存储</text>
+    <text class="privacy-text">这些信息用于提供训练功能、保存和展示你的内容、同步个人资料，以及改进产品。业务数据存储在微信云开发（CloudBase）数据库，头像文件存储在微信云开发云存储，并按微信登录标识隔离。</text>
+    <text class="privacy-text">昵称、剧团名、头像和反馈联系方式均由你主动填写或选择；不填写不会影响素材浏览、记录和排练等核心功能。</text>
+    <text class="privacy-text">我们不会出售、出租或以其他方式向第三方提供你的个人信息。</text>
 
-    <text class="privacy-section-title">三、信息使用</text>
-    <text class="privacy-text">我们仅将收集的信息用于：提供即兴训练辅助功能、保存和展示您的记录与素材、改善产品体验。</text>
-    <text class="privacy-text">我们不会将您的个人信息出售、出租或以其他方式提供给第三方。</text>
+    <text class="privacy-section-title">三、安全与用户权利</text>
+    <text class="privacy-text">数据读写通过云函数校验。你可以查看、编辑或删除自己创建的内容，也可以在“我的”页修改昵称、剧团名和头像。</text>
+    <text class="privacy-text">删除全部个人数据、已提交反馈、素材状态和当前头像文件，请前往“我的 → 设置 → 注销并删除数据”。删除后无法恢复；如果头像文件删除失败，系统会返回可重试状态，请稍后再次执行注销。</text>
 
-    <text class="privacy-section-title">四、信息安全</text>
-    <text class="privacy-text">我们采用微信云开发的安全机制保护您的数据，所有数据读写均通过云函数进行权限校验，前端不直接操作数据库。</text>
+    <text class="privacy-section-title">四、未成年人保护</text>
+    <text class="privacy-text">未满 14 周岁的用户，请在监护人指导下使用。</text>
 
-    <text class="privacy-section-title">五、您的权利</text>
-    <text class="privacy-text">您可以随时查看、编辑或删除自己创建的内容。如需删除全部个人数据和已提交反馈，可在“我的 → 设置”中选择“注销并删除我的数据”。</text>
-
-    <text class="privacy-section-title">六、未成年人保护</text>
-    <text class="privacy-text">我们高度重视未成年人个人信息保护。若您是未满14周岁的未成年人，请在监护人指导下使用本小程序。</text>
-
-    <text class="privacy-section-title">七、政策更新</text>
-    <text class="privacy-text">我们可能会适时修订本政策。政策变更后，我们会通过小程序内通知或其他适当方式提醒您。</text>
-
-    <text class="privacy-section-title">八、联系我们</text>
-    <text class="privacy-text">如您对本隐私政策有任何疑问或建议，请通过小程序内反馈功能与我们联系。</text>
-    <button class="ghost-btn privacy-feedback-btn" bindtap="openFeedback">提交反馈</button>
+    <text class="privacy-section-title">五、更新与联系</text>
+    <text class="privacy-text">政策更新时，我们会在小程序内或通过适当方式提醒。如有问题，请前往“我的 → 设置 → 意见反馈”。</text>
   </view>
 </scroll-view>
 </view>

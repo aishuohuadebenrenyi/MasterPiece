@@ -57,8 +57,7 @@ Page({
       layoutStyle: getLayoutStyle(),
       themeClass: getThemeClass(),
       versionLabel: version.versionLabel,
-      appVersion: version.appVersion,
-      feedbackSourcePage: options.source === 'privacy' ? '/pages/privacy/index' : '/pages/settings/index'
+      appVersion: version.appVersion
     })
     if (options.panel === 'feedback') {
       openModal(this, { feedbackVisible: true })
@@ -141,7 +140,7 @@ Page({
         feedbackOptions: buildFeedbackOptions(),
         feedbackSubmitting: false
       })
-      toast('反馈已提交，感谢你的建议')
+      toast('反馈已提交')
     } catch (error) {
       this.setData({ feedbackSubmitting: false })
       toast((error && error.message) || '提交失败，请重试')

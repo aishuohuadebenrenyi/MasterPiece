@@ -568,22 +568,6 @@ Page({
     this.setData({ currentIndex: next }, () => this.syncDetail())
   },
 
-  editCurrentPendingInspiration() {
-    const source = this.data.detailItem
-    if (!source || this.data.currentKind !== 'pending' || normalizeMethodSourceType(source.sourceType) !== 'inspiration') return
-    const inspirationId = source.sourceId || source.id
-    if (!inspirationId) return
-    closeModal(this, {
-      detailVisible: false,
-      detailItem: null,
-      detailCanSediment: false,
-      detailSelectedIntent: '',
-      sedimentSaving: false
-    }, () => {
-      wx.navigateTo({ url: `/pages/inspiration-edit/index?id=${inspirationId}` })
-    })
-  },
-
   discardCurrentDetail() {
     const source = this.data.detailItem
     if (!source || this.data.currentKind !== 'pending') return
@@ -861,7 +845,7 @@ Page({
   onEditCard(e) {
     if (this.data.currentKind === 'sediments') {
       this.onEditMethodCard(e)
-    } else if (this.data.currentKind === 'inspirations') {
+    } else if (this.data.currentKind === 'inspirations' || this.data.currentKind === 'pending') {
       this.onEditInspiration(e)
     }
   },

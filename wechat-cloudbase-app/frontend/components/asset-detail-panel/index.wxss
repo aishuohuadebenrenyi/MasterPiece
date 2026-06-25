@@ -48,20 +48,6 @@
   gap: 16rpx;
 }
 
-.detail-edit-btn {
-  position: absolute;
-  top: var(--improv-card-padding-md, 40rpx);
-  right: var(--improv-card-padding-md, 40rpx);
-  flex: 0 0 104rpx;
-  width: 104rpx;
-  min-width: 104rpx;
-  max-width: 104rpx;
-  min-height: 48rpx;
-  margin: 0;
-  padding: 0 16rpx;
-  font-size: 22rpx;
-}
-
 .detail-middle {
   flex: 1 1 auto;
   width: 100%;
@@ -102,7 +88,7 @@
   display: flex;
   flex-direction: column;
   gap: 16rpx;
-  margin-top: 34rpx;
+  margin-top: 22rpx;
 }
 
 .detail-action-row {

@@ -13,10 +13,10 @@ page {
   width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
-  background: linear-gradient(180deg, #fff5ef 0%, #f7f9ff 54%, #eef5ff 100%);
-  background: linear-gradient(180deg, var(--improv-bg-top, #fff5ef) 0%, var(--improv-bg-mid, #f7f9ff) 54%, var(--improv-bg-bottom, #eef5ff) 100%);
-  color: #24324a;
-  color: var(--improv-text, #24324a);
+  background: linear-gradient(180deg, #fafaf7 0%, #f7f8f3 54%, #f3f7f5 100%);
+  background: linear-gradient(180deg, var(--improv-bg-top, #fafaf7) 0%, var(--improv-bg-mid, #f7f8f3) 54%, var(--improv-bg-bottom, #f3f7f5) 100%);
+  color: #2f3337;
+  color: var(--improv-text, #2f3337);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
@@ -73,8 +73,8 @@ button::after {
   min-height: 100vh;
   overflow-x: hidden;
   padding: var(--content-safe-top) var(--page-side) var(--page-bottom);
-  background: linear-gradient(180deg, var(--improv-bg-top, #fff5ef) 0%, var(--improv-bg-mid, #f7f9ff) 54%, var(--improv-bg-bottom, #eef5ff) 100%);
-  color: var(--improv-text, #24324a);
+  background: linear-gradient(180deg, var(--improv-bg-top, #fafaf7) 0%, var(--improv-bg-mid, #f7f8f3) 54%, var(--improv-bg-bottom, #f3f7f5) 100%);
+  color: var(--improv-text, #2f3337);
 }
 
 .subpage-page {
@@ -82,8 +82,8 @@ button::after {
   min-height: 0;
   padding: var(--nav-row-top) var(--page-side) calc(48rpx + env(safe-area-inset-bottom));
   overflow-y: auto;
-  background: linear-gradient(180deg, var(--improv-bg-top, #fff5ef) 0%, var(--improv-bg-mid, #f7f9ff) 54%, var(--improv-bg-bottom, #eef5ff) 100%);
-  color: var(--improv-text, #24324a);
+  background: linear-gradient(180deg, var(--improv-bg-top, #fafaf7) 0%, var(--improv-bg-mid, #f7f8f3) 54%, var(--improv-bg-bottom, #f3f7f5) 100%);
+  color: var(--improv-text, #2f3337);
 }
 
 .page.modal-open {
@@ -101,8 +101,8 @@ button::after {
   border-radius: 40rpx;
   background: #ffffff;
   background: var(--improv-card-strong, #ffffff);
-  border: 2rpx solid rgba(94, 114, 144, 0.08);
-  border: 2rpx solid var(--improv-line-subtle, rgba(94, 114, 144, 0.08));
+  border: 2rpx solid rgba(68, 108, 140, 0.08);
+  border: 2rpx solid var(--improv-line-subtle, rgba(68, 108, 140, 0.08));
   box-shadow: 0 24rpx 56rpx rgba(55, 82, 150, 0.12);
   box-shadow: var(--improv-shadow-md, 0 24rpx 56rpx rgba(55, 82, 150, 0.14));
   overflow: visible;
@@ -184,23 +184,23 @@ button::after {
 .primary-btn {
   min-height: 76rpx;
   padding: 0 28rpx;
-  background: linear-gradient(135deg, #ff7a45, #ff5b2e);
-  background: var(--improv-btn-primary-bg, linear-gradient(135deg, var(--improv-primary, #ff7a45), var(--improv-primary-strong, #ff5b2e)));
-  color: #ffffff;
-  color: var(--improv-btn-primary-text, var(--improv-on-brand, #ffffff));
-  box-shadow: 0 20rpx 40rpx rgba(255, 91, 46, 0.2);
-  box-shadow: var(--improv-btn-primary-shadow, 0 20rpx 40rpx var(--improv-shadow-action-color, rgba(255, 91, 46, 0.2)));
+  background: #ff9f1c;
+  background: var(--improv-btn-primary-bg, var(--improv-primary, #ff9f1c));
+  color: #3a2a10;
+  color: var(--improv-btn-primary-text, #3a2a10);
+  box-shadow: 0 16rpx 32rpx rgba(255, 159, 28, 0.18);
+  box-shadow: var(--improv-btn-primary-shadow, 0 16rpx 32rpx var(--improv-shadow-action-color, rgba(255, 159, 28, 0.18)));
 }
 
 .ghost-btn {
   min-height: 74rpx;
   padding: 0 26rpx;
-  background: #fff6f1;
-  background: var(--improv-btn-secondary-bg, var(--improv-primary-tint, #fff6f1));
-  color: #ff6b3d;
-  color: var(--improv-btn-secondary-text, var(--improv-primary-warm, #ff6b3d));
-  border: 2rpx solid rgba(255, 122, 69, 0.14);
-  border: 2rpx solid var(--improv-btn-secondary-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
+  background: #fff1d6;
+  background: var(--improv-btn-secondary-bg, var(--improv-primary-tint, #fff1d6));
+  color: #3a2a10;
+  color: var(--improv-btn-secondary-text, var(--improv-primary-warm, #3a2a10));
+  border: 2rpx solid rgba(255, 159, 28, 0.18);
+  border: 2rpx solid var(--improv-btn-secondary-border, var(--improv-primary-wash, rgba(255, 159, 28, 0.18)));
   box-shadow: var(--improv-btn-secondary-shadow, none);
 }
 
@@ -209,10 +209,10 @@ button::after {
   min-height: 54rpx;
   min-width: 88rpx;
   padding: 0 20rpx;
-  background: rgba(255, 246, 241, 0.72);
-  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
-  border: 2rpx solid rgba(255, 122, 69, 0.08);
-  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  background: rgba(245, 247, 243, 0.78);
+  background: var(--improv-btn-tertiary-bg, rgba(245, 247, 243, 0.78));
+  border: 2rpx solid rgba(63, 127, 168, 0.08);
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(63, 127, 168, 0.08));
   color: #5a6781;
   color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   font-size: 24rpx;
@@ -235,9 +235,9 @@ button::after {
 }
 
 .mini-action-btn.primary-lite {
-  background: var(--improv-btn-toolbar-primary-bg, var(--improv-primary-tint, #fff6f1));
-  border-color: var(--improv-btn-toolbar-primary-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
-  color: var(--improv-btn-toolbar-primary-text, var(--improv-primary-warm, #ff6b3d));
+  background: var(--improv-btn-toolbar-primary-bg, var(--improv-primary-tint, #fff1d6));
+  border-color: var(--improv-btn-toolbar-primary-border, var(--improv-primary-wash, rgba(168, 176, 79, 0.18)));
+  color: var(--improv-btn-toolbar-primary-text, var(--improv-primary-warm, #3a2a10));
 }
 
 .mini-action-btn.neutral {
@@ -254,8 +254,8 @@ button::after {
 }
 
 .button-tertiary {
-  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
-  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  background: var(--improv-btn-tertiary-bg, rgba(239, 233, 214, 0.58));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(68, 108, 140, 0.08));
   color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   box-shadow: var(--improv-btn-tertiary-shadow, none);
 }
@@ -264,7 +264,7 @@ button::after {
 .button-danger-quiet {
   background: var(--improv-btn-danger-bg, rgba(255, 77, 79, 0.08));
   border: 2rpx solid var(--improv-btn-danger-border, rgba(255, 77, 79, 0.12));
-  color: var(--improv-btn-danger-text, #e85d48);
+  color: var(--improv-btn-danger-text, #c23b4a);
   box-shadow: none;
 }
 
@@ -281,8 +281,8 @@ button.share-btn::after {
 }
 
 .small-btn.share-btn {
-  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
-  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  background: var(--improv-btn-tertiary-bg, rgba(239, 233, 214, 0.58));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(68, 108, 140, 0.08));
   color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
 }
 
@@ -293,8 +293,8 @@ button.share-btn::after {
 }
 
 .ghost-btn.share-btn {
-  background: var(--improv-btn-secondary-bg, var(--improv-primary-tint, #fff6f1));
-  color: var(--improv-btn-secondary-text, var(--improv-primary-warm, #ff6b3d));
+  background: var(--improv-btn-secondary-bg, var(--improv-primary-tint, #fff1d6));
+  color: var(--improv-btn-secondary-text, var(--improv-primary-warm, #3a2a10));
 }
 
 .chip {
@@ -313,11 +313,11 @@ button.share-btn::after {
 }
 
 .chip.active {
-  background: #fff6f1;
-  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff6f1));
-  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
-  color: #ff6b3d;
-  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #ff6b3d));
+  background: #fff1d6;
+  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff1d6));
+  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(168, 176, 79, 0.18)));
+  color: #3a2a10;
+  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #3a2a10));
 }
 
 .main-filter-chip {
@@ -339,9 +339,9 @@ button.share-btn::after {
 }
 
 .main-filter-chip.active {
-  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
-  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff6f1));
-  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #ff6b3d));
+  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(168, 176, 79, 0.18)));
+  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff1d6));
+  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #3a2a10));
   box-shadow: none;
 }
 
@@ -362,9 +362,9 @@ button.share-btn::after {
 }
 
 .compact-filter-chip.active {
-  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(255, 122, 69, 0.14)));
-  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff6f1));
-  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #ff6b3d));
+  border-color: var(--improv-btn-chip-active-border, var(--improv-primary-wash, rgba(168, 176, 79, 0.18)));
+  background: var(--improv-btn-chip-active-bg, var(--improv-primary-tint, #fff1d6));
+  color: var(--improv-btn-chip-active-text, var(--improv-primary-warm, #3a2a10));
   box-shadow: none;
 }
 

@@ -38,7 +38,8 @@ Page({
     selectedRecord: null,
     selectedNotes: [],
     hasMore: true,
-    pageLoading: false
+    pageLoading: false,
+    isRefreshing: false
   },
 
   onShareAppMessage() {
@@ -105,6 +106,7 @@ Page({
 
   async onPullDownRefresh() {
     await this.loadRecords()
+    this.setData({ isRefreshing: false })
     wx.stopPullDownRefresh()
   },
 

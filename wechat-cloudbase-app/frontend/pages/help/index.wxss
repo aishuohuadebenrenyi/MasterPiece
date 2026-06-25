@@ -4,8 +4,8 @@
   width: 100%;
   height: 100vh;
   min-height: 0;
-  background: linear-gradient(180deg, #fff5ef 0%, #f7f9ff 54%, #eef5ff 100%);
-  background: linear-gradient(180deg, var(--improv-bg-top, #fff5ef) 0%, var(--improv-bg-mid, #f7f9ff) 54%, var(--improv-bg-bottom, #eef5ff) 100%);
+  background: linear-gradient(180deg, #fafaf7 0%, #f7f8f3 54%, #f3f7f5 100%);
+  background: linear-gradient(180deg, var(--improv-bg-top, #fafaf7) 0%, var(--improv-bg-mid, #f7f8f3) 54%, var(--improv-bg-bottom, #f3f7f5) 100%);
   color: var(--improv-text);
 }
 

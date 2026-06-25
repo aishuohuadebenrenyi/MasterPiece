@@ -1,5 +1,5 @@
 <scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" bindscroll="onScroll" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="page mine {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
-  <button class="icon-text icon-settings settings-entry-btn" aria-label="设置" bindtap="goSettings">⚙︎</button>
+  <button class="settings-entry-btn" aria-label="设置" bindtap="goSettings">设置</button>
   <view class="mine-content {{showIntroState ? 'mine-content-intro' : ''}}">
     <empty-state-panel wx:if="{{loadErrorText}}" tone="error" title="数据未完全加载" desc="{{loadErrorText}}" />
     <block wx:if="{{showIntroState}}">
@@ -19,7 +19,7 @@
           </view>
           <button class="small-btn profile-edit-btn" catchtap="openEditProfile">编辑</button>
         </view>
-        <text class="muted">练习复盘、灵感和排练复盘，都会慢慢收进这里。</text>
+        <text class="muted">灵感、练习和排练记录都在这里。</text>
           </view>
         </view>
 
@@ -34,12 +34,8 @@
         <view class="intro-action-section">
           <view class="mine-card-list intro-fill-list">
             <view class="card mine-entry-card mine-guide-card intro-fill-card">
-              <view class="intro-card-top">
-                <text class="kicker intro-kicker">这里会出现什么</text>
-              </view>
               <view class="intro-card-center">
-                <view class="mine-entry-title intro-title">你的方法卡、灵感和排练记录</view>
-                <text class="muted intro-body">每次现场记录，都会慢慢沉淀到这里。</text>
+                <view class="mine-entry-title intro-title">你的记录与方法卡</view>
               </view>
               <view class="tags intro-tags"><text>方法卡</text><text>灵感回看</text><text>排练记录</text></view>
             </view>
@@ -67,7 +63,6 @@
           </view>
           <button class="small-btn profile-edit-btn" catchtap="openEditProfile">编辑</button>
         </view>
-        <text class="muted">把热身、关系和灵感收集成一套顺手可用的排练工具，让每次现场都能更快进入状态。</text>
       </view>
 
       <view wx:if="{{showStatsCard}}" class="card mine-stats-card">
@@ -129,23 +124,21 @@
           <button wx:for="{{methodFilterOptions}}" wx:key="value" class="chip compact-filter-chip mine-filter-chip {{item.activeClass}}" data-filter="{{item.value}}" catchtap="filterMethodCards">{{item.label}}</button>
         </view>
       </scroll-view>
-      <scroll-view wx:if="{{currentKind === 'inspirations'}}" class="mine-filter-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
-        <view class="mine-filter-row">
+      <view wx:if="{{currentKind === 'inspirations'}}" class="mine-inspiration-filter-row">
           <button wx:for="{{inspirationFilterOptions}}" wx:key="value" class="chip compact-filter-chip mine-filter-chip {{item.activeClass}}" data-filter="{{item.value}}" catchtap="filterInspirations">{{item.label}}</button>
-        </view>
-      </scroll-view>
+      </view>
       <empty-state-panel wx:if="{{!listItems.length}}" customClass="empty-list" title="暂无记录" desc="{{currentKind === 'sediments' ? '还没沉淀方法卡，去整理一条吧。' : (currentKind === 'pending' ? '当前没有待整理记录。' : '还没有灵感记录，随时记下闪念。')}}" />
       <view wx:for="{{listItems}}" wx:key="title" class="mine-list-item-wrap">
-        <record-card customClass="mine-list-record-card" itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" badgeText="{{item.cardView.badgeText}}" badgeTone="{{item.cardView.badgeTone}}" primaryActionText="{{(currentKind === 'sediments' || currentKind === 'inspirations') ? '编辑' : ''}}" bind:tapcard="openDetail" bind:action="onEditCard" />
+        <record-card customClass="mine-list-record-card" itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" badgeText="{{item.cardView.badgeText}}" badgeTone="{{item.cardView.badgeTone}}" primaryActionText="{{(currentKind === 'sediments' || currentKind === 'inspirations' || (currentKind === 'pending' && item.sourceType === 'inspiration')) ? '编辑' : ''}}" bind:tapcard="openDetail" bind:action="onEditCard" />
       </view>
     </view>
   </bottom-sheet>
 
   <floating-card visible="{{detailVisible}}" title="{{detailTitle}}" count="{{detailCount}}" bind:close="closeDetail" bind:prev="prevDetail" bind:next="nextDetail">
-    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '素材练习' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" canMarkIntent="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" selectedIntent="{{detailSelectedIntent}}" canEdit="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" loading="{{sedimentSaving}}" bind:edit="editCurrentPendingInspiration" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" bind:markintent="markCurrentDetailIntent" />
+    <asset-detail-panel wx:if="{{detailItem}}" badgeText="{{detailItem.type}}" badgeTone="{{detailItem.type === '素材练习' ? 'orange' : (detailItem.type === '排练复盘' ? 'mint' : 'blue')}}" pending="{{detailItem.syncStatus === 'pending'}}" title="{{detailItem.title}}" desc="{{detailItem.desc}}" meta="{{detailItem.filteredMeta}}" canSediment="{{detailCanSediment}}" canMarkIntent="{{detailCanSediment && detailItem.sourceType === 'inspiration'}}" selectedIntent="{{detailSelectedIntent}}" loading="{{sedimentSaving}}" bind:discard="discardCurrentDetail" bind:sediment="sedimentCurrentDetail" bind:markintent="markCurrentDetailIntent" />
   </floating-card>
 
-  <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" closeOnMask="{{false}}" bind:close="closeSheet">
+  <bottom-sheet visible="{{profileEditVisible}}" title="编辑个人卡片" bodyMode="fit" sheetClass="profile-edit-sheet-shell" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
     <view class="profile-edit-sheet">
       <view class="profile-edit-avatar-container" bindtap="chooseProfileAvatar">
         <view class="avatar profile-editor-avatar">
@@ -159,23 +152,23 @@
         <input class="app-input" type="nickname" value="{{profileDraftName}}" maxlength="12" placeholder="输入你的名字" bindblur="updateProfileName" bindconfirm="updateProfileName" />
       </form-field>
 
-      <form-field label="剧团">
-        <input class="app-input" type="text" value="{{profileDraftTroupeName}}" maxlength="12" placeholder="输入剧团名字（选填）" bindblur="updateProfileTroupeName" bindconfirm="updateProfileTroupeName" />
+      <form-field label="剧团（选填）">
+        <input class="app-input" type="text" value="{{profileDraftTroupeName}}" maxlength="12" placeholder="剧团名称" bindblur="updateProfileTroupeName" bindconfirm="updateProfileTroupeName" />
       </form-field>
 
-      <form-field class="profile-tags-field" label="个人标签" desc="如果没有设置剧团名字，默认显示「即兴主理人」。">
+      <form-field class="profile-tags-field" label="个人标签" desc="未填写剧团时显示「即兴主理人」">
         <view class="role-line profile-tag-line info-primary">
           <text wx:for="{{profileDraftTags}}" wx:key="*this" class="role-pill">{{item}}</text>
         </view>
       </form-field>
 
-      <view class="profile-action-bar">
-        <button class="primary-btn profile-save-btn" loading="{{profileSaving}}" bindtap="saveProfile">保存</button>
-      </view>
+    </view>
+    <view slot="actions" class="profile-action-bar">
+      <button class="primary-btn profile-save-btn" loading="{{profileSaving}}" bindtap="saveProfile">保存</button>
     </view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{showMethodCardEditSheet}}" title="编辑方法卡" closeOnMask="{{false}}" bind:close="closeMethodCardEdit">
+  <bottom-sheet visible="{{showMethodCardEditSheet}}" title="编辑方法卡" bodyMode="fit" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeMethodCardEdit">
     <view class="edit-form">
       <view class="edit-form-field">
         <text class="edit-form-label">标题</text>
@@ -185,6 +178,8 @@
         <text class="edit-form-label">内容</text>
         <textarea class="edit-form-textarea" value="{{methodCardDraftContent}}" bindblur="onMethodCardDraftContentInput" placeholder="方法卡内容" />
       </view>
+    </view>
+    <view slot="actions" class="method-edit-actions">
       <button class="primary-btn edit-form-submit" bindtap="saveMethodCardEdit">保存</button>
     </view>
   </bottom-sheet>

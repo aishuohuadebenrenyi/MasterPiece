@@ -3,49 +3,46 @@
     <subpage-header title="使用帮助" bind:back="goBack" />
 
     <view class="card help-hero">
-      <text class="kicker">3 分钟快速开始</text>
-      <text class="help-hero-title">先找一条素材，再留下第一次记录</text>
+      <text class="kicker">3 步开始</text>
+      <text class="help-hero-title">从一条素材开始</text>
       <view class="help-steps">
-        <view class="help-step"><text class="help-step-index">1</text><text>在“发现”浏览或搜索训练素材。</text></view>
-        <view class="help-step"><text class="help-step-index">2</text><text>进入素材详情，点击开始训练。</text></view>
-        <view class="help-step"><text class="help-step-index">3</text><text>训练结束后填写 Keep、Try 和下次提醒。</text></view>
+        <view class="help-step"><text class="help-step-index">1</text><text>在发现页选择素材</text></view>
+        <view class="help-step"><text class="help-step-index">2</text><text>进入详情开始练习</text></view>
+        <view class="help-step"><text class="help-step-index">3</text><text>结束后记录 Keep 和 Try</text></view>
       </view>
     </view>
 
     <view class="help-section">
-      <text class="help-section-title">找素材并开始训练</text>
-      <text class="help-text">“发现”提供游戏、角色、才艺、格式、主理、技巧、复盘和路径八类素材。可以搜索、按条件筛选，或使用随机抽卡快速决定练什么。</text>
-      <text class="help-text">进入素材详情后再开始训练；“路径”属于学习参考，不进入计时、复盘和排练计划。</text>
+      <text class="help-section-title">找素材与练习</text>
+      <text class="help-text">可以搜索、筛选或随机抽取素材。路径仅供参考，不参与练习和排练。</text>
     </view>
 
     <view class="help-section">
-      <text class="help-section-title">快速记录灵感</text>
-      <text class="help-text">在“记录”页直接输入现场闪念并保存。需要口述时，可使用系统输入法自带的语音转文字。</text>
-      <text class="help-text">保存后的灵感可在“我的 → 灵感记录”回看，也可以继续关联素材、排练或沉淀为方法卡。</text>
+      <text class="help-section-title">认识素材分类与筛选</text>
+      <text class="help-text">素材类型是一级分类，训练能力和使用场景用于筛选；标签只补充细节，标签不会创建新的一级分类。</text>
     </view>
 
     <view class="help-section">
-      <text class="help-section-title">开启和复盘排练</text>
-      <text class="help-text">从“记录”快速开启排练，选择目标并加入素材。排练中可以记录每条素材的状态、Keep 和 Try，结束后完成整体复盘。</text>
-      <text class="help-text">历史排练用于只读回看，避免和正在进行的排练混在一起。</text>
+      <text class="help-section-title">记录灵感</text>
+      <text class="help-text">在记录页写下灵感；保存后可在我的页回看或整理为方法卡。</text>
     </view>
 
     <view class="help-section">
-      <text class="help-section-title">整理为方法卡</text>
-      <text class="help-text">“我的 → 待整理”会聚合灵感、素材练习和排练复盘。打开详情后，可以放弃整理，也可以把有价值的经验沉淀为方法卡。</text>
-      <text class="help-text">方法卡会保留来源，便于以后回看这条经验从哪里产生。</text>
+      <text class="help-section-title">开启及复盘排练</text>
+      <text class="help-text">从记录页开启排练，添加素材并填写 Keep、Try；结束后完成整体复盘。</text>
     </view>
 
     <view class="help-section">
-      <text class="help-section-title">数据保存与隐私</text>
-      <text class="help-text">个人记录通过微信云开发保存，并按当前微信用户隔离。写入失败时，小程序会保留当前表单内容并提示重试，不会显示虚假的保存成功。</text>
-      <text class="help-text">主题偏好只保存在当前设备。注销账号会删除个人业务数据，且无法恢复。</text>
+      <text class="help-section-title">回看与整理</text>
+      <text class="help-text">我的页集中保存灵感、练习、排练和方法卡。</text>
     </view>
 
     <view class="help-section help-faq-section">
       <text class="help-section-title">常见问题</text>
-      <text class="help-question">为什么有些卡片没有显示？</text>
-      <text class="help-text">没有真实数据时，小程序会隐藏对应的零数据入口；完成一次记录后即可在“我的”中回看。</text>
+      <text class="help-question">为什么有些入口没有显示？</text>
+      <text class="help-text">没有对应数据时，入口会暂时隐藏。</text>
+      <text class="help-question">保存失败怎么办？</text>
+      <text class="help-text">当前输入会保留，可直接重试。</text>
     </view>
   </view>
 </scroll-view>

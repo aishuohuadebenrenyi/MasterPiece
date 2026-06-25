@@ -113,6 +113,21 @@
   gap: var(--improv-form-gap-inline, 16rpx);
 }
 
+.discover-filter-section .filter-chip-wrap {
+  width: 100%;
+  height: auto;
+  align-items: flex-start;
+  align-content: flex-start;
+  justify-content: flex-start;
+  gap: var(--improv-form-gap-inline, 16rpx);
+  padding: 0;
+  white-space: normal;
+}
+
+.discover-filter-section .filter-chip {
+  margin: 0 !important;
+}
+
 .filter-chip {
   flex: 0 0 auto;
   min-width: 88rpx;

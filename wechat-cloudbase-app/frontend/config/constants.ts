@@ -10,6 +10,7 @@ export const DEFAULT_SORT_ORDER = 999
 
 // 请求超时时间（毫秒）
 export const REQUEST_TIMEOUT_MS = 8000
+export const MATERIAL_LIST_TIMEOUT_MS = 20000
 
 // 今日列表条数上限
 export const TODAY_LIST_LIMIT = 20

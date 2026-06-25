@@ -45,7 +45,6 @@
 .empty-actions {
   justify-content: center;
 }
-}
 
 .detail-card {
   padding: 28rpx;

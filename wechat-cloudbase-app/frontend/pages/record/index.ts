@@ -61,8 +61,12 @@ Page({
     showTodaySummary: false,
     teamName: '',
     rehearsalDuration: '90',
+    customDurationVisible: false,
+    customDurationSelected: false,
+    customDurationInput: '',
     rehearsalGoals: [] as string[],
     customGoalVisible: false,
+    customGoalSelected: false,
     customGoalInput: '',
     rehearsalSource: 'recommended',
     durationOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
@@ -79,7 +83,7 @@ Page({
   unsubscribePrivacy: null as null | (() => void),
 
   getMergedRehearsalGoals() {
-    const customGoal = String(this.data.customGoalInput || '').trim()
+    const customGoal = this.data.customGoalSelected ? String(this.data.customGoalInput || '').trim() : ''
     return Array.from(new Set(
       (this.data.rehearsalGoals || [])
         .concat(customGoal ? [customGoal] : [])
@@ -156,7 +160,7 @@ Page({
         { value: '90', label: '90 分钟' },
         { value: '120', label: '120 分钟' }
       ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.rehearsalDuration === item.value ? 'active' : ''
+        activeClass: !this.data.customDurationSelected && this.data.rehearsalDuration === item.value ? 'active' : ''
       })),
       goalOptions: [
         { value: '身体到场', label: '身体到场' },
@@ -277,8 +281,12 @@ Page({
       filteredMaterialsList: [],
       teamName: '',
       rehearsalDuration: '90',
+      customDurationVisible: false,
+      customDurationSelected: false,
+      customDurationInput: '',
       rehearsalGoals: [],
       customGoalVisible: false,
+      customGoalSelected: false,
       customGoalInput: '',
       rehearsalSource: 'recommended'
     })
@@ -464,7 +472,30 @@ Page({
 
   setDuration(event: WechatMiniprogram.TouchEvent) {
     const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
-    this.setData({ rehearsalDuration: value }, () => this.syncLocalState())
+    this.setData({
+      rehearsalDuration: value,
+      customDurationVisible: false,
+      customDurationSelected: false
+    }, () => this.syncLocalState())
+  },
+
+  toggleCustomDuration() {
+    const alreadySelected = this.data.customDurationSelected
+    const customValue = String(this.data.customDurationInput || '').trim()
+    this.setData({
+      customDurationSelected: true,
+      customDurationVisible: alreadySelected ? !this.data.customDurationVisible : true,
+      rehearsalDuration: customValue || this.data.rehearsalDuration
+    }, () => this.syncLocalState())
+  },
+
+  updateCustomDuration(event: WechatMiniprogram.Input) {
+    const value = String(event.detail.value || '').replace(/\D/g, '')
+    this.setData({
+      customDurationInput: value,
+      customDurationSelected: true,
+      rehearsalDuration: value || this.data.rehearsalDuration
+    }, () => this.syncLocalState())
   },
 
   toggleGoal(event: WechatMiniprogram.TouchEvent) {
@@ -482,11 +513,18 @@ Page({
   },
 
   toggleCustomGoal() {
-    this.setData({ customGoalVisible: !this.data.customGoalVisible })
+    const selected = !this.data.customGoalSelected
+    this.setData({
+      customGoalSelected: selected,
+      customGoalVisible: selected
+    })
   },
 
   updateCustomGoal(event: WechatMiniprogram.Input) {
-    this.setData({ customGoalInput: String(event.detail.value || '').trim() })
+    this.setData({
+      customGoalInput: String(event.detail.value || '').trim(),
+      customGoalSelected: true
+    })
   },
 
   resumeRehearsal() {
@@ -497,6 +535,10 @@ Page({
     const mutexError = getTaskMutexError('rehearsal')
     if (mutexError) {
       toast(mutexError)
+      return
+    }
+    if (this.data.customDurationSelected && !Number(this.data.customDurationInput)) {
+      toast('请输入有效的排练时长')
       return
     }
     const state = getState()

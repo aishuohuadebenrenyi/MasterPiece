@@ -12,6 +12,11 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+.form-card-content-safe {
+  padding-bottom: calc(var(--improv-card-padding-md, 40rpx) + 28rpx);
 }
 
 .card-head {
@@ -52,7 +57,10 @@
 }
 
 .card-body {
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12rpx;
+  box-sizing: border-box;
 }

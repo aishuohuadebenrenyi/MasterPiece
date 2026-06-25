@@ -30,15 +30,15 @@
     <block wx:else>
       <view class="view-tools">
         <view class="switch compact-switch">
-          <view class="{{allActiveClass}}" data-view="all" bindtap="switchView">全部</view>
-          <view class="{{categoryActiveClass}}" data-view="category" bindtap="switchView">分类</view>
+          <view class="{{allActiveClass}}" role="button" aria-label="切换到全部素材" data-view="all" bindtap="switchView">全部</view>
+          <view class="{{categoryActiveClass}}" role="button" aria-label="切换到素材分类" data-view="category" bindtap="switchView">分类</view>
         </view>
       </view>
 
       <search-bar wx:if="{{view === 'all' || isCategoryDetail}}" customClass="search card" value="{{query}}" placeholder="{{searchPlaceholder}}" hint="{{isCategoryDetail ? activeCategory : '角色 / 主理'}}" showClear="{{true}}" bind:blur="search" bind:confirm="search" bind:clear="clearSearchQuery" />
 
       <view wx:if="{{isCategoryDetail}}" class="category-toolbar">
-        <view class="category-back" aria-label="返回分类" bindtap="backToCategoryGrid">←</view>
+        <view class="category-back" role="button" aria-label="返回素材分类" bindtap="backToCategoryGrid">←</view>
         <button class="mini-action-btn neutral filter-btn" bindtap="openFilter">筛选</button>
       </view>
 
@@ -61,7 +61,7 @@
           </view>
           <view class="category-grid">
             <view wx:for="{{categoryRows}}" wx:key="id" class="category-row">
-              <view wx:for="{{item.items}}" wx:for-item="category" wx:key="type" class="category-card card-surface-nav" data-type="{{category.type}}" bindtap="openCategoryDetail">
+              <view wx:for="{{item.items}}" wx:for-item="category" wx:key="type" class="category-card card-surface-nav" role="button" aria-label="查看{{category.type}}分类，{{category.count}}条素材" data-type="{{category.type}}" bindtap="openCategoryDetail">
                 <view class="category-card-accent category-card-accent-{{category.tone}}"></view>
                 <view class="category-card-main">
                   <text class="category-card-title">{{category.type}}</text>
@@ -121,7 +121,8 @@
 
       <button
         wx:if="{{fabReady}}"
-        class="random-fab"
+        class="random-fab {{fabHidden ? 'fab-hidden' : ''}}"
+        aria-label="随机抽取素材，可拖动"
         hover-class="fab-btn-active"
         style="left: {{fabX}}px; top: {{fabY}}px;"
         bindtap="openRandom"
@@ -129,23 +130,23 @@
         catchtouchmove="onFabTouchMove"
         bindtouchend="onFabTouchEnd"
       >
-        <text class="icon-text icon-random fab-icon-text">🎲</text>
+        <text class="fab-icon-text">抽</text>
       </button>
     </block>
   </view>
 
-  <bottom-sheet visible="{{filterVisible}}" title="筛选素材" maskVariant="medium" sheetClass="filter-sheet discover-filter-sheet" bodyMode="fit" bind:close="closeSheet">
+  <bottom-sheet visible="{{filterVisible}}" title="筛选素材" maskVariant="medium" sheetClass="filter-sheet discover-filter-sheet" showActions="{{true}}" bind:close="closeSheet">
     <view class="filter-group-stack">
-      <filter-section wx:if="{{!isCategoryDetail}}" customClass="discover-filter-section" label="素材类型" options="{{typeFilters}}" chipClass="discover-filter-chip" bind:select="filterType" />
-      <filter-section customClass="discover-filter-section" label="训练能力" options="{{abilityFilters}}" chipClass="discover-filter-chip" bind:select="filterAbility" />
-      <filter-section customClass="discover-filter-section" label="使用场景" options="{{sceneFilters}}" chipClass="discover-filter-chip" bind:select="filterScene" />
-      <filter-section customClass="discover-filter-section" label="状态" options="{{statusFilters}}" chipClass="discover-filter-chip" bind:select="filterStatus" />
+      <filter-section wx:if="{{!isCategoryDetail}}" customClass="discover-filter-section" label="素材类型" options="{{typeFilters}}" chipClass="discover-filter-chip" wrap="{{true}}" bind:select="filterType" />
+      <filter-section customClass="discover-filter-section" label="训练能力" options="{{abilityFilters}}" chipClass="discover-filter-chip" wrap="{{true}}" bind:select="filterAbility" />
+      <filter-section customClass="discover-filter-section" label="使用场景" options="{{sceneFilters}}" chipClass="discover-filter-chip" wrap="{{true}}" bind:select="filterScene" />
+      <filter-section customClass="discover-filter-section" label="状态" options="{{statusFilters}}" chipClass="discover-filter-chip" wrap="{{true}}" bind:select="filterStatus" />
     </view>
-    <button class="primary-btn sheet-submit" catchtap="applyFilter">查看结果（{{filteredMaterials.length}}）</button>
+    <view slot="actions" class="discover-sheet-actions"><button class="primary-btn sheet-submit" catchtap="applyFilter">查看结果（{{resultTotal}}）</button></view>
   </bottom-sheet>
 
-  <bottom-sheet visible="{{randomVisible}}" title="抽一张素材" maskVariant="light" sheetClass="tab-sheet" bodyMode="fit" bind:close="closeSheet">
-    <block wx:if="{{!materials.length}}">
+  <bottom-sheet visible="{{randomVisible}}" title="抽一张素材" maskVariant="light" sheetClass="tab-sheet" bodyMode="fit" showActions="{{currentRandomMaterial ? true : false}}" bind:close="closeSheet">
+    <block wx:if="{{availableTotal === 0}}">
       <empty-state-panel
         customClass="random-state-card"
         kicker="抽卡"
@@ -179,12 +180,12 @@
         <text class="pill blue">{{randomUseAllMaterials ? '全部素材' : '抽到'}}</text>
         <view class="recommend-title">{{currentRandomMaterial.title}}</view>
         <text class="muted">{{currentRandomMaterial.desc}}</text>
-        <view class="random-actions">
-          <button class="ghost-btn" catchtap="reroll">再抽一张</button>
-          <button class="primary-btn" catchtap="openRandomDetail">查看详情</button>
-        </view>
       </view>
     </block>
+    <view wx:if="{{currentRandomMaterial}}" slot="actions" class="random-actions">
+      <button class="ghost-btn" catchtap="reroll">再抽一张</button>
+      <button class="primary-btn" catchtap="openRandomDetail">查看详情</button>
+    </view>
   </bottom-sheet>
 
   <bottom-sheet visible="{{pathVisible}}" title="{{pathSheetTitle}}" maskVariant="medium" sheetClass="path-sheet task-sheet" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeSheet">
@@ -247,6 +248,7 @@
       typeOptions="{{typeCategoryOptions}}"
       abilityOptions="{{abilityCategoryOptions}}"
       sceneOptions="{{sceneCategoryOptions}}"
+      tagOptions="{{tagCategoryOptions}}"
       customCategoryVisible="{{customCategoryVisible}}"
       customCategoryInput="{{customCategoryInput}}"
       customCategoryFocus="{{customCategoryFocus}}"
@@ -257,6 +259,7 @@
       bind:selecttype="setNewMaterialType"
       bind:selectability="toggleNewMaterialAbility"
       bind:selectscene="toggleNewMaterialScene"
+      bind:selecttag="toggleNewMaterialTag"
       bind:togglecustomcategory="toggleCustomCategory"
       bind:customcategoryfocus="handleCustomCategoryFocus"
       bind:customcategoryblur="handleCustomCategoryBlur"

@@ -4,29 +4,25 @@
 
     <view class="settings-group">
       <view class="card settings-card">
-        <button class="settings-row" bindtap="openHelp">
+        <view class="settings-row" role="button" aria-label="打开使用帮助" bindtap="openHelp">
           <view class="settings-row-main">
             <text class="settings-row-title">使用帮助</text>
-            <text class="settings-row-desc">快速开始、训练、记录与整理指南</text>
+            <text class="settings-row-desc">快速开始与常见问题</text>
           </view>
-          <view class="settings-row-side">
-            <text class="settings-row-arrow">›</text>
-          </view>
-        </button>
+          <view class="settings-row-side"><text class="settings-row-action">查看</text><text class="settings-row-arrow">›</text></view>
+        </view>
       </view>
     </view>
 
     <view class="settings-group">
       <view class="card settings-card">
-        <button class="settings-row" bindtap="openFeedback">
+        <view class="settings-row" role="button" aria-label="打开意见反馈" bindtap="openFeedback">
           <view class="settings-row-main">
             <text class="settings-row-title">意见反馈</text>
-            <text class="settings-row-desc">告诉我们遇到的问题或建议</text>
+            <text class="settings-row-desc">问题与建议</text>
           </view>
-          <view class="settings-row-side">
-            <text class="settings-row-arrow">›</text>
-          </view>
-        </button>
+          <view class="settings-row-side"><text class="settings-row-action">反馈</text><text class="settings-row-arrow">›</text></view>
+        </view>
       </view>
     </view>
 
@@ -36,11 +32,12 @@
         <view class="settings-panel">
           <view class="settings-panel-main">
             <text class="settings-row-title">外观主题</text>
-            <text class="settings-row-desc">保存在当前设备，即时全局生效</text>
+            <text class="settings-row-desc">灵感用于日常，现场用于低光</text>
           </view>
-          <view class="switch compact-switch settings-theme-switch">
-            <view class="{{themeClass === 'theme-default' ? 'active' : ''}}" data-mode="default" bindtap="setThemeModeByTap">默认模式</view>
-            <view class="{{themeClass === 'theme-vivid' ? 'active' : ''}}" data-mode="vivid" bindtap="setThemeModeByTap">沉浸模式</view>
+          <view class="settings-theme-switch {{themeClass === 'theme-vivid' ? 'is-vivid' : ''}}">
+            <view class="settings-theme-thumb"></view>
+            <button aria-label="切换到灵感主题" class="settings-theme-option {{themeClass === 'theme-default' ? 'active' : ''}}" data-mode="default" bindtap="setThemeModeByTap">灵感</button>
+            <button aria-label="切换到现场主题" class="settings-theme-option {{themeClass === 'theme-vivid' ? 'active' : ''}}" data-mode="vivid" bindtap="setThemeModeByTap">现场</button>
           </view>
         </view>
       </view>
@@ -49,28 +46,29 @@
     <view class="settings-group">
       <text class="settings-group-title">关于</text>
       <view class="card settings-card">
-        <button class="settings-row" bindtap="openPrivacy">
+        <view class="settings-row" role="button" aria-label="打开隐私政策" bindtap="openPrivacy">
           <view class="settings-row-main">
             <text class="settings-row-title">隐私政策</text>
-            <text class="settings-row-desc">了解数据收集、使用和删除方式</text>
+            <text class="settings-row-desc">数据使用与删除说明</text>
           </view>
-          <view class="settings-row-side">
-            <text class="settings-row-arrow">›</text>
-          </view>
-        </button>
+          <view class="settings-row-side"><text class="settings-row-action">查看</text><text class="settings-row-arrow">›</text></view>
+        </view>
       </view>
     </view>
 
     <view class="settings-account-group">
       <text class="settings-group-title">账号</text>
-      <view class="settings-account-actions">
-        <text class="settings-account-note">此操作不可恢复</text>
-        <button class="danger-btn settings-danger-btn" bindtap="deleteMyAccount">注销并删除我的数据</button>
+      <view class="card settings-card settings-account-card">
+        <view class="settings-account-main">
+          <text class="settings-row-title settings-account-title">注销并删除数据</text>
+          <text class="settings-row-desc">删除个人记录与设置，且无法恢复</text>
+        </view>
+        <button class="button-danger-quiet settings-danger-btn" bindtap="deleteMyAccount">注销</button>
       </view>
     </view>
   </view>
 
-  <bottom-sheet visible="{{feedbackVisible}}" title="意见反馈" sheetClass="task-sheet feedback-sheet" closeOnMask="{{false}}" bind:close="closeFeedback">
+  <bottom-sheet visible="{{feedbackVisible}}" title="意见反馈" sheetClass="task-sheet feedback-sheet" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeFeedback">
     <view class="feedback-form">
       <form-field label="反馈类型">
         <scroll-view scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}" class="feedback-types-scroll">
@@ -80,15 +78,17 @@
         </scroll-view>
       </form-field>
 
-      <form-field label="反馈内容" desc="请填写 10–500 字，帮助我们更快理解问题">
-        <textarea class="app-textarea feedback-textarea" value="{{feedbackContent}}" maxlength="500" placeholder="请描述发生了什么、你原本希望怎样……" bindblur="updateFeedbackContent"></textarea>
+      <form-field label="反馈内容（10–500 字）">
+        <textarea class="app-textarea feedback-textarea" value="{{feedbackContent}}" maxlength="500" placeholder="发生了什么？你希望怎样？" bindblur="updateFeedbackContent"></textarea>
         <text class="feedback-count">{{feedbackContent.length}} / 500</text>
       </form-field>
 
-      <form-field label="联系方式（选填）" desc="仅用于反馈沟通，最多 100 字">
+      <form-field label="联系方式（选填）">
         <input class="app-input" type="text" value="{{feedbackContact}}" maxlength="100" placeholder="微信号或邮箱" bindblur="updateFeedbackContact" bindconfirm="updateFeedbackContact" />
       </form-field>
 
+    </view>
+    <view slot="actions" class="feedback-actions">
       <button class="primary-btn feedback-submit" loading="{{feedbackSubmitting}}" disabled="{{feedbackSubmitting}}" bindtap="submitFeedback">提交反馈</button>
     </view>
   </bottom-sheet>

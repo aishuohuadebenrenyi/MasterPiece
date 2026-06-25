@@ -40,8 +40,10 @@ text {
   gap: 8rpx;
   padding: 8rpx;
   border-radius: 40rpx;
-  background: var(--improv-card-glass);
-  border: 1px solid var(--improv-line-light);
+  background: rgba(255, 255, 255, 0.94);
+  background: var(--improv-card-frost, rgba(255, 255, 255, 0.94));
+  border: 1px solid rgba(47, 111, 147, 0.12);
+  border: 1px solid var(--improv-line-soft, rgba(47, 111, 147, 0.12));
   box-shadow: var(--improv-shadow-sm);
   pointer-events: auto;
   overflow: visible;
@@ -60,29 +62,28 @@ text {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4rpx;
+  gap: 0;
   border-radius: 44rpx;
   background: transparent;
-  color: #96a1b4;
-  color: var(--improv-light, #96a1b4);
-  font-size: 22rpx;
+  color: #65717d;
+  color: var(--improv-text-soft, #65717d);
+  font-size: 26rpx;
   font-weight: 900;
 }
 
 .tab-item.active {
-  background: transparent;
-  color: #ff7a45;
-  color: var(--improv-primary, #ff7a45);
-  box-shadow: none;
+  background: #ffe6b8;
+  background: var(--improv-primary-soft, #ffe6b8);
+  color: #3a2a10;
+  color: var(--improv-primary-warm, #3a2a10);
+  border: 2rpx solid rgba(255, 159, 28, 0.26);
+  border: 2rpx solid var(--improv-primary-wash-strong, rgba(255, 159, 28, 0.26));
+  box-shadow: 0 12rpx 24rpx rgba(255, 159, 28, 0.14);
+  box-shadow: 0 12rpx 24rpx var(--improv-shadow-primary-soft-color, rgba(255, 159, 28, 0.14));
   overflow: hidden;
 }
 
-.tab-icon {
-  width: 48rpx;
-  height: 48rpx;
-}
-
 .tab-text {
-  font-size: 23rpx;
-  line-height: 1.1;
+  font-size: 26rpx;
+  line-height: 1;
 }

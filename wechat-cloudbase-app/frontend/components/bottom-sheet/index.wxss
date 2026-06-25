@@ -90,9 +90,11 @@ text {
 }
 
 .sheet-scroll {
+  width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   height: calc(78vh - 160rpx);
+  max-height: calc(78vh - 160rpx);
   box-sizing: border-box;
   padding-bottom: 12rpx;
   display: flex;
@@ -100,14 +102,16 @@ text {
 }
 
 .sheet-scroll-static {
-  flex: 0 0 auto;
   width: 100%;
+  flex: 0 0 auto;
+  min-height: 0;
   max-height: calc(78vh - 160rpx);
   box-sizing: border-box;
   padding-bottom: 12rpx;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .sheet-actions {
@@ -118,8 +122,19 @@ text {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 18rpx;
+  padding-top: 14rpx;
   padding-bottom: var(--sheet-action-bottom-gap);
+}
+
+.sheet.sheet-with-actions .sheet-scroll {
+  height: calc(78vh - 238rpx);
+  max-height: calc(78vh - 238rpx);
+  padding-bottom: 8rpx;
+}
+
+.sheet.sheet-with-actions .sheet-scroll-static {
+  max-height: calc(78vh - 238rpx);
+  padding-bottom: 8rpx;
 }
 
 .sheet.compact-sheet {
@@ -128,6 +143,7 @@ text {
 
 .sheet.compact-sheet .sheet-scroll {
   height: calc(65vh - 150rpx);
+  max-height: calc(65vh - 150rpx);
 }
 
 .sheet.task-sheet {
@@ -136,7 +152,17 @@ text {
 
 .sheet.task-sheet .sheet-scroll {
   height: calc(82vh - 154rpx);
+  max-height: calc(82vh - 154rpx);
   padding-bottom: 10rpx;
+}
+
+.sheet.task-sheet.sheet-with-actions .sheet-scroll {
+  height: calc(82vh - 238rpx);
+  max-height: calc(82vh - 238rpx);
+}
+
+.sheet.task-sheet.sheet-with-actions .sheet-scroll-static {
+  max-height: calc(82vh - 238rpx);
 }
 
 .sheet.task-sheet .sheet-scroll-static {
@@ -159,15 +185,14 @@ text {
 
 .sheet.path-sheet .sheet-scroll {
   height: calc(72vh - 330rpx);
+  max-height: calc(72vh - 330rpx);
   padding-bottom: 40rpx;
 }
 
 .sheet.path-sheet .sheet-scroll-static {
-  flex: 1 1 auto;
-  min-height: 0;
   max-height: calc(72vh - 330rpx);
   padding-bottom: 40rpx;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .sheet.path-sheet .sheet-actions {
@@ -179,6 +204,10 @@ text {
 .sheet.profile-edit-sheet-shell {
   max-height: 72vh;
   padding-bottom: 30rpx;
+}
+
+.sheet.profile-edit-sheet-shell.sheet-with-actions {
+  padding-bottom: 0;
 }
 
 .sheet.profile-edit-sheet-shell .sheet-scroll-static {
@@ -194,6 +223,7 @@ text {
 
 .sheet.full-sheet .sheet-scroll {
   height: calc(88vh - 246rpx);
+  max-height: calc(88vh - 246rpx);
 }
 
 .sheet.filter-sheet {
@@ -235,6 +265,7 @@ text {
 
 .sheet.add-sheet .sheet-scroll {
   height: calc(82vh - 254rpx);
+  max-height: calc(82vh - 254rpx);
   padding-bottom: 18rpx;
 }
 
@@ -269,6 +300,7 @@ text {
 .sheet.mine-list-sheet .sheet-scroll,
 .sheet.mine-detail-sheet .sheet-scroll {
   height: calc(72vh - 150rpx);
+  max-height: calc(72vh - 150rpx);
 }
 
 .sheet.mine-list-sheet .sheet-scroll-static,
@@ -312,9 +344,9 @@ text {
 .small-btn {
   min-height: 58rpx;
   padding: 0 20rpx;
-  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(68, 108, 140, 0.08));
   border-radius: 999rpx;
-  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
+  background: var(--improv-btn-tertiary-bg, rgba(239, 233, 214, 0.58));
   color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   font-size: 24rpx;
   font-weight: 900;

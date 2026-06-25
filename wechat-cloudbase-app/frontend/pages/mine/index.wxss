@@ -15,18 +15,22 @@
   position: fixed;
   z-index: 12;
   top: var(--nav-row-top);
-  left: var(--page-side);
-  width: 64rpx !important;
-  min-width: 64rpx !important;
-  height: 64rpx !important;
-  min-height: 64rpx !important;
-  padding: 0 !important;
-  border-radius: 32rpx !important;
-  background: var(--improv-btn-toolbar-bg);
-  color: var(--improv-btn-toolbar-text);
-  border: 2rpx solid var(--improv-btn-toolbar-border);
-  font-size: 32rpx;
-  font-weight: 800;
+  left: var(--page-side) !important;
+  right: auto !important;
+  width: 96rpx !important;
+  min-width: 96rpx !important;
+  height: var(--nav-row-height);
+  min-height: var(--nav-row-height) !important;
+  padding: 0 12rpx !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  background: transparent;
+  color: var(--improv-muted-strong);
+  border: 0;
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: var(--nav-row-height);
+  white-space: nowrap;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -476,7 +480,7 @@ form-field.profile-tags-field {
   justify-content: center;
   align-items: center;
   gap: 24rpx;
-  margin-top: 28rpx;
+  margin-top: 0;
   width: 100%;
 }
 
@@ -523,6 +527,22 @@ form-field.profile-tags-field {
   gap: 12rpx;
   padding: 0 2rpx;
   white-space: nowrap;
+}
+
+.mine-inspiration-filter-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.mine-inspiration-filter-row .mine-filter-chip {
+  flex: 1 1 0;
+  width: 100% !important;
+  min-width: 0;
+  padding: 0 6rpx !important;
+  font-size: 22rpx;
 }
 
 .mine-filter-chip {
@@ -630,7 +650,13 @@ form-field.profile-tags-field {
 .edit-form-submit {
   display: flex;
   width: 320rpx;
-  margin: 32rpx auto 0;
+  margin: 0 auto;
   border-radius: 40rpx;
   font-size: 28rpx;
+}
+
+.method-edit-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }

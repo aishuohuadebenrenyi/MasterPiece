@@ -40,7 +40,7 @@ text {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: var(--improv-card-padding-md, 40rpx);
+  padding: 36rpx var(--improv-card-padding-md, 40rpx) 28rpx;
   border-radius: 52rpx;
   transform: translateY(-50%);
   background: var(--improv-sheet-bg, rgba(255, 255, 255, 0.96));
@@ -68,7 +68,7 @@ text {
   align-items: center;
   justify-content: space-between;
   gap: 18rpx;
-  margin-top: 28rpx;
+  margin-top: 18rpx;
   color: #96a1b4;
   color: var(--improv-light, #96a1b4);
   font-size: 28rpx;
@@ -83,8 +83,8 @@ text {
   min-height: 64rpx;
   padding: 0;
   border-radius: 32rpx;
-  background: var(--improv-btn-tertiary-bg, rgba(255, 246, 241, 0.72));
-  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(255, 122, 69, 0.08));
+  background: var(--improv-btn-tertiary-bg, rgba(239, 233, 214, 0.58));
+  border: 2rpx solid var(--improv-btn-tertiary-border, rgba(68, 108, 140, 0.08));
   color: var(--improv-btn-tertiary-text, var(--improv-text-soft, #5a6781));
   font-size: 24rpx;
   font-weight: 900;

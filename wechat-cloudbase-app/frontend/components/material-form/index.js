@@ -8,6 +8,7 @@ Component({
     typeOptions: { type: Array, value: [] },
     abilityOptions: { type: Array, value: [] },
     sceneOptions: { type: Array, value: [] },
+    tagOptions: { type: Array, value: [] },
     customCategoryVisible: { type: Boolean, value: false },
     customCategoryInput: { type: String, value: '' },
     customCategoryFocus: { type: Boolean, value: false },
@@ -28,6 +29,9 @@ Component({
     },
     selectScene(event) {
       this.triggerEvent('selectscene', { value: event.detail.value })
+    },
+    selectTag(event) {
+      this.triggerEvent('selecttag', { value: event.detail.value })
     },
     toggleCustomCategory() {
       this.triggerEvent('togglecustomcategory')

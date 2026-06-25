@@ -1,11 +1,10 @@
 <view class="detail-panel">
   <view class="detail-content-wrapper">
-    <view class="detail-header-row" wx:if="{{badgeText || pending || canEdit}}">
+    <view class="detail-header-row" wx:if="{{badgeText || pending}}">
       <view class="detail-top-tags" wx:if="{{badgeText || pending}}">
         <text wx:if="{{badgeText}}" class="pill {{badgeTone}}">{{badgeText}}</text>
         <text wx:if="{{pending}}" class="sync-pill">本地暂存</text>
       </view>
-      <button wx:if="{{canEdit}}" class="mini-action-btn detail-edit-btn" catchtap="onEdit">编辑</button>
     </view>
     <view class="detail-middle">
       <view class="detail-title">{{title}}</view>
@@ -22,10 +21,10 @@
       <view class="meta-pill detail-intent-chip {{selectedIntent === 'training' ? 'active' : ''}}" data-intent="training" catchtap="onMarkIntent">训练线索</view>
       <view class="meta-pill detail-intent-chip {{selectedIntent === 'rehearsal' ? 'active' : ''}}" data-intent="rehearsal" catchtap="onMarkIntent">排练线索</view>
     </view>
+    <text class="detail-action-note">沉淀后仍保留原记录。</text>
     <view class="detail-action-row">
       <button class="ghost-btn detail-discard-btn" bindtap="onDiscard">不再整理</button>
       <button class="primary-btn detail-action-btn" loading="{{loading}}" bindtap="onSediment">沉淀为方法卡</button>
     </view>
-    <text class="detail-action-note">选择用途后，沉淀时一并保存；原记录始终保留。</text>
   </view>
 </view>

@@ -20,9 +20,5 @@ Page({
 
   goBack() {
     wx.navigateBack({ delta: 1 })
-  },
-
-  openFeedback() {
-    wx.navigateTo({ url: '/pages/settings/index?panel=feedback&source=privacy' })
   }
 })

@@ -16,14 +16,14 @@
   ],
   "window": {
     "navigationStyle": "custom",
-    "backgroundColor": "#FFF6F1",
+    "backgroundColor": "#FAFAF7",
     "backgroundTextStyle": "dark",
     "enablePullDownRefresh": true
   },
   "tabBar": {
     "custom": true,
-    "color": "#96A1B4",
-    "selectedColor": "#FF6A3D",
+    "color": "#8D9AA5",
+    "selectedColor": "#2F6F93",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [
@@ -31,19 +31,19 @@
         "pagePath": "pages/discover/index",
         "text": "发现",
         "iconPath": "assets/tabbar/discover.png",
-        "selectedIconPath": "assets/tabbar/discover-active.png"
+        "selectedIconPath": "assets/tabbar/discover.png"
       },
       {
         "pagePath": "pages/record/index",
         "text": "记录",
         "iconPath": "assets/tabbar/record.png",
-        "selectedIconPath": "assets/tabbar/record-active.png"
+        "selectedIconPath": "assets/tabbar/record.png"
       },
       {
         "pagePath": "pages/mine/index",
         "text": "我的",
         "iconPath": "assets/tabbar/mine.png",
-        "selectedIconPath": "assets/tabbar/mine-active.png"
+        "selectedIconPath": "assets/tabbar/mine.png"
       }
     ]
   },

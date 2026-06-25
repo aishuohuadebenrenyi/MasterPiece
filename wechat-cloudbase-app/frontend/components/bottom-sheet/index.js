@@ -25,7 +25,7 @@ Component({
     },
     bodyMode: {
       type: String,
-      value: 'scroll'
+      value: 'fit'
     },
     maskClass: {
       type: String,
@@ -38,7 +38,7 @@ Component({
     showClass: '',
     maskVisibleClass: '',
     resolvedMaskVariant: 'light',
-    resolvedBodyMode: 'scroll'
+    resolvedBodyMode: 'fit'
   },
   lifetimes: {
     attached() {
@@ -87,7 +87,7 @@ Component({
       return ['light', 'medium', 'strong'].includes(value) ? value : 'light'
     },
     normalizeBodyMode(value) {
-      return ['scroll', 'fit'].includes(value) ? value : 'scroll'
+      return ['scroll', 'fit'].includes(value) ? value : 'fit'
     },
     noop() {},
     closeFromMask() {

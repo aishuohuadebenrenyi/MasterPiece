@@ -1,4 +1,4 @@
-<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="practice-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="practice-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
   <view class="practice-records-page">
     <subpage-header title="练习记录" bind:back="back" />
 

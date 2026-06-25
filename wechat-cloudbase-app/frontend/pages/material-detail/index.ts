@@ -1,14 +1,14 @@
 import type { Material, MaterialType } from '../../types/domain'
-import { findLocalMaterial, listMaterials, updateMaterialState, updateMaterial, deleteMaterial } from '../../services/material'
+import { findLocalMaterial, getMaterial, updateMaterialState, updateMaterial, deleteMaterial } from '../../services/material'
 import { getState, markPlayed, unmarkPlayed, setMaterials, toggleSaved, startMaterialSession, subscribe, updateMaterialSession, clearMaterialSession , getThemeClass } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
 import { SHARE_ABILITY_COUNT, CATEGORY_SUGGESTION_LIMIT } from '../../config/constants'
+import { MATERIAL_ABILITIES, MATERIAL_SCENES, MATERIAL_TYPES } from '../../config/material'
 
-const materialTypes: MaterialType[] = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
-const defaultCategoryOptions = ['游戏', '角色', '才艺', '格式', '主理', '技巧', '复盘', '路径']
-const abilityOptions = ['自发性', 'Yes And', '积极聆听', '角色塑造', '情绪表达', '身体空间', '叙事构建', '失败复原', '主持', '团队协作']
-const sceneOptions = ['临场速查', '备课', '排练', '演出']
+const materialTypes = MATERIAL_TYPES
+const abilityOptions = MATERIAL_ABILITIES
+const sceneOptions = MATERIAL_SCENES
 
 function getCustomMaterialTags(categories: string[]) {
   return categories.filter((item) => (
@@ -70,6 +70,7 @@ Page({
     typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    tagCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     customCategoryVisible: false,
     customCategoryInput: '',
     categorySuggestions: [] as Array<{ value: string; label: string }>,
@@ -169,32 +170,23 @@ Page({
       this.setData({ currentMaterialSession, historyCards })
     })
 
-    // 2. 后台拉取最新数据，确保云端状态同步
+    // 2. 按 ID 拉取最新数据，避免默认列表分页导致后续素材深链打不开
     try {
-      const serverMaterials = await listMaterials()
-      setMaterials(serverMaterials)
-    } catch (error) {
+      material = await getMaterial(id)
+      const mergedMaterials = getState().materials.filter((item) => item.id !== id).concat(material)
+      setMaterials(mergedMaterials)
+      this.renderMaterial(material)
+    } catch (error: any) {
       if (!this.data.material) {
         this.setData({
           detailLoading: false,
-          detailErrorTitle: '素材详情加载失败',
-          detailErrorDesc: '云开发暂时没有返回素材数据，可以回到记录页或稍后重试。'
+          detailErrorTitle: error && error.code === 404 ? '没有找到这条素材' : '素材详情加载失败',
+          detailErrorDesc: error && error.code === 404
+            ? '这张推荐卡可能已不在当前素材库中，返回记录页重新选择。'
+            : '云开发暂时没有返回素材数据，可以回到记录页或稍后重试。'
         })
       }
       return
-    }
-
-    // 3. 更新为最新数据
-    allMaterials = getState().materials
-    material = allMaterials.find((item) => item.id === id) || findLocalMaterial(id)
-    if (material) {
-      this.renderMaterial(material)
-    } else {
-      this.setData({
-        detailLoading: false,
-        detailErrorTitle: '没有找到这条素材',
-        detailErrorDesc: '这张推荐卡可能已不在当前素材库中，返回记录页重新选择。'
-      })
     }
   },
 
@@ -383,7 +375,6 @@ Page({
 
   getCategoryPool() {
     const categories: string[] = []
-    defaultCategoryOptions.forEach((item) => categories.push(item))
     getState().materials.forEach((material: Material) => {
       if (Array.isArray(material.tags)) {
         material.tags.forEach((tag) => categories.push(tag))
@@ -418,6 +409,11 @@ Page({
         label: value,
         activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
       })),
+      tagCategoryOptions: getCustomMaterialTags(this.data.selectedCategoryTags).map((value: string) => ({
+        value,
+        label: value,
+        activeClass: 'active'
+      })),
       categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
     })
   },
@@ -447,6 +443,10 @@ Page({
   },
 
   toggleEditMaterialScene(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleEditMaterialTag(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
     this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
   },
 
@@ -512,7 +512,11 @@ Page({
       : this.data.customCategoryInput
     const category = String(nextValue || '').trim()
     if (!category) {
-      toast('先输入分类')
+      toast('先输入标签')
+      return
+    }
+    if (materialTypes.includes(category as MaterialType) || abilityOptions.includes(category) || sceneOptions.includes(category)) {
+      toast('请在对应的类型、能力或场景中选择')
       return
     }
     const existed = this.getCategoryPool().find((item: string) => item.toLowerCase() === category.toLowerCase())
@@ -558,7 +562,11 @@ Page({
     delete currentMaterial.avoid
     delete currentMaterial.verdict
 
-    const materialType = (materialTypes.find((item) => categories.includes(item)) || currentMaterial.type || '游戏') as MaterialType
+    const materialType = materialTypes.find((item) => categories.includes(item)) as MaterialType | undefined
+    if (!materialType) {
+      toast('请选择素材类型')
+      return
+    }
     const abilities = abilityOptions.filter((item) => categories.includes(item))
     const scenes = sceneOptions.filter((item) => categories.includes(item))
     const tags = getCustomMaterialTags(categories)
@@ -604,11 +612,11 @@ Page({
 
   async refreshMaterials(materialId?: string) {
     try {
-      const serverMaterials = await listMaterials()
-      setMaterials(serverMaterials)
       const currentId = materialId || this.data.material?.id
-      const material = currentId ? serverMaterials.find((item: Material) => item.id === currentId) || null : null
+      const material = currentId ? await getMaterial(currentId) : null
       if (material) {
+        const mergedMaterials = getState().materials.filter((item) => item.id !== material.id).concat(material)
+        setMaterials(mergedMaterials)
         this.renderMaterial(material)
       }
     } catch (error) {
