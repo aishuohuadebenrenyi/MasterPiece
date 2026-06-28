@@ -59,15 +59,19 @@ function createCardViewModel({
 
 function buildPracticeRecordCardViewModel(record = {}) {
   const summaryText = pickFirstText([
-    record.keep ? `Keep：${record.keep}` : '',
-    record.try ? `Try：${record.try}` : '',
+    record.note ? `复盘：${record.note}` : '',
     record.reminder ? `提醒：${record.reminder}` : '',
-    record.desc,
-    record.effect
+    record.desc
   ]) || '无反馈内容'
   const meta = []
+  if (record.score) {
+    meta.push(`${record.score} 分`)
+  }
   if (record.duration > 0) {
     meta.push(`${Math.floor(record.duration / 60)} 分钟`)
+  }
+  if (Array.isArray(record.attachments) && record.attachments.length) {
+    meta.push(`${record.attachments.length} 个附件`)
   }
   meta.push(...buildMetaPills(record.meta, 2))
   return createCardViewModel({

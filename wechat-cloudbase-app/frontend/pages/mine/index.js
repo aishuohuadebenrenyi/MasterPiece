@@ -392,11 +392,14 @@ Page({
   },
 
   onScroll(e) {
-    const deltaY = e.detail.deltaY
-    if (Math.abs(deltaY) > 10) {
+    const scrollTop = Number(e.detail.scrollTop || 0)
+    const previousScrollTop = typeof this._lastScrollTop === 'number' ? this._lastScrollTop : scrollTop
+    const delta = scrollTop - previousScrollTop
+    this._lastScrollTop = scrollTop
+    if (Math.abs(delta) > 10) {
       const tabbar = this.getTabBar()
       if (tabbar && typeof tabbar.setHidden === 'function') {
-        tabbar.setHidden(deltaY > 0)
+        tabbar.setHidden(delta > 0)
       }
     }
   },

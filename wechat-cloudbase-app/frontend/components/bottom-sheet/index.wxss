@@ -124,6 +124,8 @@ text {
   justify-content: center;
   padding-top: 14rpx;
   padding-bottom: var(--sheet-action-bottom-gap);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.76), #ffffff 38%);
+  background: var(--improv-sheet-action-gradient, linear-gradient(180deg, rgba(255, 255, 255, 0.76), #ffffff 38%));
 }
 
 .sheet.sheet-with-actions .sheet-scroll {
@@ -217,6 +219,10 @@ text {
   flex-direction: column;
 }
 
+.sheet.profile-edit-sheet-shell.sheet-with-actions .sheet-scroll-static {
+  max-height: calc(72vh - 238rpx);
+}
+
 .sheet.full-sheet {
   max-height: 88vh;
 }
@@ -293,6 +299,10 @@ text {
   background: var(--improv-bg-subtle, #f7f9fe);
 }
 
+.sheet.mine-list-sheet {
+  text-align: left;
+}
+
 .sheet.mine-detail-sheet {
   padding-bottom: var(--improv-card-padding-md, 40rpx);
 }
@@ -308,6 +318,10 @@ text {
   max-height: calc(72vh - 150rpx);
   display: flex;
   flex-direction: column;
+}
+
+.sheet.mine-list-sheet .sheet-scroll-static {
+  padding-bottom: 0;
 }
 
 .sheet.show {

@@ -1,4 +1,4 @@
-import type { Material, TodayItem, PracticeRecord } from '../../types/domain'
+import type { Material, TodayItem, PracticeRecord, PracticeRecordAttachment } from '../../types/domain'
 import { findLocalMaterial } from '../../services/material'
 import { completePractice } from '../../services/practice-record'
 import { listRehearsals } from '../../services/rehearsal'
@@ -26,14 +26,14 @@ Page({
     contextSummaryTitle: '',
     contextSummaryDesc: '',
     attendanceText: '',
-    effectValue: '一般',
-    keepValue: '',
-    tryValue: '',
+    scoreValue: 8,
+    noteValue: '',
     reminderValue: '',
+    draftAttachments: [] as PracticeRecordAttachment[],
+    uploadingAttachment: false,
     moreVisible: false,
     savingMode: '' as '' | 'record' | 'method',
     contextOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
-    effectOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     layoutStyle: '',
     duration: 0,
     durationText: ''
@@ -93,13 +93,6 @@ Page({
         ...(hasHistorical ? [{ value: 'history', label: '关联历史排练' }] : [])
       ].map((item) => Object.assign({}, item, {
         activeClass: this.data.contextType === item.value ? 'active' : ''
-      })),
-      effectOptions: [
-        { value: '很有效', label: '很有效' },
-        { value: '一般', label: '一般' },
-        { value: '不适合', label: '不适合' }
-      ].map((item) => Object.assign({}, item, {
-        activeClass: this.data.effectValue === item.value ? 'active' : ''
       }))
     })
   },
@@ -215,7 +208,7 @@ Page({
   },
 
   buildFeedbackSummary() {
-    return `Keep: ${this.data.keepValue || '无'}\nTry: ${this.data.tryValue || '无'}${this.data.reminderValue ? '\n提醒: ' + this.data.reminderValue : ''}`
+    return `评分: ${this.data.scoreValue}/10\n本次复盘: ${this.data.noteValue || '无'}${this.data.reminderValue ? '\n提醒: ' + this.data.reminderValue : ''}`
   },
 
   buildMethodCardItem(): TodayItem | null {
@@ -256,8 +249,18 @@ Page({
     }, () => this.syncContextSummary())
   },
 
-  setEffect(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ effectValue: event.currentTarget.dataset.value }, () => this.syncOptions())
+  setScoreValue(value: number) {
+    const scoreValue = Math.max(1, Math.min(10, Math.round(Number(value) || 8)))
+    this.setData({ scoreValue })
+  },
+
+  setScore(event: WechatMiniprogram.CustomEvent<{ value: number }>) {
+    this.setScoreValue(Number(event.detail.value))
+  },
+
+  adjustScore(event: WechatMiniprogram.TouchEvent) {
+    const delta = Number(event.currentTarget.dataset.delta) || 0
+    this.setScoreValue(this.data.scoreValue + delta)
   },
 
   toggleMore() {
@@ -267,6 +270,66 @@ Page({
   updateField(event: WechatMiniprogram.Input) {
     const field = event.currentTarget.dataset.field
     this.setData({ [field]: event.detail.value })
+  },
+
+  getUploadExtension(path = '', mediaType = 'image') {
+    const match = path.match(/\.([a-zA-Z0-9]+)(?:\?|$)/)
+    if (match && match[1]) return match[1].toLowerCase()
+    return mediaType === 'video' ? 'mp4' : 'jpg'
+  },
+
+  async addAttachment(event: WechatMiniprogram.TouchEvent) {
+    if (this.data.uploadingAttachment) return
+    const mediaType = event.currentTarget.dataset.type === 'video' ? 'video' : 'image'
+    const currentAttachments = this.data.draftAttachments || []
+    if (currentAttachments.length >= 9) {
+      toast('最多添加 9 个附件')
+      return
+    }
+    this.setData({ uploadingAttachment: true })
+    try {
+      const picked = await (wx as any).chooseMedia({
+        count: 1,
+        mediaType: [mediaType],
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed']
+      })
+      const file = picked.tempFiles && picked.tempFiles[0]
+      if (!file || !file.tempFilePath) {
+        this.setData({ uploadingAttachment: false })
+        return
+      }
+      const id = `attachment-${Date.now()}`
+      const extension = this.getUploadExtension(file.tempFilePath, mediaType)
+      const cloudPath = `practice-attachments/${id}.${extension}`
+      const uploaded = await (wx.cloud as any).uploadFile({
+        cloudPath,
+        filePath: file.tempFilePath
+      })
+      const nextAttachment: PracticeRecordAttachment = {
+        id,
+        type: mediaType as 'image' | 'video',
+        fileID: uploaded.fileID,
+        duration: typeof file.duration === 'number' ? file.duration : undefined,
+        size: typeof file.size === 'number' ? file.size : undefined,
+        createdAt: Date.now()
+      }
+      this.setData({
+        draftAttachments: currentAttachments.concat(nextAttachment),
+        uploadingAttachment: false
+      })
+    } catch (error: any) {
+      this.setData({ uploadingAttachment: false })
+      if (error && /cancel/i.test(String(error.errMsg || error.message || ''))) return
+      toast('附件添加失败')
+    }
+  },
+
+  removeDraftAttachment(event: WechatMiniprogram.TouchEvent) {
+    const id = event.currentTarget.dataset.id
+    this.setData({
+      draftAttachments: (this.data.draftAttachments || []).filter((item) => item.id !== id)
+    })
   },
 
   async persistFeedbackRecord(options: { createMethodCard: boolean }) {
@@ -281,17 +344,17 @@ Page({
     const practiceRecord: PracticeRecord = {
       id: `practiceRecord-${Date.now()}`,
       title: material.title,
-      desc: this.data.keepValue || this.data.tryValue || this.data.reminderValue || '无反馈',
+      desc: this.data.noteValue || this.data.reminderValue || '无反馈',
       materialId: material.id,
       materialTitle: material.title,
       rehearsalId: targetRehearsal ? targetRehearsal.id : '',
       rehearsalTitle: targetRehearsal ? targetRehearsal.title : '',
-      effect: this.data.effectValue,
-      keep: this.data.keepValue,
-      try: this.data.tryValue,
+      score: this.data.scoreValue,
+      note: this.data.noteValue,
+      attachments: this.data.draftAttachments,
       reminder: this.data.reminderValue,
       duration: this.data.duration,
-      meta: [this.data.effectValue, this.data.attendanceText].filter(Boolean),
+      meta: [`${this.data.scoreValue} 分`, this.data.attendanceText].filter(Boolean),
       createdAt: Date.now()
     }
     const methodCard = options.createMethodCard ? this.buildMethodCardItem() : null
@@ -306,9 +369,9 @@ Page({
           rehearsalTitle: practiceRecord.rehearsalTitle,
           title: practiceRecord.title,
           desc: practiceRecord.desc,
-          effect: practiceRecord.effect,
-          keep: practiceRecord.keep,
-          try: practiceRecord.try,
+          score: practiceRecord.score,
+          note: practiceRecord.note,
+          attachments: practiceRecord.attachments,
           reminder: practiceRecord.reminder,
           duration: practiceRecord.duration,
           meta: practiceRecord.meta
@@ -317,8 +380,8 @@ Page({
           rehearsalId: targetRehearsal.id,
           materialId: material.id,
           status: '已完成',
-          keep: this.data.keepValue,
-          try: this.data.tryValue
+          keep: this.data.noteValue,
+          try: ''
         } : null,
         methodCard: methodCard ? {
           id: methodCard.id,
@@ -328,15 +391,15 @@ Page({
           type: '素材练习',
           title: methodCard.title,
           desc: methodCard.desc,
-          meta: ['素材练习', material.title, this.data.effectValue]
+          meta: ['素材练习', material.title, `${this.data.scoreValue} 分`]
         } : null
       })
       addPracticeRecord(result.practiceRecord)
       if (targetRehearsal && this.data.contextType === 'current') {
         updateCurrentRehearsalPlan(material.id, {
           status: '已完成',
-          keep: this.data.keepValue,
-          try: this.data.tryValue
+          keep: this.data.noteValue,
+          try: ''
         })
       }
       markPlayed(material.id)

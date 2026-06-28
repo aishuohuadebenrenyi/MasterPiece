@@ -154,4 +154,28 @@ assert(/\.sheet-scroll\s*\{[^}]*height:\s*calc\(/s.test(bottomSheetStyles), 'bot
 assert(/\.sheet-scroll-static\s*\{[^}]*overflow-y:\s*auto/s.test(bottomSheetStyles), 'bottom-sheet fit mode must cap long content')
 assert(bottomSheetScript.includes("value: 'fit'"), 'bottom-sheet must default to fit mode')
 
+const emptyStatePanelStyles = read('frontend/components/empty-state-panel/index.wxss')
+assert(/\.empty-state-panel \.empty-actions\s*\{[^}]*flex-wrap:\s*wrap/s.test(emptyStatePanelStyles), 'empty-state-panel actions must wrap on narrow cards')
+assert(/\.empty-state-panel \.empty-action-btn\s*\{[^}]*min-width:\s*0/s.test(emptyStatePanelStyles), 'empty-state-panel buttons must not force card overflow')
+
+const practiceFeedbackTemplate = read('frontend/pages/practice-feedback/index.wxml')
+const practiceFeedbackStyles = read('frontend/pages/practice-feedback/index.wxss')
+assert(!practiceFeedbackTemplate.includes('title="{{material.title}}"'), 'practice feedback header must not repeat the material title')
+assert(practiceFeedbackTemplate.includes('practice-duration-summary'), 'practice feedback must show duration in a dedicated summary block')
+assert(/\.score-value-badge\s*\{[^}]*align-items:\s*center/s.test(practiceFeedbackStyles), 'score badge text must be vertically centered')
+
+const practiceRecordsJson = read('frontend/pages/practice-records/index.json')
+const practiceRecordsScript = read('frontend/pages/practice-records/index.js')
+const materialFilterHandler = practiceRecordsScript.match(/setMaterialFilter\(e\)\s*\{[\s\S]*?\n  \},/)
+const materialOptionsSync = practiceRecordsScript.match(/syncMaterialOptions\(records = \[\]\)\s*\{[\s\S]*?\n  \},/)
+const practiceRecordsOnLoad = practiceRecordsScript.match(/onLoad\(options = \{\}\)\s*\{[\s\S]*?\n  \},/)
+assert(practiceRecordsJson.includes('"search-bar": "../../components/search-bar/index"'), 'practice records material sheet must register search-bar')
+assert(practiceRecordsTemplate.includes('<search-bar'), 'practice records material sheet must use shared search-bar')
+assert(!practiceRecordsTemplate.includes('material-search-clear'), 'practice records material sheet must not keep custom clear button')
+assert(practiceRecordsTemplate.includes('data-index="{{index}}"'), 'practice records material options must pass a stable option index')
+assert(!practiceRecordsScript.includes('暂无练习记录'), 'practice records material options must not include materials without records')
+assert(materialFilterHandler && !materialFilterHandler[0].includes("dataset.value || 'all'"), 'practice records material option selection must not fall back to all when dataset is missing')
+assert(materialOptionsSync && !materialOptionsSync[0].includes('filters,'), 'practice records material option sync must not rewrite active filters')
+assert(practiceRecordsOnLoad && practiceRecordsOnLoad[0].includes('materialId })'), 'practice records must preserve route materialId before remote records load')
+
 console.log(`Checked ${requiredActions.length} actions, ${pageFiles.length} page scripts, ${wxmlFiles.length} templates and ${wxssFiles.length} stylesheets`)

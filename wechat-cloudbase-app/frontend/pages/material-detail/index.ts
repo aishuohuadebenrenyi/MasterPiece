@@ -1,5 +1,6 @@
 import type { Material, MaterialType } from '../../types/domain'
 import { findLocalMaterial, getMaterial, updateMaterialState, updateMaterial, deleteMaterial } from '../../services/material'
+import { listPracticeRecords } from '../../services/practice-record'
 import { getState, markPlayed, unmarkPlayed, setMaterials, toggleSaved, startMaterialSession, subscribe, updateMaterialSession, clearMaterialSession , getThemeClass } from '../../store/index'
 import { getRouteParam, toast } from '../../utils/page'
 import { getLayoutStyle } from '../../utils/layout'
@@ -30,6 +31,13 @@ type HistoryCard = {
   desc: string
   meta: string[]
   date: string
+}
+
+function formatShortDate(value: unknown) {
+  if (!value) return '-'
+  const date = new Date(value as number)
+  if (Number.isNaN(date.getTime())) return '-'
+  return `${date.getMonth() + 1}月${date.getDate()}日`
 }
 
 function buildMaterialMeta(people = '', duration = '') {
@@ -67,6 +75,12 @@ Page({
     timer: null as number | null,
     currentMaterialSession: null as any,
     historyCards: [] as HistoryCard[],
+    practiceSummary: {
+      avgScore: '-',
+      count: 0,
+      latestText: '-'
+    },
+    recentPracticeRecords: [] as Array<{ id: string; title: string; note: string; meta: string[] }>,
     typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
     sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
@@ -217,6 +231,41 @@ Page({
       detailErrorTitle: '',
       detailErrorDesc: ''
     }, () => this.syncStatusText())
+    this.loadPracticeSummary(material.id)
+  },
+
+  async loadPracticeSummary(materialId: string) {
+    try {
+      const allRecords = await listPracticeRecords({ materialId, limit: 100 })
+      const records = allRecords.filter((item) => item.materialId === materialId)
+      const scoredRecords = records.filter((item) => Number(item.score) > 0)
+      const avgScore = scoredRecords.length
+        ? (scoredRecords.reduce((sum, item) => sum + Number(item.score || 0), 0) / scoredRecords.length).toFixed(1)
+        : '-'
+      const latest = records[0]
+      this.setData({
+        practiceSummary: {
+          avgScore,
+          count: records.length,
+          latestText: latest ? formatShortDate(latest.createdAt) : '-'
+        },
+        recentPracticeRecords: records.slice(0, 3).map((item) => ({
+          id: item.id,
+          title: formatShortDate(item.createdAt),
+          note: item.note || item.desc || '无复盘内容',
+          meta: [`${item.score || '-'} 分`, ...(Array.isArray(item.attachments) && item.attachments.length ? [`${item.attachments.length} 个附件`] : [])]
+        }))
+      })
+    } catch (error) {
+      this.setData({
+        practiceSummary: {
+          avgScore: '-',
+          count: 0,
+          latestText: '-'
+        },
+        recentPracticeRecords: []
+      })
+    }
   },
 
   retryLoad() {
@@ -335,6 +384,11 @@ Page({
   openRelated() {
     if (!this.data.related) return
     wx.redirectTo({ url: `/pages/material-detail/index?id=${this.data.related.id}` })
+  },
+
+  openPracticeRecords() {
+    const materialId = this.data.material?.id
+    wx.navigateTo({ url: `/pages/practice-records/index${materialId ? '?materialId=' + materialId : ''}` })
   },
 
   enterEditMode() {

@@ -88,7 +88,7 @@
 - `components/filter-section`：筛选 chips、目标选择、来源选择等分组块的统一壳层。
 - `components/selection-card`：选择列表、今日记录列表、弹层候选卡片的统一卡片结构。
 - `components/record-card`、`components/record-detail-panel`、`components/asset-detail-panel`：历史记录和我的页资产列表/详情收口组件。
-- `components/material-form`：统一素材录入与编辑表单，复用字段分组、分类 chips、自定义分类建议和文本输入结构。
+- `components/material-form`：统一素材录入与编辑表单，复用类型、能力、场景、自由标签和文本输入结构。
 - `components/subpage-header`：子页面返回头部壳层，统一返回按钮、kicker 和标题层级。
 - `custom-tab-bar`：自定义主导航。
 
@@ -98,7 +98,7 @@
 
 前端配色以 `frontend/styles/theme.wxss` 的 `--improv-*` 变量作为主题 token 契约，页面和组件不再直接维护散落色值。当前默认主题延续橙色主品牌、蓝色辅助色、浅色卡片和柔和阴影体系；`theme.wxss` 内提供了 `.theme-vivid` 高对比度沉浸主题覆盖块，用户可在“设置 -> 外观主题”切换。主题模式属于纯 UI 偏好：当前通过 `store/index.ts` 统一管理，并使用本地 Storage 持久化到当前设备；不新增 CloudBase 字段，不参与业务事实同步。所有页面根节点、TabBar 以及弹层组件均需绑定 `themeClass`，依赖 CSS 变量继承机制实现全局主题一致。自定义组件存在样式隔离边界，凡是在组件 WXSS 中使用主题变量的组件，必须显式 `@import` 主题文件；凡是组件内部需要复用全局按钮、输入框或页面传入 `customClass` 的场景，必须显式打开全局类共享。受 Skyline / Glass-Easel 兼容性影响，底部导航、发现页空态卡片、素材卡片、弹层和浮层等关键视觉属性必须保留直接色值兜底，再使用 `var(--improv-*, fallback)` 覆盖；运行关键样式不应只引用复合渐变 token。
 
-半弹窗组件当前通过 `sheetClass` 区分 `compact-sheet`、`task-sheet`、`full-sheet` 等用途规格。轻量选择使用较低高度，任务型弹层保持标题区稳定；底部操作区通过 `showActions` 可选启用，添加素材这类原型化快速表单不启用独立底栏，主按钮放在内容流末尾。任务型弹层必须显式设置 `closeOnMask="{{false}}"`，避免用户误点遮罩丢失正在填写或编辑的内容；轻量查看、筛选和详情弹层可保留遮罩关闭。超过单一任务或长表单的场景进入子页面。
+半弹窗组件当前通过 `sheetClass` 区分 `compact-sheet`、`task-sheet`、`full-sheet` 等用途规格，并通过 `bodyMode` 区分正文承载方式。默认 `fit` 模式使用普通容器，由内容自然撑高并以最大高度限制超长内容，因此短内容不会在下方制造大面积空白；只有显式 `scroll` 模式使用原生纵向 `scroll-view`，且必须为正文滚动视口提供明确高度。Skyline 下不能只给纵向 `scroll-view` 设置 `max-height` 并依赖插槽内容自动撑高，否则正文区可能塌缩为零。任务型弹层保持标题区稳定；凡是包含提交、保存、开始、确认等页面级主操作的半弹窗，统一通过 `showActions` 和命名 `actions` slot 将按钮放入底部操作区。列表条目自身的选择、加入等行级动作继续留在条目右侧。任务型弹层必须显式设置 `closeOnMask="{{false}}"`，避免用户误点遮罩丢失正在填写或编辑的内容；轻量查看、筛选和详情弹层可保留遮罩关闭。超过单一任务或长表单的场景进入子页面。
 
 全局轻提示由 `frontend/utils/page.js` 的 `toast(title)` 统一触发，并在 `app.wxss` 中定义样式。成功文案只能在服务端确认写入后展示；失败时保留表单草稿并提供重试，不使用“待同步”伪装成功。
 
@@ -169,7 +169,7 @@
 - 私有数据由云函数通过 `cloud.getWXContext()` 获取 `OPENID` 并写入 `ownerOpenId`
 - 用户反馈通过 `feedback.create` 写入私有集合 `improv_feedback`，前端无直接数据库读写权限；首版不建设反馈管理端。
 
-详细集合和 action 见 [data-architecture.md](data-architecture.md) 与 [wechat-cloudbase-app/database.md](../wechat-cloudbase-app/database.md)。
+详细集合和 action 见 [data-architecture.md](data-architecture.md) 与 [release-support/wechat-cloudbase-app/database.md](../release-support/wechat-cloudbase-app/database.md)。
 
 ## 9. 数据隔离约定
 

@@ -9,10 +9,24 @@
       </view>
     </form-card>
 
+    <view class="record-filter-panel">
+      <button class="material-filter-picker" bindtap="openMaterialSheet">
+        <text class="filter-picker-label">素材</text>
+        <text class="filter-picker-value">{{materialFilterLabel}}</text>
+        <text class="filter-picker-action">切换</text>
+      </button>
+      <view class="filter-row">
+        <button wx:for="{{scoreOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setScoreFilter">{{item.label}}</button>
+      </view>
+      <view class="filter-row">
+        <button wx:for="{{attachmentOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setAttachmentFilter">{{item.label}}</button>
+      </view>
+    </view>
+
     <view wx:if="{{errorText}}" class="notice-note-card">{{errorText}}</view>
 
     <empty-state-panel wx:if="{{loading}}" tone="loading" title="正在同步练习记录" desc="稍等一下，正在拉取最近的素材练习复盘。" />
-    <empty-state-panel wx:elif="{{!records.length}}" title="还没有练习记录" desc="这里会回看单次素材练习的 Keep、Try 和提醒。等你真的练过一次，再把它留下来。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
+    <empty-state-panel wx:elif="{{!records.length}}" title="还没有练习记录" desc="{{hasActiveFilter ? '当前筛选下还没有练习记录，可以回到全部素材记录查看。' : '这里会回看单次素材练习的评分、本次复盘和提醒。等你真的练过一次，再把它留下来。'}}" primaryText="{{hasActiveFilter ? '查看全部素材记录' : '去记录'}}" secondaryText="去发现" bind:primary="handleEmptyPrimary" bind:secondary="goDiscover" />
 
     <view wx:else class="record-list">
       <view wx:for="{{records}}" wx:key="id" class="record-item-wrap">
@@ -23,6 +37,37 @@
 
   <bottom-sheet visible="{{detailVisible}}" title="记录详情" sheetClass="record-detail-sheet" bind:close="closeSheet">
     <record-detail-panel wx:if="{{selectedRecord}}" title="{{selectedRecord.title}}" meta="{{selectedRecord.displayMeta}}" pending="{{selectedRecord.syncStatus === 'pending'}}" sectionTitle="复盘详情" notes="{{selectedNotes}}" emptyText="无具体复盘内容。" readonlyNote="这是历史记录的只读回看。需要再次练这条素材时，可前往素材详情页开启。" />
+    <view wx:if="{{selectedRecord && selectedRecord.attachments && selectedRecord.attachments.length}}" class="record-attachment-section">
+      <view class="section-title">附件</view>
+      <view class="record-attachment-grid">
+        <button wx:for="{{selectedRecord.attachments}}" wx:key="id" class="record-attachment-item {{item.type === 'video' ? 'video' : ''}}" data-id="{{item.id}}" bindtap="openAttachment">{{item.type === 'video' ? '短视频' : '照片'}}</button>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{materialSheetVisible}}" title="选择素材" sheetClass="record-detail-sheet material-select-sheet" bodyMode="scroll" bind:close="closeMaterialSheet">
+    <search-bar customClass="material-search" size="compact" value="{{materialSearchKeyword}}" placeholder="搜索素材名称后按搜索" showClear="{{true}}" bind:blur="updateMaterialSearch" bind:confirm="updateMaterialSearch" bind:clear="clearMaterialSearch" />
+    <view class="material-option-list">
+      <view wx:for="{{filteredMaterialOptions}}" wx:key="value" class="material-option-item {{item.activeClass}}" role="button" data-index="{{index}}" data-material-id="{{item.value}}" bindtap="setMaterialFilter">
+        <view class="material-option-copy">
+          <text class="material-option-title">{{item.label}}</text>
+          <text class="material-option-desc">{{item.desc}}</text>
+        </view>
+        <text class="material-option-check">{{item.activeClass ? '✓' : ''}}</text>
+      </view>
+    </view>
+    <text wx:if="{{!filteredMaterialOptions.length}}" class="material-option-empty">没有匹配的素材</text>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{attachmentVisible}}" title="附件详情" sheetClass="record-detail-sheet" bind:close="closeAttachment">
+    <view wx:if="{{selectedAttachment}}" class="attachment-preview {{selectedAttachment.type === 'video' ? 'video' : ''}}">
+      <text>{{selectedAttachment.type === 'video' ? '短视频预览' : '照片预览'}}</text>
+      <text class="muted attachment-file-id">{{selectedAttachment.fileID}}</text>
+    </view>
+    <view class="form-actions attachment-actions">
+      <button class="ghost-btn" bindtap="closeAttachment">关闭</button>
+      <button class="danger-btn" bindtap="deleteAttachment">删除附件</button>
+    </view>
   </bottom-sheet>
 
   <root-portal wx:if="{{appToastVisible}}">

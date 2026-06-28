@@ -8,7 +8,30 @@
 }
 
 .empty-state-panel {
+  min-width: 0;
   margin-bottom: 0;
+}
+
+.empty-state-panel .empty-actions {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.empty-state-panel .empty-action-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .empty-state-kicker {

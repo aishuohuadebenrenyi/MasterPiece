@@ -1,0 +1,152 @@
+﻿file,category,platform,purpose,width_px,height_px,format,bytes,note,source
+01_logo_base/png/logo_full_transparent_original_crop.png,Logo基础包,,完整横版logo透明背景,1156,646,PNG,245243,,generated
+01_logo_base/png/logo_symbol_transparent_original_crop.png,Logo基础包,,图形符号透明背景,888,448,PNG,142638,,generated
+01_logo_base/png/logo_wordmark_transparent_original_crop.png,Logo基础包,,文字组合透明背景,1156,335,PNG,158101,,generated
+01_logo_base/png/logo_full_transparent_512w.png,Logo基础包,,完整横版透明PNG 512px宽,512,286,PNG,72997,,generated
+01_logo_base/png/logo_full_transparent_1024w.png,Logo基础包,,完整横版透明PNG 1024px宽,1024,572,PNG,201231,,generated
+01_logo_base/png/logo_full_transparent_2048w.png,Logo基础包,,完整横版透明PNG 2048px宽,2048,1144,PNG,598071,,generated
+01_logo_base/png/logo_full_transparent_4096w.png,Logo基础包,,完整横版透明PNG 4096px宽,4096,2288,PNG,1726975,,generated
+01_logo_base/png/logo_symbol_transparent_64x64.png,Logo基础包,,图形符号透明PNG 64x64,64,64,PNG,2502,,generated
+01_logo_base/png/logo_symbol_white_square_64x64.png,Logo基础包,,图形符号白底方形PNG 64x64,64,64,PNG,1939,,generated
+01_logo_base/png/logo_symbol_white_rounded_preview_64x64.png,Logo基础包,,图形符号圆角预览PNG 64x64,64,64,PNG,2030,,generated
+01_logo_base/png/logo_symbol_transparent_128x128.png,Logo基础包,,图形符号透明PNG 128x128,128,128,PNG,6118,,generated
+01_logo_base/png/logo_symbol_white_square_128x128.png,Logo基础包,,图形符号白底方形PNG 128x128,128,128,PNG,4937,,generated
+01_logo_base/png/logo_symbol_white_rounded_preview_128x128.png,Logo基础包,,图形符号圆角预览PNG 128x128,128,128,PNG,5114,,generated
+01_logo_base/png/logo_symbol_transparent_256x256.png,Logo基础包,,图形符号透明PNG 256x256,256,256,PNG,15787,,generated
+01_logo_base/png/logo_symbol_white_square_256x256.png,Logo基础包,,图形符号白底方形PNG 256x256,256,256,PNG,13392,,generated
+01_logo_base/png/logo_symbol_white_rounded_preview_256x256.png,Logo基础包,,图形符号圆角预览PNG 256x256,256,256,PNG,13713,,generated
+01_logo_base/png/logo_symbol_transparent_512x512.png,Logo基础包,,图形符号透明PNG 512x512,512,512,PNG,42255,,generated
+01_logo_base/png/logo_symbol_white_square_512x512.png,Logo基础包,,图形符号白底方形PNG 512x512,512,512,PNG,37242,,generated
+01_logo_base/png/logo_symbol_white_rounded_preview_512x512.png,Logo基础包,,图形符号圆角预览PNG 512x512,512,512,PNG,37946,,generated
+01_logo_base/png/logo_symbol_transparent_1024x1024.png,Logo基础包,,图形符号透明PNG 1024x1024,1024,1024,PNG,114240,,generated
+01_logo_base/png/logo_symbol_white_square_1024x1024.png,Logo基础包,,图形符号白底方形PNG 1024x1024,1024,1024,PNG,101241,,generated
+01_logo_base/png/logo_symbol_white_rounded_preview_1024x1024.png,Logo基础包,,图形符号圆角预览PNG 1024x1024,1024,1024,PNG,102959,,generated
+01_logo_base/png/logo_symbol_transparent_2048x2048.png,Logo基础包,,图形符号透明PNG 2048x2048,2048,2048,PNG,327945,,generated
+01_logo_base/png/logo_symbol_white_square_2048x2048.png,Logo基础包,,图形符号白底方形PNG 2048x2048,2048,2048,PNG,286828,,generated
+01_logo_base/png/logo_symbol_white_rounded_preview_2048x2048.png,Logo基础包,,图形符号圆角预览PNG 2048x2048,2048,2048,PNG,290512,,generated
+01_logo_base/png/logo_full_navy_transparent.png,Logo基础包,,full 单色 navy 透明版,1156,646,PNG,42480,,generated
+01_logo_base/png/logo_symbol_navy_transparent.png,Logo基础包,,symbol 单色 navy 透明版,888,448,PNG,22614,,generated
+01_logo_base/png/logo_full_black_transparent.png,Logo基础包,,full 单色 black 透明版,1156,646,PNG,36616,,generated
+01_logo_base/png/logo_symbol_black_transparent.png,Logo基础包,,symbol 单色 black 透明版,888,448,PNG,18628,,generated
+01_logo_base/png/logo_full_white_transparent.png,Logo基础包,,full 单色 white 透明版,1156,646,PNG,41871,,generated
+01_logo_base/png/logo_full_white_on_navy_preview.png,Logo基础包,,full 反白版预览,1316,806,PNG,68841,,generated
+01_logo_base/png/logo_symbol_white_transparent.png,Logo基础包,,symbol 单色 white 透明版,888,448,PNG,22029,,generated
+01_logo_base/png/logo_symbol_white_on_navy_preview.png,Logo基础包,,symbol 反白版预览,1200,700,PNG,49030,,generated
+01_logo_base/png/logo_full_orange_transparent.png,Logo基础包,,full 单色 orange 透明版,1156,646,PNG,42330,,generated
+01_logo_base/png/logo_symbol_orange_transparent.png,Logo基础包,,symbol 单色 orange 透明版,888,448,PNG,22459,,generated
+01_logo_base/png/logo_full_blue_transparent.png,Logo基础包,,full 单色 blue 透明版,1156,646,PNG,42374,,generated
+01_logo_base/png/logo_symbol_blue_transparent.png,Logo基础包,,symbol 单色 blue 透明版,888,448,PNG,22509,,generated
+01_logo_base/png/logo_symbol_gradient_rebuilt.png,Logo基础包,,图形符号渐变重建版,888,448,PNG,50239,,generated
+01_logo_base/png/brand_color_swatch_1600x900.png,Logo基础包,,品牌色板PNG,1600,900,PNG,49367,,generated
+02_application_listing/wechat_mini_program/mini_program_avatar_144x144.png,应用上架类,微信小程序,微信小程序头像白底方形,144,144,PNG,6010,头像上传后平台会进行圆形裁切，核心图形已保留安全区,generated
+02_application_listing/wechat_mini_program/mini_program_avatar_180x180.png,应用上架类,微信小程序,微信小程序头像白底方形,180,180,PNG,8319,头像上传后平台会进行圆形裁切，核心图形已保留安全区,generated
+02_application_listing/wechat_mini_program/mini_program_avatar_240x240.png,应用上架类,微信小程序,微信小程序头像白底方形,240,240,PNG,12682,头像上传后平台会进行圆形裁切，核心图形已保留安全区,generated
+02_application_listing/wechat_mini_program/mini_program_avatar_300x300.png,应用上架类,微信小程序,微信小程序头像白底方形,300,300,PNG,17598,头像上传后平台会进行圆形裁切，核心图形已保留安全区,generated
+02_application_listing/wechat_mini_program/mini_program_avatar_512x512.png,应用上架类,微信小程序,微信小程序头像白底方形,512,512,PNG,38373,头像上传后平台会进行圆形裁切，核心图形已保留安全区,generated
+02_application_listing/wechat_mini_program/service_account_avatar_240x240.png,应用上架类,微信公众号,微信公众号/服务号头像,240,240,PNG,12682,,generated
+02_application_listing/wechat_mini_program/service_account_avatar_500x500.png,应用上架类,微信公众号,微信公众号/服务号头像,500,500,PNG,36961,,generated
+02_application_listing/wechat_mini_program/service_account_avatar_640x640.png,应用上架类,微信公众号,微信公众号/服务号头像,640,640,PNG,53603,,generated
+02_application_listing/wechat_mini_program/mini_program_code_white_template_430x430.png,应用上架类,微信小程序,小程序码白底适配模板,430,430,PNG,13538,此为占位模板，需替换真实小程序码后投放,generated
+02_application_listing/wechat_mini_program/mini_program_code_white_template_600x600.png,应用上架类,微信小程序,小程序码白底适配模板,600,600,PNG,20323,此为占位模板，需替换真实小程序码后投放,generated
+02_application_listing/wechat_mini_program/mini_program_code_white_template_860x860.png,应用上架类,微信小程序,小程序码白底适配模板,860,860,PNG,30173,此为占位模板，需替换真实小程序码后投放,generated
+02_application_listing/wechat_mini_program/function_intro_first_image_750x422.png,应用上架类,微信小程序,小程序功能介绍首图/首屏头图,750,422,PNG,57042,,generated
+02_application_listing/wechat_mini_program/function_intro_first_image_900x500.png,应用上架类,微信小程序,小程序功能介绍首图/首屏头图,900,500,PNG,70609,,generated
+02_application_listing/wechat_mini_program/function_intro_first_image_1080x608.png,应用上架类,微信小程序,小程序功能介绍首图/首屏头图,1080,608,PNG,91781,,generated
+02_application_listing/wechat_mini_program/function_intro_first_image_1600x900.png,应用上架类,微信小程序,小程序功能介绍首图/首屏头图,1600,900,PNG,151378,,generated
+02_application_listing/wechat_mini_program/wechat_share_card_500x400.png,应用上架类,微信小程序,微信分享卡片图 5:4,500,400,PNG,38343,,generated
+02_application_listing/app_store_ios/app_store_icon_1024x1024_square_no_transparency.png,应用上架类,Apple App Store,App Store 图标 1024 方形无透明,1024,1024,PNG,101241,官方上传素材应为方形无透明，圆角由系统展示时处理,generated
+02_application_listing/app_store_ios/app_store_icon_1024x1024_rounded_preview.png,应用上架类,Apple App Store,App Store 圆角预览图,1024,1024,PNG,102959,仅用于视觉预览，不建议作为原始上传图,generated
+02_application_listing/app_store_ios/ios_launch_no_text_1170x2532.png,应用上架类,iOS,iOS 启动图无文字版本,1170,2532,PNG,122516,,generated
+02_application_listing/app_store_ios/ios_launch_no_text_1290x2796.png,应用上架类,iOS,iOS 启动图无文字版本,1290,2796,PNG,137605,,generated
+02_application_listing/app_store_ios/ios_launch_no_text_1242x2688.png,应用上架类,iOS,iOS 启动图无文字版本,1242,2688,PNG,132372,,generated
+02_application_listing/app_store_ios/ios_launch_no_text_1284x2778.png,应用上架类,iOS,iOS 启动图无文字版本,1284,2778,PNG,137460,,generated
+02_application_listing/app_store_ios/ios_launch_no_text_1125x2436.png,应用上架类,iOS,iOS 启动图无文字版本,1125,2436,PNG,115713,,generated
+02_application_listing/app_store_ios/ios_launch_no_text_2048x2732.png,应用上架类,iOS,iOS 启动图无文字版本,2048,2732,PNG,245149,,generated
+02_application_listing/app_store_ios/app_store_screenshot_template_iphone_6_9_1290x2796.png,应用上架类,Apple App Store,App Store 截图模板 iphone_6_9,1290,2796,PNG,207148,,generated
+02_application_listing/app_store_ios/app_store_screenshot_template_iphone_6_5_1242x2688.png,应用上架类,Apple App Store,App Store 截图模板 iphone_6_5,1242,2688,PNG,198932,,generated
+02_application_listing/app_store_ios/app_store_screenshot_template_iphone_5_5_1242x2208.png,应用上架类,Apple App Store,App Store 截图模板 iphone_5_5,1242,2208,PNG,190846,,generated
+02_application_listing/app_store_ios/app_store_screenshot_template_ipad_12_9_2048x2732.png,应用上架类,Apple App Store,App Store 截图模板 ipad_12_9,2048,2732,PNG,300108,,generated
+02_application_listing/app_store_ios/app_store_detail_brand_header_1200x628.png,应用上架类,Apple App Store,应用商店详情页首屏品牌头图,1200,628,PNG,95842,,generated
+02_application_listing/app_store_ios/app_store_detail_brand_header_1920x1080.png,应用上架类,Apple App Store,应用商店详情页首屏品牌头图,1920,1080,PNG,188097,,generated
+02_application_listing/app_store_ios/app_store_detail_brand_header_1024x500.png,应用上架类,Apple App Store,应用商店详情页首屏品牌头图,1024,500,PNG,69637,,generated
+02_application_listing/android_stores/google_play_icon_512x512.png,应用上架类,Google Play,Google Play 高分辨率应用图标 512,512,512,PNG,37242,,generated
+02_application_listing/android_stores/android_launcher_icon_mdpi_48x48_transparent.png,应用上架类,Android,Android launcher icon mdpi,48,48,PNG,1695,,generated
+02_application_listing/android_stores/android_launcher_icon_mdpi_48x48_white.png,应用上架类,Android,Android launcher icon mdpi 白底,48,48,PNG,1339,,generated
+02_application_listing/android_stores/android_launcher_icon_hdpi_72x72_transparent.png,应用上架类,Android,Android launcher icon hdpi,72,72,PNG,2995,,generated
+02_application_listing/android_stores/android_launcher_icon_hdpi_72x72_white.png,应用上架类,Android,Android launcher icon hdpi 白底,72,72,PNG,2351,,generated
+02_application_listing/android_stores/android_launcher_icon_xhdpi_96x96_transparent.png,应用上架类,Android,Android launcher icon xhdpi,96,96,PNG,4449,,generated
+02_application_listing/android_stores/android_launcher_icon_xhdpi_96x96_white.png,应用上架类,Android,Android launcher icon xhdpi 白底,96,96,PNG,3429,,generated
+02_application_listing/android_stores/android_launcher_icon_xxhdpi_144x144_transparent.png,应用上架类,Android,Android launcher icon xxhdpi,144,144,PNG,7728,,generated
+02_application_listing/android_stores/android_launcher_icon_xxhdpi_144x144_white.png,应用上架类,Android,Android launcher icon xxhdpi 白底,144,144,PNG,6010,,generated
+02_application_listing/android_stores/android_launcher_icon_xxxhdpi_192x192_transparent.png,应用上架类,Android,Android launcher icon xxxhdpi,192,192,PNG,11544,,generated
+02_application_listing/android_stores/android_launcher_icon_xxxhdpi_192x192_white.png,应用上架类,Android,Android launcher icon xxxhdpi 白底,192,192,PNG,9140,,generated
+02_application_listing/android_stores/android_adaptive_icon_foreground_432x432.png,应用上架类,Android,Android 自适应图标 foreground,432,432,PNG,25063,,generated
+02_application_listing/android_stores/android_adaptive_icon_background_432x432.png,应用上架类,Android,Android 自适应图标 background,432,432,PNG,7512,,generated
+02_application_listing/android_stores/android_store_brand_graphic_1024x500.png,应用上架类,Android Store,安卓商店详情页/特色图片适配,1024,500,PNG,68803,,generated
+02_application_listing/android_stores/android_store_brand_graphic_1200x628.png,应用上架类,Android Store,安卓商店详情页/特色图片适配,1200,628,PNG,94821,,generated
+02_application_listing/android_stores/android_store_brand_graphic_1920x1080.png,应用上架类,Android Store,安卓商店详情页/特色图片适配,1920,1080,PNG,187091,,generated
+02_application_listing/android_stores/android_store_brand_graphic_1080x1920.png,应用上架类,Android Store,安卓商店详情页/特色图片适配,1080,1920,PNG,158316,,generated
+02_application_listing/android_stores/android_store_screenshot_template_1080x1920.png,应用上架类,Android Store,安卓商店截图模板,1080,1920,PNG,146822,,generated
+02_application_listing/android_stores/android_store_screenshot_template_1920x1080.png,应用上架类,Android Store,安卓商店截图模板,1920,1080,PNG,122239,,generated
+02_application_listing/android_stores/android_store_screenshot_template_1440x2560.png,应用上架类,Android Store,安卓商店截图模板,1440,2560,PNG,214097,,generated
+03_owned_channels/avatars/wechat_official_avatar_240x240.png,官方阵地运营类,社交平台,微信公众号头像,240,240,PNG,12682,,generated
+03_owned_channels/avatars/wechat_video_channel_avatar_500x500.png,官方阵地运营类,社交平台,视频号头像,500,500,PNG,36961,,generated
+03_owned_channels/avatars/xiaohongshu_avatar_1080x1080.png,官方阵地运营类,社交平台,小红书头像,1080,1080,PNG,115116,,generated
+03_owned_channels/avatars/douyin_avatar_400x400.png,官方阵地运营类,社交平台,抖音头像,400,400,PNG,26544,,generated
+03_owned_channels/avatars/weibo_avatar_200x200.png,官方阵地运营类,社交平台,微博头像,200,200,PNG,9734,,generated
+03_owned_channels/avatars/universal_social_avatar_1024x1024.png,官方阵地运营类,社交平台,全平台统一头像,1024,1024,PNG,105019,,generated
+03_owned_channels/covers/wechat_official_article_cover_900x383.png,官方阵地运营类,社交平台,公众号文章头图,900,383,PNG,56483,,generated
+03_owned_channels/covers/wechat_official_content_guide_900x500.png,官方阵地运营类,社交平台,公众号内容引导图,900,500,PNG,69808,,generated
+03_owned_channels/covers/wechat_video_cover_landscape_1080x608.png,官方阵地运营类,社交平台,视频号横版封面,1080,608,PNG,90984,,generated
+03_owned_channels/covers/wechat_video_cover_vertical_1080x1260.png,官方阵地运营类,社交平台,视频号竖版封面,1080,1260,PNG,143214,,generated
+03_owned_channels/covers/douyin_home_cover_1125x633.png,官方阵地运营类,社交平台,抖音主页顶图,1125,633,PNG,96460,,generated
+03_owned_channels/covers/xiaohongshu_shop_header_1080x608.png,官方阵地运营类,社交平台,小红书店铺/主页头图,1080,608,PNG,90984,,generated
+03_owned_channels/covers/weibo_banner_980x300.png,官方阵地运营类,社交平台,微博主页背景图,980,300,PNG,42849,,generated
+03_owned_channels/watermark_templates/daily_post_logo_watermark_template_square_1080x1080.png,官方阵地运营类,社交内容,日常配图Logo水印规范模板,1080,1080,PNG,99025,,generated
+03_owned_channels/watermark_templates/daily_post_logo_watermark_template_xiaohongshu_3_4_1080x1440.png,官方阵地运营类,社交内容,日常配图Logo水印规范模板,1080,1440,PNG,118581,,generated
+03_owned_channels/watermark_templates/daily_post_logo_watermark_template_vertical_story_1080x1920.png,官方阵地运营类,社交内容,日常配图Logo水印规范模板,1080,1920,PNG,146822,,generated
+03_owned_channels/watermark_templates/daily_post_logo_watermark_template_landscape_1920x1080.png,官方阵地运营类,社交内容,日常配图Logo水印规范模板,1920,1080,PNG,122239,,generated
+03_owned_channels/watermark_templates/content_corner_logo_component_transparent_480x160.png,官方阵地运营类,社交内容,内容产出品牌角标透明组件,480,160,PNG,31498,,generated
+03_owned_channels/watermark_templates/content_corner_logo_component_transparent_720x240.png,官方阵地运营类,社交内容,内容产出品牌角标透明组件,720,240,PNG,57303,,generated
+03_owned_channels/watermark_templates/content_corner_logo_component_transparent_960x320.png,官方阵地运营类,社交内容,内容产出品牌角标透明组件,960,320,PNG,88839,,generated
+03_owned_channels/watermark_templates/content_corner_logo_component_preview_1080x1080.png,官方阵地运营类,社交内容,品牌角标固定模板预览,1080,1080,PNG,33555,,generated
+04_paid_ads/base_templates/wechat_moments_ad_square_800x800.png,流量投放类,广告平台,朋友圈广告常规方图,800,800,PNG,85483,,generated
+04_paid_ads/base_templates/wechat_moments_ad_square_1080x1080.png,流量投放类,广告平台,朋友圈广告高清方图,1080,1080,PNG,125010,,generated
+04_paid_ads/base_templates/douyin_feed_vertical_1080x1920.png,流量投放类,广告平台,抖音信息流竖版,1080,1920,PNG,170177,,generated
+04_paid_ads/base_templates/douyin_feed_square_1080x1080.png,流量投放类,广告平台,抖音信息流方版,1080,1080,PNG,125010,,generated
+04_paid_ads/base_templates/douyin_feed_horizontal_1920x1080.png,流量投放类,广告平台,抖音信息流横版,1920,1080,PNG,145049,,generated
+04_paid_ads/base_templates/xiaohongshu_bid_note_1080x1440.png,流量投放类,广告平台,小红书竞价笔记图 3:4,1080,1440,PNG,147982,,generated
+04_paid_ads/base_templates/xiaohongshu_bid_square_1080x1080.png,流量投放类,广告平台,小红书竞价方图,1080,1080,PNG,125010,,generated
+04_paid_ads/base_templates/generic_native_ad_1200x628.png,流量投放类,广告平台,信息流广告通用 1200x628,1200,628,PNG,74013,,generated
+04_paid_ads/base_templates/generic_native_ad_1280x720.png,流量投放类,广告平台,信息流广告通用 16:9,1280,720,PNG,86074,,generated
+04_paid_ads/base_templates/generic_native_ad_720x1280.png,流量投放类,广告平台,信息流广告通用 9:16,720,1280,PNG,100285,,generated
+04_paid_ads/base_templates/generic_native_ad_640x640.png,流量投放类,广告平台,信息流广告通用 1:1,640,640,PNG,65375,,generated
+04_paid_ads/splash_ads/splash_ad_logo_center_no_text_1080x1920.png,流量投放类,广告平台,开屏广告Logo居中规范模板,1080,1920,PNG,105171,,generated
+04_paid_ads/splash_ads/splash_ad_logo_center_no_text_720x1280.png,流量投放类,广告平台,开屏广告Logo居中规范模板,720,1280,PNG,58893,,generated
+04_paid_ads/splash_ads/splash_ad_logo_center_no_text_1440x2560.png,流量投放类,广告平台,开屏广告Logo居中规范模板,1440,2560,PNG,156117,,generated
+04_paid_ads/splash_ads/splash_ad_logo_center_no_text_1242x2688.png,流量投放类,广告平台,开屏广告Logo居中规范模板,1242,2688,PNG,132372,,generated
+04_paid_ads/landing_page_components/landing_page_brand_header_750x420.png,流量投放类,落地页,跳转落地页品牌头部固定组件,750,420,PNG,60552,,generated
+04_paid_ads/landing_page_components/landing_page_brand_header_1080x360.png,流量投放类,落地页,跳转落地页品牌头部固定组件,1080,360,PNG,56584,,generated
+04_paid_ads/landing_page_components/landing_page_brand_header_1200x480.png,流量投放类,落地页,跳转落地页品牌头部固定组件,1200,480,PNG,74168,,generated
+04_paid_ads/landing_page_components/landing_page_brand_header_1920x640.png,流量投放类,落地页,跳转落地页品牌头部固定组件,1920,640,PNG,107527,,generated
+04_paid_ads/landing_page_components/landing_page_brand_header_1920x1080.png,流量投放类,落地页,跳转落地页品牌头部固定组件,1920,1080,PNG,190365,,generated
+05_offline_print/flyer_A4_300dpi_2480x3508.png,线下推广类,印刷,A4宣传单 300DPI PNG,2480,3508,PNG,811362,,generated
+05_offline_print/poster_A3_300dpi_3508x4961.png,线下推广类,印刷,A3海报 300DPI PNG,3508,4961,PNG,1303683,,generated
+05_offline_print/rollup_preview_800x1800.png,线下推广类,线下展示,门店展架/易拉宝预览图,800,1800,PNG,185107,,generated
+05_offline_print/merch_sticker_1024x1024.png,线下推广类,周边,周边文创Logo应用模板：圆形贴纸,1024,1024,PNG,66345,,generated
+05_offline_print/merch_badge_1500x1500.png,线下推广类,周边,周边文创Logo应用模板：徽章图案,1500,1500,PNG,165753,,generated
+05_offline_print/merch_tshirt_chest_2048x2048.png,线下推广类,周边,周边文创Logo应用模板：T恤胸前印花,2048,2048,PNG,129259,,generated
+05_offline_print/qr_promo_template_mini_program_600x600.png,线下推广类,线下推广,扫码推广小程序码Logo融合模板,600,600,PNG,20323,需替换真实二维码/小程序码,generated
+05_offline_print/qr_promo_template_app_download_600x600.png,线下推广类,线下推广,扫码推广APP下载码Logo融合模板,600,600,PNG,20753,需替换真实二维码/小程序码,generated
+01_logo_base/vector/zentro_symbol_gradient.svg,Logo基础包,矢量源文件,图形符号渐变SVG,,,SVG,1225,可在Figma/Illustrator/Inkscape中打开编辑,generated
+01_logo_base/vector/zentro_full_lockup_gradient.svg,Logo基础包,矢量源文件,完整锁定组合渐变SVG,,,SVG,1671,可在Figma/Illustrator/Inkscape中打开编辑,generated
+01_logo_base/vector/zentro_symbol_single_color_navy.svg,Logo基础包,矢量源文件,图形符号深蓝单色SVG,,,SVG,1212,可在Figma/Illustrator/Inkscape中打开编辑,generated
+01_logo_base/vector/zentro_symbol_reverse_white.svg,Logo基础包,矢量源文件,图形符号反白SVG,,,SVG,1212,可在Figma/Illustrator/Inkscape中打开编辑,generated
+01_logo_base/vector/zentro_symbol_cmyk_print.eps,Logo基础包,印刷/矢量,CMYK EPS印刷矢量源文件,,,EPS,863,AI文件为AI兼容EPS结构；如需原生分层AI，请在Illustrator中打开后另存为.ai,generated
+01_logo_base/vector/zentro_symbol_ai_compatible.ai,Logo基础包,印刷/矢量,Illustrator兼容CMYK矢量源文件,,,AI,863,AI文件为AI兼容EPS结构；如需原生分层AI，请在Illustrator中打开后另存为.ai,generated
+01_logo_base/vector/zentro_symbol_cmyk_vector_print.pdf,Logo基础包,印刷/矢量,CMYK PDF矢量印刷源文件,1200,700,PDF,1612,矢量PDF，不依赖DPI；用于印刷排版,generated
+05_offline_print/rollup_80x180cm_vector.svg,线下推广类,印刷,80x180cm易拉宝矢量模板,,,SVG,2158,矢量SVG，可按300DPI或印厂要求输出PDF/AI,generated
+07_acceptance/asset_manifest.csv,验收测试,交付清单,全量素材清单CSV,,,CSV,24078,由生成脚本自动记录,generated
+07_acceptance/acceptance_check_report.csv,验收测试,交付清单,尺寸/格式/可读取性验收报告CSV,,,CSV,22125,逐文件打开校验,generated
+06_docs/zentro_brand_guidelines.md,物料规范文档,文档,全渠道上线宣传物料使用规范 Markdown,,,MD,5942,,generated
+07_acceptance/acceptance_report.md,验收测试,交付清单,素材包验收报告 Markdown,,,MD,911,,generated

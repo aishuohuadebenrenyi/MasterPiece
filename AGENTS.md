@@ -13,14 +13,14 @@
 5. `project_memory/tasks/in-progress.md`、`project_memory/tasks/todo.md`：当前任务状态。
 6. `docs/README.md`：正式产品文档索引。
 7. `docs/architecture.md`：当前技术架构和约束。
-8. `wechat-cloudbase-app/README.md`：小程序工程入口、脚本和开发约定。
-9. `wechat-cloudbase-app/database.md`：CloudBase 集合和 action 事实源。
+8. `release-support/wechat-cloudbase-app/README.md`：小程序工程入口、脚本和开发约定。
+9. `release-support/wechat-cloudbase-app/database.md`：CloudBase 集合和 action 事实源。
 
 ## 2. 事实源边界
 
 - `docs/` 是正式产品、交互、架构、数据和路线文档的唯一正式入口。
-- `wechat-cloudbase-app/README.md` 是工程入口。
-- `wechat-cloudbase-app/database.md` 是数据库集合和云函数 action 的工程事实源。
+- `release-support/wechat-cloudbase-app/README.md` 是工程入口。
+- `release-support/wechat-cloudbase-app/database.md` 是数据库集合和云函数 action 的工程事实源。
 - `.trae/documents/` 只作为历史过程归档，不移动、不删除、不改写。
 - `project_memory/memory/` 只记录协作记忆，不替代正式文档。
 - `.codex/` 只保存 AI/人类协作规则、提示词、模板和命令片段。

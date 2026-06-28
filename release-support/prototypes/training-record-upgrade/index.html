@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+  <title>Zentro 训练记录升级原型</title>
+  <style>
+    :root {
+      --bg: #f6f0e8;
+      --panel: rgba(255, 252, 246, 0.92);
+      --ink: #1f2623;
+      --muted: #6f736d;
+      --line: rgba(49, 57, 52, 0.12);
+      --brand: #e86f3b;
+      --brand-deep: #a94d2b;
+      --olive: #88906a;
+      --mint: #9fcac0;
+      --blue: #9dbbd1;
+      --rose: #d78b98;
+      --yellow: #dfc36c;
+      --purple: #aaa0ca;
+      --nav-h: 62px;
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(232, 111, 59, 0.18), transparent 26%),
+        linear-gradient(145deg, #f5ecdf 0%, #eef3ee 54%, #f3e4df 100%);
+      color: var(--ink);
+    }
+
+    button,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .phone {
+      width: min(100%, 430px);
+      min-height: 812px;
+      max-height: 920px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 34px;
+      background: rgba(255, 250, 241, 0.72);
+      box-shadow: 0 30px 80px rgba(76, 61, 46, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.68);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      padding: 22px 20px calc(var(--nav-h) + 22px);
+      display: none;
+      scrollbar-width: none;
+    }
+
+    .screen::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      margin-bottom: 16px;
+    }
+
+    .title-wrap {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 34px;
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      line-height: 1.16;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .back-btn,
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 19px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1px var(--line);
+      flex: none;
+    }
+
+    .back-btn::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-left: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      margin-left: 4px;
+    }
+
+    .header-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 7px;
+      box-shadow: inset 0 0 0 2px currentColor;
+      opacity: 0.8;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .category-card {
+      min-height: 178px;
+      border-radius: 22px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--c);
+      color: #20251f;
+      box-shadow: 0 14px 30px rgba(68, 54, 43, 0.10);
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .category-card:active,
+    .primary-btn:active,
+    .record-card:active {
+      transform: translateY(1px);
+    }
+
+    .material-art {
+      height: 74px;
+      width: 100%;
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .material-art .disc {
+      position: absolute;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.75), transparent 24%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(31, 38, 35, 0.18));
+      box-shadow: 0 10px 18px rgba(55, 45, 37, 0.16);
+    }
+
+    .material-art .bar {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 78px;
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.46);
+      transform: translate(-50%, -50%) rotate(var(--r));
+      box-shadow: 0 8px 14px rgba(52, 43, 36, 0.08);
+    }
+
+    .category-name {
+      font-size: clamp(20px, 7vw, 27px);
+      line-height: 1.02;
+      letter-spacing: 0;
+      margin-bottom: 7px;
+      overflow-wrap: anywhere;
+    }
+
+    .category-subtitle {
+      color: rgba(31, 38, 35, 0.62);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .panel {
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7), 0 12px 30px rgba(73, 56, 43, 0.08);
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .hero-detail {
+      padding: 20px;
+      border-radius: 28px;
+      background: linear-gradient(145deg, var(--accent), rgba(255, 255, 255, 0.66));
+      box-shadow: 0 18px 42px rgba(78, 60, 45, 0.11);
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.58);
+      color: #3f473f;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px var(--line);
+      white-space: nowrap;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      min-height: 46px;
+      border-radius: 999px;
+      padding: 0 18px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: var(--ink);
+      color: #fffaf1;
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .danger-btn {
+      background: #d84b3e;
+      color: #fff;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 20px 0 10px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border-radius: 18px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.56);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+      white-space: nowrap;
+    }
+
+    .record-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .record-card {
+      width: 100%;
+      text-align: left;
+      border-radius: 20px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: inset 0 0 0 1px var(--line);
+      color: var(--ink);
+    }
+
+    .record-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .score-badge {
+      min-width: 48px;
+      height: 34px;
+      border-radius: 17px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(232, 111, 59, 0.14);
+      color: var(--brand-deep);
+      font-weight: 900;
+      flex: none;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 8px;
+    }
+
+    .score-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 10px;
+      scrollbar-width: none;
+      scroll-snap-type: x proximity;
+    }
+
+    .score-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .score-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 23px;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px var(--line);
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+    }
+
+    .score-btn.active {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(232, 111, 59, 0.28);
+    }
+
+    .score-feedback {
+      margin: 4px 0 14px;
+      color: var(--brand-deep);
+      font-weight: 800;
+      min-height: 22px;
+    }
+
+    .textarea {
+      width: 100%;
+      min-height: 112px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px 14px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.76);
+      outline: none;
+      line-height: 1.5;
+    }
+
+    .upload-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .attach-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .attach-card {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(159, 202, 192, 0.72), rgba(255, 255, 255, 0.68));
+      box-shadow: inset 0 0 0 1px var(--line);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(31, 38, 35, 0.72);
+      font-weight: 900;
+    }
+
+    .attach-card.video {
+      background: linear-gradient(145deg, rgba(157, 187, 209, 0.8), rgba(255, 255, 255, 0.68));
+    }
+
+    .attach-card button {
+      position: absolute;
+      right: 6px;
+      top: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 13px;
+      background: rgba(31, 38, 35, 0.72);
+      color: white;
+      font-weight: 900;
+    }
+
+    .attach-card .play {
+      width: 0;
+      height: 0;
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      border-left: 18px solid rgba(31, 38, 35, 0.68);
+      margin-left: 5px;
+    }
+
+    .more-box {
+      margin-top: 14px;
+    }
+
+    .more-toggle {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 18px;
+      padding: 0 14px;
+      background: rgba(255, 255, 255, 0.62);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1px var(--line);
+      font-weight: 800;
+    }
+
+    .more-content {
+      display: none;
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .more-box.open .more-content {
+      display: grid;
+    }
+
+    .field {
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.62);
+      padding: 12px;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .field span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+
+    .filter-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-chip {
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--muted);
+      box-shadow: inset 0 0 0 1px var(--line);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .filter-chip.active {
+      background: var(--ink);
+      color: #fffaf1;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 14px;
+      height: var(--nav-h);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: inset 0 0 0 1px rgba(47, 111, 147, 0.12), 0 12px 26px rgba(63, 69, 61, 0.12);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding: 8px;
+      z-index: 8;
+    }
+
+    .nav-btn {
+      border-radius: 18px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .nav-btn.active {
+      background: #ffe6b8;
+      color: #3a2a10;
+      box-shadow: inset 0 0 0 1px rgba(255, 159, 28, 0.26), 0 8px 18px rgba(255, 159, 28, 0.12);
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      display: none;
+      z-index: 20;
+      background: rgba(31, 38, 35, 0.34);
+      padding: 18px;
+      align-items: flex-end;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-height: 86%;
+      overflow-y: auto;
+      border-radius: 28px;
+      background: #fffaf1;
+      padding: 18px;
+      box-shadow: 0 24px 60px rgba(31, 38, 35, 0.22);
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .media-preview {
+      margin-top: 14px;
+      min-height: 260px;
+      border-radius: 22px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 35% 26%, rgba(255, 255, 255, 0.8), transparent 18%),
+        linear-gradient(145deg, rgba(159, 202, 192, 0.95), rgba(215, 139, 152, 0.74));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(31, 38, 35, 0.62);
+      font-weight: 900;
+      font-size: 24px;
+    }
+
+    .media-preview.video {
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.7), transparent 18%),
+        linear-gradient(145deg, rgba(157, 187, 209, 0.96), rgba(170, 160, 202, 0.82));
+    }
+
+    .empty-state {
+      padding: 22px 16px;
+      border-radius: 20px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.58);
+      text-align: center;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    @media (max-width: 390px) {
+      .stage {
+        padding: 0;
+      }
+
+      .phone {
+        min-height: 100vh;
+        max-height: none;
+        border-radius: 0;
+      }
+
+      .screen {
+        padding-inline: 16px;
+      }
+
+      .category-grid {
+        gap: 10px;
+      }
+
+      .category-card {
+        border-radius: 20px;
+        padding: 15px 13px;
+      }
+
+      .material-art {
+        height: 74px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <div class="phone" id="app">
+      <section class="screen active" id="screen-categories">
+        <div class="topbar">
+          <div class="title-wrap">
+            <p class="eyebrow">Zentro Material</p>
+            <h1>训练分类</h1>
+          </div>
+          <button class="icon-btn" type="button" aria-label="查看训练记录" data-screen="records">
+            <span class="header-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="category-grid" id="category-grid"></div>
+      </section>
+
+      <section class="screen" id="screen-detail">
+        <div class="topbar">
+          <button class="back-btn" type="button" aria-label="返回分类" data-screen="categories"></button>
+          <div class="title-wrap">
+            <p class="eyebrow" id="detail-category">Material</p>
+            <h2 id="detail-title">素材详情</h2>
+          </div>
+          <span></span>
+        </div>
+        <div class="hero-detail" id="detail-hero">
+          <p class="eyebrow">今日建议</p>
+          <h2 id="detail-headline"></h2>
+          <p class="note" id="detail-desc"></p>
+          <div class="detail-meta">
+            <span class="pill" id="detail-level"></span>
+            <span class="pill" id="detail-duration"></span>
+            <span class="pill">可记录照片/短视频</span>
+          </div>
+          <button class="primary-btn" type="button" id="start-practice">开始训练</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric"><strong id="metric-avg">0</strong><span>平均分</span></div>
+          <div class="metric"><strong id="metric-count">0</strong><span>训练次数</span></div>
+          <div class="metric"><strong id="metric-last">-</strong><span>最近一次</span></div>
+        </div>
+        <div class="section-head">
+          <h3>最近记录</h3>
+          <button class="secondary-btn" type="button" id="detail-all-records">全部</button>
+        </div>
+        <div class="record-list" id="detail-records"></div>
+      </section>
+
+      <section class="screen" id="screen-feedback">
+        <div class="topbar">
+          <button class="back-btn" type="button" aria-label="返回素材详情" id="feedback-back"></button>
+          <div class="title-wrap">
+            <p class="eyebrow">Practice Review</p>
+            <h2>练习复盘</h2>
+          </div>
+          <span></span>
+        </div>
+        <div class="panel">
+          <p class="eyebrow" id="feedback-material">当前素材</p>
+          <h3>1-10 分评价本次训练</h3>
+          <div class="score-strip" id="score-strip" aria-label="选择训练评分"></div>
+          <p class="score-feedback" id="score-feedback">请选择一个分数</p>
+          <textarea class="textarea" id="review-note" placeholder="本次复盘：记录有效的瞬间、卡住的地方，或下一轮想尝试的方向。"></textarea>
+          <div class="upload-actions">
+            <button class="secondary-btn" type="button" data-add-attachment="image">添加照片</button>
+            <button class="secondary-btn" type="button" data-add-attachment="video">添加短视频</button>
+          </div>
+          <div class="attach-grid" id="draft-attachments"></div>
+          <div class="more-box" id="more-box">
+            <button class="more-toggle" type="button" id="more-toggle">
+              <span>更多信息</span>
+              <span id="more-arrow">展开</span>
+            </button>
+            <div class="more-content">
+              <div class="field"><span>提醒</span>明天 20:00 复练一次</div>
+              <div class="field"><span>人数</span>单人训练</div>
+              <div class="field"><span>关联排练</span>周末开放麦准备</div>
+            </div>
+          </div>
+        </div>
+        <button class="primary-btn" type="button" id="submit-review" style="margin-top:14px;">提交复盘</button>
+      </section>
+
+      <section class="screen" id="screen-records">
+        <div class="topbar">
+          <div class="title-wrap">
+            <p class="eyebrow">Practice Records</p>
+            <h1>练习记录</h1>
+          </div>
+          <button class="secondary-btn" type="button" data-screen="categories">分类</button>
+        </div>
+        <div class="filter-row" id="record-filters"></div>
+        <div class="record-list" id="record-list"></div>
+      </section>
+
+      <div class="bottom-nav">
+        <button class="nav-btn active" type="button" data-screen="categories">
+          <span>发现</span>
+        </button>
+        <button class="nav-btn" type="button" data-screen="records">
+          <span>记录</span>
+        </button>
+        <button class="nav-btn" type="button" data-tab-placeholder="mine">
+          <span>我的</span>
+        </button>
+      </div>
+
+      <div class="modal" id="record-modal" role="dialog" aria-modal="true" aria-labelledby="record-modal-title">
+        <div class="modal-panel">
+          <div class="topbar">
+            <div>
+              <p class="eyebrow" id="record-modal-date"></p>
+              <h2 id="record-modal-title"></h2>
+            </div>
+            <button class="icon-btn" type="button" data-close-modal="record-modal">×</button>
+          </div>
+          <div class="score-badge" id="record-modal-score"></div>
+          <p class="note" id="record-modal-note"></p>
+          <div class="section-head">
+            <h3>附件</h3>
+            <span class="pill">仅查看/删除</span>
+          </div>
+          <div class="attach-grid" id="record-modal-attachments"></div>
+        </div>
+      </div>
+
+      <div class="modal" id="attachment-modal" role="dialog" aria-modal="true" aria-labelledby="attachment-title">
+        <div class="modal-panel">
+          <div class="topbar">
+            <div>
+              <p class="eyebrow" id="attachment-meta"></p>
+              <h2 id="attachment-title">附件详情</h2>
+            </div>
+            <button class="icon-btn" type="button" data-close-modal="attachment-modal">×</button>
+          </div>
+          <div class="media-preview" id="attachment-preview"></div>
+          <div class="modal-actions">
+            <button class="secondary-btn" type="button" data-close-modal="attachment-modal">关闭</button>
+            <button class="danger-btn" type="button" id="delete-attachment">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div class="modal-panel">
+          <h2 id="confirm-title">删除已保存附件？</h2>
+          <p class="note">删除后该训练记录不再展示这个附件。原型中只演示交互，不会修改真实云端文件。</p>
+          <div class="modal-actions">
+            <button class="secondary-btn" type="button" data-close-modal="confirm-modal">取消</button>
+            <button class="danger-btn" type="button" id="confirm-delete">确认删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const categories = [
+      { id: "observe", name: "观察与联想", subtitle: "从真实细节找到入口", color: "#dfc36c", height: "236px", rotate: "-8deg" },
+      { id: "character", name: "角色与关系", subtitle: "建立身份、目标和关系", color: "#9dbbd1", height: "258px", rotate: "12deg" },
+      { id: "emotion", name: "情绪与状态", subtitle: "放大当下能量", color: "#aaa0ca", height: "238px", rotate: "21deg" },
+      { id: "scene", name: "场景与空间", subtitle: "让观众看见环境", color: "#d78b98", height: "258px", rotate: "-16deg" },
+      { id: "body", name: "身体与节奏", subtitle: "用动作带动反应", color: "#a9d8d0", height: "248px", rotate: "7deg" },
+      { id: "story", name: "故事推进", subtitle: "让信息逐步升级", color: "#d8edbc", height: "250px", rotate: "-5deg" },
+      { id: "listening", name: "倾听与接招", subtitle: "接住伙伴给出的事实", color: "#f0b7a8", height: "226px", rotate: "18deg" },
+      { id: "stage", name: "舞台呈现", subtitle: "收束表达和观众反馈", color: "#b8c995", height: "244px", rotate: "-12deg" }
+    ];
+
+    const materials = [
+      { id: "m1", categoryId: "observe", title: "三秒细节命名", desc: "选择眼前一个物件，连续说出 5 个可观察事实，再转成即兴开场。", level: "入门", duration: "6 分钟" },
+      { id: "m2", categoryId: "character", title: "关系先行", desc: "先说出你和对方的关系，再用一句行动诉求推动对话。", level: "进阶", duration: "8 分钟" },
+      { id: "m3", categoryId: "emotion", title: "情绪刻度", desc: "从 2 分情绪逐步推到 8 分，观察身体和语言如何同步变化。", level: "入门", duration: "5 分钟" },
+      { id: "m4", categoryId: "scene", title: "空间三点定位", desc: "给舞台空间设定三个固定点，用移动建立场景真实感。", level: "进阶", duration: "7 分钟" },
+      { id: "m5", categoryId: "body", title: "节奏切换", desc: "用快慢、停顿、重复三种节奏做一段无道具练习。", level: "入门", duration: "6 分钟" },
+      { id: "m6", categoryId: "story", title: "因为所以链", desc: "每句话都承接前一条事实，让故事自然出现因果。", level: "进阶", duration: "9 分钟" },
+      { id: "m7", categoryId: "listening", title: "最后词接招", desc: "抓住伙伴上一句最后一个关键词，作为下一句的起点。", level: "入门", duration: "5 分钟" },
+      { id: "m8", categoryId: "stage", title: "收尾信号", desc: "练习用重复、停顿和眼神完成一个清晰收尾。", level: "进阶", duration: "7 分钟" }
+    ];
+
+    let records = [
+      {
+        id: "r1",
+        materialId: "m1",
+        score: 8,
+        note: "观察事实变多了，但联想进入故事时还会急。下一轮先停半拍再开口。",
+        createdAt: "06-27 20:10",
+        attachments: [
+          { id: "a1", type: "image", fileID: "cloud://demo/photo-01", thumbFileID: "cloud://demo/photo-01-thumb", size: 620000, createdAt: "06-27 20:11" },
+          { id: "a2", type: "video", fileID: "cloud://demo/video-01", thumbFileID: "cloud://demo/video-01-thumb", duration: 18, size: 4200000, createdAt: "06-27 20:12" }
+        ]
+      },
+      {
+        id: "r2",
+        materialId: "m2",
+        score: 7,
+        note: "关系说清楚后对话更稳定，但诉求还不够主动。",
+        createdAt: "06-26 19:42",
+        attachments: [{ id: "a3", type: "image", fileID: "cloud://demo/photo-02", size: 530000, createdAt: "06-26 19:44" }]
+      },
+      {
+        id: "r3",
+        materialId: "m4",
+        score: 9,
+        note: "三个空间点很清楚，回到门口时观众能跟上位置变化。",
+        createdAt: "06-25 21:08",
+        attachments: []
+      },
+      {
+        id: "r4",
+        materialId: "m1",
+        score: 6,
+        note: "命名速度够快，但事实和评价混在一起，需要更客观。",
+        createdAt: "06-24 18:30",
+        attachments: []
+      }
+    ];
+
+    let currentMaterialId = "m1";
+    let currentScore = 8;
+    let draftAttachments = [];
+    let recordFilter = "all";
+    let activeRecordId = null;
+    let activeAttachment = null;
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function getMaterial(id) {
+      return materials.find((item) => item.id === id);
+    }
+
+    function getCategory(id) {
+      return categories.find((item) => item.id === id);
+    }
+
+    function showScreen(name) {
+      $$(".screen").forEach((screen) => screen.classList.remove("active"));
+      $(`#screen-${name}`).classList.add("active");
+      $$(".nav-btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.screen === name));
+    }
+
+    function renderCategories() {
+      $("#category-grid").innerHTML = categories.map((category) => `
+        <button class="category-card" type="button" data-category-id="${category.id}" style="--c:${category.color};--r:${category.rotate};">
+          <span class="material-art" aria-hidden="true"><span class="bar"></span><span class="disc"></span></span>
+          <span>
+            <strong class="category-name">${category.name}</strong>
+            <span class="category-subtitle">${category.subtitle}</span>
+          </span>
+        </button>
+      `).join("");
+    }
+
+    function categoryRecords(materialId) {
+      return records.filter((record) => record.materialId === materialId);
+    }
+
+    function renderDetail(materialId) {
+      currentMaterialId = materialId;
+      const material = getMaterial(materialId);
+      const category = getCategory(material.categoryId);
+      const recent = categoryRecords(materialId);
+      const avg = recent.length ? (recent.reduce((sum, item) => sum + item.score, 0) / recent.length).toFixed(1) : "-";
+      $("#detail-category").textContent = category.name;
+      $("#detail-title").textContent = material.title;
+      $("#detail-headline").textContent = material.title;
+      $("#detail-desc").textContent = material.desc;
+      $("#detail-level").textContent = material.level;
+      $("#detail-duration").textContent = material.duration;
+      $("#detail-hero").style.setProperty("--accent", category.color);
+      $("#metric-avg").textContent = avg;
+      $("#metric-count").textContent = recent.length;
+      $("#metric-last").textContent = recent[0]?.createdAt.slice(0, 5) || "-";
+      $("#detail-records").innerHTML = recent.slice(0, 3).map(recordTemplate).join("") || `<div class="empty-state">还没有训练记录</div>`;
+      showScreen("detail");
+    }
+
+    function recordTemplate(record) {
+      const material = getMaterial(record.materialId);
+      const attachmentText = record.attachments.length ? `${record.attachments.length} 个附件` : "无附件";
+      return `
+        <button class="record-card" type="button" data-record-id="${record.id}">
+          <span class="record-top">
+            <span>
+              <strong>${material.title}</strong>
+              <span class="note">${record.createdAt} · ${attachmentText}</span>
+            </span>
+            <span class="score-badge">${record.score}</span>
+          </span>
+          <span class="note">${record.note}</span>
+        </button>
+      `;
+    }
+
+    function renderScoreStrip() {
+      $("#score-strip").innerHTML = Array.from({ length: 10 }, (_, index) => {
+        const score = index + 1;
+        return `<button class="score-btn ${score === currentScore ? "active" : ""}" type="button" data-score="${score}">${score}</button>`;
+      }).join("");
+      renderScoreFeedback();
+    }
+
+    function renderScoreFeedback() {
+      const copy = currentScore >= 8 ? "本次很有效，建议补充关键证据。" : currentScore >= 5 ? "有收获但需要记录阻塞点。" : "需要调整素材或训练方式。";
+      $("#score-feedback").textContent = `${currentScore} 分 · ${copy}`;
+    }
+
+    function startFeedback() {
+      const material = getMaterial(currentMaterialId);
+      $("#feedback-material").textContent = material.title;
+      currentScore = 8;
+      draftAttachments = [];
+      $("#review-note").value = "";
+      $("#more-box").classList.remove("open");
+      $("#more-arrow").textContent = "展开";
+      renderScoreStrip();
+      renderDraftAttachments();
+      showScreen("feedback");
+    }
+
+    function renderDraftAttachments() {
+      $("#draft-attachments").innerHTML = draftAttachments.map((item) => `
+        <div class="attach-card ${item.type}" data-draft-attachment="${item.id}">
+          ${item.type === "video" ? '<span class="play"></span>' : "照片"}
+          <button type="button" aria-label="删除未保存附件" data-remove-draft="${item.id}">×</button>
+        </div>
+      `).join("");
+    }
+
+    function addDraftAttachment(type) {
+      const id = `draft-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      draftAttachments.push({
+        id,
+        type,
+        fileID: `local://${type}-${draftAttachments.length + 1}`,
+        thumbFileID: type === "video" ? `local://thumb-${draftAttachments.length + 1}` : undefined,
+        duration: type === "video" ? 12 : undefined,
+        size: type === "video" ? 3600000 : 720000,
+        createdAt: "未保存"
+      });
+      renderDraftAttachments();
+    }
+
+    function submitReview() {
+      const note = $("#review-note").value.trim() || "本次复盘：已完成训练，待补充细节。";
+      const savedAttachments = draftAttachments.map((item, index) => ({
+        ...item,
+        id: `a-${Date.now()}-${index}`,
+        fileID: `cloud://demo/${item.type}-${Date.now()}-${index}`,
+        createdAt: "刚刚"
+      }));
+      records.unshift({
+        id: `r-${Date.now()}`,
+        materialId: currentMaterialId,
+        score: currentScore,
+        note,
+        createdAt: "刚刚",
+        attachments: savedAttachments
+      });
+      draftAttachments = [];
+      recordFilter = currentMaterialId;
+      renderRecords();
+      showScreen("records");
+    }
+
+    function renderFilters() {
+      const chips = [{ id: "all", name: "全部" }, ...materials.map((material) => ({ id: material.id, name: material.title }))];
+      $("#record-filters").innerHTML = chips.map((chip) => `
+        <button class="filter-chip ${chip.id === recordFilter ? "active" : ""}" type="button" data-filter="${chip.id}">${chip.name}</button>
+      `).join("");
+    }
+
+    function renderRecords() {
+      renderFilters();
+      const visible = recordFilter === "all" ? records : records.filter((record) => record.materialId === recordFilter);
+      $("#record-list").innerHTML = visible.map(recordTemplate).join("") || `<div class="empty-state">当前筛选下没有记录</div>`;
+    }
+
+    function openRecord(recordId) {
+      activeRecordId = recordId;
+      const record = records.find((item) => item.id === recordId);
+      const material = getMaterial(record.materialId);
+      $("#record-modal-title").textContent = material.title;
+      $("#record-modal-date").textContent = record.createdAt;
+      $("#record-modal-score").textContent = `${record.score} 分`;
+      $("#record-modal-note").textContent = record.note;
+      $("#record-modal-attachments").innerHTML = record.attachments.map((attachment) => attachmentTemplate(record.id, attachment)).join("") || `<div class="empty-state">这条记录没有附件</div>`;
+      openModal("record-modal");
+    }
+
+    function attachmentTemplate(recordId, attachment) {
+      return `
+        <button class="attach-card ${attachment.type}" type="button" data-open-attachment="${attachment.id}" data-source-record="${recordId}">
+          ${attachment.type === "video" ? '<span class="play"></span>' : "照片"}
+        </button>
+      `;
+    }
+
+    function openAttachment(recordId, attachmentId) {
+      const record = records.find((item) => item.id === recordId);
+      const attachment = record.attachments.find((item) => item.id === attachmentId);
+      activeAttachment = { recordId, attachmentId };
+      $("#attachment-title").textContent = attachment.type === "video" ? "短视频附件" : "照片附件";
+      $("#attachment-meta").textContent = `${attachment.createdAt} · ${formatSize(attachment.size)}${attachment.duration ? ` · ${attachment.duration}s` : ""}`;
+      $("#attachment-preview").classList.toggle("video", attachment.type === "video");
+      $("#attachment-preview").textContent = attachment.type === "video" ? "视频播放占位" : "图片大图预览";
+      openModal("attachment-modal");
+    }
+
+    function formatSize(size) {
+      if (!size) return "未知大小";
+      if (size >= 1000000) return `${(size / 1000000).toFixed(1)} MB`;
+      return `${Math.round(size / 1000)} KB`;
+    }
+
+    function deleteSavedAttachment() {
+      closeModal("attachment-modal");
+      openModal("confirm-modal");
+    }
+
+    function confirmDeleteAttachment() {
+      if (!activeAttachment) return;
+      const record = records.find((item) => item.id === activeAttachment.recordId);
+      record.attachments = record.attachments.filter((item) => item.id !== activeAttachment.attachmentId);
+      closeModal("confirm-modal");
+      activeAttachment = null;
+      renderRecords();
+      if (activeRecordId) openRecord(activeRecordId);
+    }
+
+    function openModal(id) {
+      $(`#${id}`).classList.add("active");
+    }
+
+    function closeModal(id) {
+      $(`#${id}`).classList.remove("active");
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("button");
+      if (!target) return;
+
+      if (target.dataset.screen) {
+        if (target.dataset.screen === "records") renderRecords();
+        showScreen(target.dataset.screen);
+      }
+
+      if (target.dataset.categoryId) {
+        const material = materials.find((item) => item.categoryId === target.dataset.categoryId);
+        renderDetail(material.id);
+      }
+
+      if (target.id === "start-practice" || target.hasAttribute("data-feedback-shortcut")) {
+        startFeedback();
+      }
+
+      if (target.id === "feedback-back") {
+        renderDetail(currentMaterialId);
+      }
+
+      if (target.dataset.score) {
+        currentScore = Number(target.dataset.score);
+        renderScoreStrip();
+      }
+
+      if (target.dataset.addAttachment) {
+        addDraftAttachment(target.dataset.addAttachment);
+      }
+
+      if (target.dataset.removeDraft) {
+        draftAttachments = draftAttachments.filter((item) => item.id !== target.dataset.removeDraft);
+        renderDraftAttachments();
+      }
+
+      if (target.id === "more-toggle") {
+        $("#more-box").classList.toggle("open");
+        $("#more-arrow").textContent = $("#more-box").classList.contains("open") ? "收起" : "展开";
+      }
+
+      if (target.id === "submit-review") {
+        submitReview();
+      }
+
+      if (target.id === "detail-all-records") {
+        recordFilter = currentMaterialId;
+        renderRecords();
+        showScreen("records");
+      }
+
+      if (target.dataset.filter) {
+        recordFilter = target.dataset.filter;
+        renderRecords();
+      }
+
+      if (target.dataset.recordId) {
+        openRecord(target.dataset.recordId);
+      }
+
+      if (target.dataset.openAttachment) {
+        openAttachment(target.dataset.sourceRecord, target.dataset.openAttachment);
+      }
+
+      if (target.dataset.closeModal) {
+        closeModal(target.dataset.closeModal);
+      }
+
+      if (target.id === "delete-attachment") {
+        deleteSavedAttachment();
+      }
+
+      if (target.id === "confirm-delete") {
+        confirmDeleteAttachment();
+      }
+    });
+
+    renderCategories();
+    renderScoreStrip();
+    renderRecords();
+  </script>
+</body>
+</html>

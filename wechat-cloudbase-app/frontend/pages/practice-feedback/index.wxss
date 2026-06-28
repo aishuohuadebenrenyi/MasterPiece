@@ -11,6 +11,31 @@
   width: 100%;
 }
 
+.practice-duration-summary {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: -4rpx 0 22rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.duration-label {
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.duration-value {
+  color: var(--improv-text);
+  font-size: 54rpx;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
 .feedback-object-summary {
   display: flex;
   flex-direction: column;
@@ -33,8 +58,7 @@
   margin-top: 18rpx;
 }
 
-.context-chip-row,
-.effect-chip-row {
+.context-chip-row {
   flex-wrap: wrap;
   row-gap: 16rpx;
 }
@@ -43,8 +67,7 @@
   justify-content: flex-start;
 }
 
-.context-chip-row .chip,
-.effect-chip-row .chip {
+.context-chip-row .chip {
   flex: 0 0 auto;
   width: auto;
   min-height: 64rpx;
@@ -86,12 +109,109 @@
   margin: 0;
 }
 
-.effect-chip-row .chip {
-  min-width: 132rpx;
-}
-
 .feedback-section {
   margin-top: 26rpx;
+}
+
+.score-inline-section {
+  margin-top: 8rpx;
+}
+
+.score-heading-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 18rpx;
+}
+
+.score-value-badge {
+  flex: 0 0 auto;
+  min-width: 128rpx;
+  height: 86rpx;
+  box-sizing: border-box;
+  padding: 0 22rpx;
+  border-radius: 32rpx;
+  background: var(--improv-primary);
+  color: var(--improv-btn-primary-text);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  box-shadow: 0 12rpx 28rpx var(--improv-shadow-primary-soft-color);
+}
+
+.score-value-badge text:first-child {
+  font-size: 42rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-value-badge text:last-child {
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-summary {
+  display: block;
+  margin-top: 2rpx;
+  color: var(--improv-primary-strong);
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.score-slider-box {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18rpx;
+  padding: 22rpx 20rpx 18rpx;
+  border-radius: 28rpx;
+  background: var(--improv-bg-subtle);
+}
+
+.score-step-btn {
+  flex: 0 0 58rpx;
+  width: 58rpx;
+  height: 58rpx;
+  min-height: 58rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 29rpx;
+  background: var(--improv-card-strong);
+  border: 2rpx solid var(--improv-line-subtle);
+  color: var(--improv-primary-strong);
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 58rpx;
+}
+
+.score-slider-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.score-slider {
+  width: 100%;
+  margin: 0;
+}
+
+.score-scale-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0 8rpx;
+  color: var(--improv-muted);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .context-inline-section {
@@ -137,6 +257,64 @@
 
 .feedback-field-stack {
   margin-top: 30rpx;
+}
+
+.attachment-section {
+  margin-top: 30rpx;
+}
+
+.attachment-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+}
+
+.attachment-add-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.attachment-item {
+  position: relative;
+  min-height: 156rpx;
+  border-radius: 24rpx;
+  background: var(--improv-primary-tint);
+  color: var(--improv-primary-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 900;
+  overflow: hidden;
+}
+
+.attachment-item.video {
+  background: var(--improv-secondary-wash);
+  color: var(--improv-secondary);
+}
+
+.attachment-remove {
+  position: absolute;
+  right: 8rpx;
+  top: 8rpx;
+  min-width: 68rpx;
+  height: 40rpx;
+  min-height: 40rpx;
+  margin: 0;
+  padding: 0 12rpx;
+  border-radius: 20rpx;
+  background: rgba(31, 38, 35, 0.72);
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 40rpx;
 }
 
 .action-stack {

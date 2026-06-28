@@ -20,7 +20,14 @@ import { toast } from '../../utils/page'
 import { closeModal, openModal } from '../../utils/modal'
 import { syncTabBar } from '../../utils/tabbar'
 import { getLayoutStyle } from '../../utils/layout'
-import { INSPIRATION_TITLE_MAX_LENGTH, REHEARSAL_PLAN_SIZE } from '../../config/constants'
+import { REHEARSAL_PLAN_SIZE } from '../../config/constants'
+
+function formatLocalDateTitle(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 Page({
   data: {
@@ -298,12 +305,10 @@ Page({
       toast('先写下一点灵感')
       return
     }
-    const firstLine = text.split(/\n/).map((line) => line.trim()).find(Boolean) || text
-    const title = firstLine.length > INSPIRATION_TITLE_MAX_LENGTH ? `${firstLine.slice(0, INSPIRATION_TITLE_MAX_LENGTH)}...` : firstLine
     const item: InspirationItem = {
       id: `inspiration-${Date.now()}`,
       type: '灵感',
-      title,
+      title: formatLocalDateTitle(),
       desc: text,
       meta: ['快速记录', '待整理']
     }

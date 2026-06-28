@@ -2,7 +2,7 @@
 
 更新时间：2026-06-21
 
-本文档从“数据流转”与“接口架构”视角整理当前项目的正式文档入口、技术架构、数据对象、集合与云函数 action 规则。工程实现事实仍以 `wechat-cloudbase-app/database.md` 为准。
+本文档从“数据流转”与“接口架构”视角整理当前项目的正式文档入口、技术架构、数据对象、集合与云函数 action 规则。工程实现事实仍以 `release-support/wechat-cloudbase-app/database.md` 为准。
 
 ## 1. 架构模式与数据流转
 
@@ -47,10 +47,12 @@
 
 ### 3.3 Rehearsal
 排练记录字段：`id`, `title`, `desc`, `teamName`, `duration`, `goals` (数组), `source`, `status`, `plan` (包含 materialId, status, keep, try), `reviewKeep`, `reviewTry`, `reviewReminder`, `createdAt`, `updatedAt`。
-说明：排练复盘直接附着在 `rehearsal`，不额外创建 `practiceRecord`。历史排练只读。
+说明：当前个人版中的排练是个人多素材 session，`teamName` 只作为历史记录字段，不代表团队空间、成员权限或多人共同编辑。排练复盘直接附着在 `rehearsal`，不额外创建 `practiceRecord`。历史排练只读。
 
 ### 3.4 PracticeRecord
-单次素材练习复盘字段：`id`, `materialId`, `title`, `desc`, `rehearsalId`, `effect`, `keep`, `try`, `reminder`, `duration`, `meta`, `createdAt`, `updatedAt`。
+单次素材练习复盘字段：`id`, `materialId`, `materialTitle`, `rehearsalId`, `rehearsalTitle`, `title`, `desc`, `score`, `note`, `attachments`, `reminder`, `duration`, `meta`, `createdAt`, `updatedAt`。
+
+`score` 为 `1-10` 分；`note` 承接“本次复盘”；`attachments` 为数组，单项固定为 `{ id, type, fileID, thumbFileID?, duration?, size?, createdAt }`。附件只支持查看和删除，不支持编辑。当前产品尚未上线使用，不保留旧 `effect/keep/try` 单素材练习记录字段。
 
 ### 3.5 MethodCard
 方法卡字段：`id`, `title`, `desc`, `type`, `sourceType`, `tags`, `meta`, `createdAt`, `updatedAt`。
@@ -65,14 +67,15 @@
 3. **快速记录灵感**：操作 `improv_inspirations`，可手动触发 `improv_method_cards`。
 4. **开启并进行排练**：操作 `improv_rehearsals`, `improv_materials`, `improv_user_material_states`。
 5. **结束排练并复盘**：操作 `improv_rehearsals`，可手动触发 `improv_method_cards`。
-6. **回看个人与团队资产**：查询方法卡、灵感、排练记录、练习记录。
+6. **回看个人资产**：查询方法卡、灵感、个人多素材 session 记录和单素材练习记录。
 7. **提交产品反馈**：设置页通过 `feedback.create` 写入 `improv_feedback`；失败时保留表单内容。
 
 ## 5. 云函数 action (`improv-api`)
 
 | action | 说明 |
 | --- | --- |
-| `material.list` | 返回素材列表，合并当前用户收藏/练过状态。支持 query, type, ability, scene, status, limit 过滤。 |
+| `material.list` | 返回合法素材列表，合并当前用户收藏/练过状态。支持 query, type, ability, scene, status, limit, offset，并返回不受筛选影响的 categoryCounts、不受分页影响的 types / abilities / scenes / statuses 动态分面数量，以及 500 条扫描容量门禁状态。 |
+| `material.get` | 按素材 `id` 返回单条公共系统素材或当前用户自定义素材，合并当前用户收藏/练过状态；素材详情页和分享冷启动使用该 action，不依赖列表默认分页。 |
 | `material.create/update/delete` | 管理自定义素材。 |
 | `material.updateState` | 更新 `saved` / `played` / `lastRehearsalAt`。 |
 | `profile.get/update` | 获取/更新当前用户资料。 |
@@ -83,7 +86,9 @@
 | `practiceRecord.*` | 单次素材练习复盘 CRUD。 |
 | `practice.complete/rehearsal.complete` | 事务化保存练习或排练完成链路。 |
 | `feedback.create` | 校验类型、正文和选填联系方式后创建用户反馈。 |
-| `account.delete` | 删除当前用户私有业务数据、反馈、素材状态和头像文件。 |
+| `account.delete` | 删除当前用户私有业务数据、反馈、素材状态和头像文件；部分失败时返回可重试状态和逐项结果。 |
+
+`practiceRecord.list` 支持按 `materialId`、评分区间、附件类型和分页查询；素材详情页按 `materialId` 拉取练习记录摘要，完整查询仍由练习记录页承接。
 
 ## 6. 权限与隔离规则
 
@@ -94,7 +99,7 @@
 ## 7. 初始化与 Mock 数据导入
 
 - 核心代码目录 `wechat-cloudbase-app/` 中不保留业务 mock 数据。
-- `mock_data/` 存放可手动导入 CloudBase 的演示数据：
+- `release-support/mock-data/` 存放可手动导入 CloudBase 的演示数据：
   - `improv_materials.json`
   - `improv_user_material_states.sample.json`
   - `improv_inspirations.sample.json`

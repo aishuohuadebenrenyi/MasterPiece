@@ -1,6 +1,6 @@
 # 项目上下文沉淀
 
-更新时间：2026-06-21
+更新时间：2026-06-27
 
 本文档沉淀历史会话中已经确认、并且对后续协作有长期价值的信息。它不替代 PRD、技术架构或数据接口文档，而是作为跨文档的项目备忘：以后修改产品、代码、数据或文档时，先看这里确认边界和事实源。
 
@@ -12,10 +12,10 @@
 - 页面级显示规则、状态策略、空态和错误态：以 [product-detailed-design.md](product-detailed-design.md) 为准。
 - 页面结构、跳转和弹层边界：以 [information-architecture.md](information-architecture.md) 为准。
 - 技术栈、目录分层、状态层和组件策略：以 [architecture.md](architecture.md) 为准。
-- 数据对象、集合、action 和权限规则：以 [data-api.md](data-api.md) 和 [../wechat-cloudbase-app/database.md](../wechat-cloudbase-app/database.md) 为准。
+- 数据对象、集合、action 和权限规则：以 [data-api.md](data-api.md) 和 `release-support/wechat-cloudbase-app/database.md` 为准。
 - 数据链路、入库范围、mock 迁移方案：以 [data-inventory.md](data-inventory.md) 为准。
 
-工程文档保留在 `wechat-cloudbase-app/`，用于打开项目、配置云开发、运行脚本和说明数据库初始化。若 `docs/` 与 `wechat-cloudbase-app/database.md` 在集合或 action 上冲突，先以 `database.md` 和云函数代码为准，再同步修正文档。
+工程与发布辅助文档保留在 `release-support/wechat-cloudbase-app/`，用于打开项目、配置云开发、运行脚本和说明数据库初始化。若 `docs/` 与 `release-support/wechat-cloudbase-app/database.md` 在集合或 action 上冲突，先以该数据库文档和云函数代码为准，再同步修正文档。
 
 ## 2. 历史会话确认过的文档规则
 
@@ -24,11 +24,16 @@
 - `.trae/documents/` 保留为过程归档，不移动、不删除、不改写。
 - `.trae/documents/` 中的历史计划、差异报告和整改清单只供追溯；只有沉淀进 `docs/` 或工程文档后，才成为当前约定。
 - 每次较大的文档整理、产品事实变化或实现策略变化，应同步更新 [changelog.md](changelog.md)。
-- 更新文档前要先对照当前代码，尤其是 `frontend/app.json`、`backend/cloudfunctions/improv-api/index.js` 和 `wechat-cloudbase-app/database.md`。
+- 1.0.0 正式上线后的版本号、补丁边界、公共契约和验收底线以 [versioning.md](versioning.md) 为准；线上问题在 `project_memory/tasks/` 中流转，并在发布后同步 `changelog.md`。
+- 更新文档前要先对照当前代码，尤其是 `frontend/app.json`、`backend/cloudfunctions/improv-api/index.js` 和 `release-support/wechat-cloudbase-app/database.md`。
 
 ## 3. 当前实现事实
 
 当前工程是 `wechat-cloudbase-app/`，产品形态是微信小程序原生应用。
+
+2026-06-26 起，项目按 1.0.0 已上线产品治理：`1.0.x` 只处理线上补丁，`1.x.0` 承接兼容增强，`2.0.0` 承接破坏性大改；生产数据、CloudBase action、集合字段、页面路径和分享参数视为发布后公共契约。
+
+后续协作中，用户提到“第一个上线版本”时，默认指 GitHub `origin/main` 在 2026-06-27 确认的 `f13086e Add content safety checks for UGC`。该提交是当前对齐线上首个版本的代码基准；本地未提交改动、调试用 AppID/envId 或开发者工具缓存都不能覆盖这个基准含义。若未来需要引用其他线上版本，必须明确给出版本号、提交号或发布时间。
 
 已确认的实现基线：
 
@@ -62,12 +67,12 @@
 
 ## 5. 数据与 mock 策略
 
-当前阶段已经将业务 mock 从小程序核心代码中抽离，导入数据放在仓库根目录 `mock_data/`。
+当前阶段已经将业务 mock 从小程序核心代码中抽离，导入数据放在 `release-support/mock-data/`。
 
 稳定规则：
 
 - 云函数代码内不再维护 seed 游戏数组。
-- 旧游戏 seed action 不再作为当前入口；素材初始化改为手动导入 `mock_data/improv_materials.json`。
+- 旧游戏 seed action 不再作为当前入口；素材初始化改为手动导入 `release-support/mock-data/improv_materials.json`。
 - 私有集合示例数据使用 `sample` 后缀，导入前必须替换 `ownerOpenId`。
 - MVP 阶段业务读写统一走 `improv-api`，前端不直接信任或传入 `ownerOpenId`。
 - 用户私有数据由云函数通过 `cloud.getWXContext()` 写入 `ownerOpenId`。
@@ -108,7 +113,7 @@
 ## 8. 后续协作守则
 
 - 修改正式文档前，先确认是否已有对应事实源，避免新增重复文档。
-- 修改数据、action 或云函数时，先改实现，再同步 `wechat-cloudbase-app/database.md` 和 `docs/data-api.md`。
+- 修改数据、action 或云函数时，先改实现，再同步 `release-support/wechat-cloudbase-app/database.md` 和 `docs/data-api.md`。
 - 修改页面结构时，同步 `docs/information-architecture.md`。
 - 修改页面状态、空态、错误态或缓存策略时，同步 `docs/product-detailed-design.md`、`docs/architecture.md`、`docs/data-inventory.md` 和 `docs/experience-guidelines.md`。
 - 不把 `.trae/documents/` 的历史方案直接当作当前实现依据；需要先验证、再沉淀。

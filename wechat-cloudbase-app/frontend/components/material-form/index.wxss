@@ -11,6 +11,7 @@
   flex-direction: column;
   width: 100%;
   gap: var(--improv-form-gap-related, 28rpx);
+  padding-bottom: 34rpx;
 }
 
 .material-form-group {
@@ -62,6 +63,21 @@
   width: 100%;
 }
 
+.material-form .app-input {
+  box-sizing: border-box;
+  height: 88rpx;
+  min-height: 88rpx;
+  padding: 0 32rpx;
+  line-height: 88rpx;
+}
+
+.material-form .app-textarea {
+  box-sizing: border-box;
+  min-height: 190rpx;
+  padding: 24rpx 32rpx;
+  line-height: 1.5;
+}
+
 .custom-category-chip.active {
   background: var(--improv-primary-wash);
   border: 2rpx solid var(--improv-primary);
@@ -85,7 +101,7 @@
 }
 
 .custom-category-input input {
-  min-height: 72rpx;
+  min-height: 88rpx;
 }
 
 .category-suggestions {

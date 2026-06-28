@@ -111,11 +111,21 @@ export interface PracticeRecord extends TodayItem {
   rehearsalId?: string
   materialTitle?: string
   rehearsalTitle?: string
-  effect?: string
-  keep?: string
-  try?: string
+  score?: number
+  note?: string
+  attachments?: PracticeRecordAttachment[]
   reminder?: string
   duration?: number
+}
+
+export interface PracticeRecordAttachment {
+  id: string
+  type: 'image' | 'video'
+  fileID: string
+  thumbFileID?: string
+  duration?: number
+  size?: number
+  createdAt?: unknown
 }
 
 export interface AppState {

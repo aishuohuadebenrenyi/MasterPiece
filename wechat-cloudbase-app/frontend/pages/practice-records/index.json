@@ -7,6 +7,7 @@
     "empty-state-panel": "../../components/empty-state-panel/index",
     "record-card": "../../components/record-card/index",
     "record-detail-panel": "../../components/record-detail-panel/index",
+    "search-bar": "../../components/search-bar/index",
     "subpage-header": "../../components/subpage-header/index"
   }
 }

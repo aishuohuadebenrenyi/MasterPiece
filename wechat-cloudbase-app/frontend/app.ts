@@ -6,7 +6,7 @@ App({
   globalData: {
     cloudEnv: null as null | ReturnType<typeof getCloudEnvConfig>,
     privacyAuthorized: false,
-    version: '1.0.0'
+    version: '1.0.1'
   },
 
   onLaunch() {

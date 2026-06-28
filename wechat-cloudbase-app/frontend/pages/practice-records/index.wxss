@@ -37,6 +37,227 @@
   min-width: 0;
 }
 
+.record-filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin: 22rpx 0 28rpx;
+}
+
+.material-filter-picker {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 72rpx;
+  padding: 0 24rpx;
+  border-radius: 28rpx;
+  background: var(--improv-card-strong);
+  border: 2rpx solid var(--improv-line-subtle);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16rpx;
+  box-shadow: 0 14rpx 34rpx rgba(55, 82, 150, 0.08);
+  margin: 0;
+  text-align: left;
+}
+
+.filter-picker-label {
+  flex: 0 0 auto;
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.filter-picker-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--improv-text);
+  font-size: 25rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.filter-picker-action {
+  flex: 0 0 auto;
+  min-width: 76rpx;
+  min-height: 48rpx;
+  padding: 0 16rpx;
+  border-radius: 24rpx;
+  background: var(--improv-primary-tint);
+  color: var(--improv-primary-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-row .chip {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 196rpx;
+  margin: 0;
+}
+
+.material-search {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 18rpx;
+}
+
+.material-option-list {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.material-option-item {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 92rpx;
+  margin: 0;
+  padding: 18rpx 20rpx;
+  border-radius: 24rpx;
+  background: var(--improv-bg-subtle);
+  border: 2rpx solid transparent;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18rpx;
+  overflow: hidden;
+  text-align: left;
+}
+
+.material-option-item.active {
+  background: var(--improv-primary-tint);
+  border-color: var(--improv-primary-wash);
+}
+
+.material-option-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.material-option-title {
+  color: var(--improv-text);
+  font-size: 27rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-option-desc {
+  color: var(--improv-muted);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-option-check {
+  flex: 0 0 36rpx;
+  width: 36rpx;
+  height: 44rpx;
+  border-radius: 22rpx;
+  color: var(--improv-primary-strong);
+  font-size: 26rpx;
+  font-weight: 900;
+  line-height: 44rpx;
+  text-align: center;
+}
+
+.material-option-empty {
+  display: block;
+  padding: 36rpx 0 12rpx;
+  color: var(--improv-muted);
+  font-size: 24rpx;
+  font-weight: 800;
+  text-align: center;
+}
+
+.record-attachment-section {
+  margin-top: 24rpx;
+}
+
+.record-attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.record-attachment-item {
+  min-height: 144rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 24rpx;
+  background: var(--improv-primary-tint);
+  color: var(--improv-primary-strong);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.record-attachment-item.video {
+  background: var(--improv-secondary-wash);
+  color: var(--improv-secondary);
+}
+
+.attachment-preview {
+  min-height: 360rpx;
+  border-radius: 28rpx;
+  background: var(--improv-primary-tint);
+  color: var(--improv-primary-strong);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+  padding: 28rpx;
+  text-align: center;
+  font-weight: 900;
+}
+
+.attachment-preview.video {
+  background: var(--improv-secondary-wash);
+  color: var(--improv-secondary);
+}
+
+.attachment-file-id {
+  max-width: 100%;
+  word-break: break-all;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.attachment-actions {
+  margin-top: 24rpx;
+}
+
 .record-item .muted {
   display: block;
   margin-top: 16rpx;
@@ -44,6 +265,8 @@
 
 .empty-actions {
   justify-content: center;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .detail-card {

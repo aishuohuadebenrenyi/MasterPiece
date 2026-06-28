@@ -117,7 +117,7 @@
     </block>
   </view>
 
-  <bottom-sheet visible="{{listVisible}}" title="{{listTitle}}" sheetClass="mine-list-sheet" bind:close="closeSheet">
+  <bottom-sheet visible="{{listVisible}}" title="{{listTitle}}" sheetClass="mine-list-sheet" bodyMode="fit" bind:close="closeSheet">
     <view class="list-stack">
       <scroll-view wx:if="{{currentKind === 'sediments' && methodFilterOptions.length > 1}}" class="mine-filter-scroll" scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}">
         <view class="mine-filter-row">
@@ -127,10 +127,12 @@
       <view wx:if="{{currentKind === 'inspirations'}}" class="mine-inspiration-filter-row">
           <button wx:for="{{inspirationFilterOptions}}" wx:key="value" class="chip compact-filter-chip mine-filter-chip {{item.activeClass}}" data-filter="{{item.value}}" catchtap="filterInspirations">{{item.label}}</button>
       </view>
-      <empty-state-panel wx:if="{{!listItems.length}}" customClass="empty-list" title="暂无记录" desc="{{currentKind === 'sediments' ? '还没沉淀方法卡，去整理一条吧。' : (currentKind === 'pending' ? '当前没有待整理记录。' : '还没有灵感记录，随时记下闪念。')}}" />
-      <view wx:for="{{listItems}}" wx:key="title" class="mine-list-item-wrap">
-        <record-card customClass="mine-list-record-card" itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" badgeText="{{item.cardView.badgeText}}" badgeTone="{{item.cardView.badgeTone}}" primaryActionText="{{(currentKind === 'sediments' || currentKind === 'inspirations' || (currentKind === 'pending' && item.sourceType === 'inspiration')) ? '编辑' : ''}}" bind:tapcard="openDetail" bind:action="onEditCard" />
-      </view>
+      <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="mine-list-scroll">
+        <empty-state-panel wx:if="{{!listItems.length}}" customClass="empty-list" title="暂无记录" desc="{{currentKind === 'sediments' ? '还没沉淀方法卡，去整理一条吧。' : (currentKind === 'pending' ? '当前没有待整理记录。' : '还没有灵感记录，随时记下闪念。')}}" />
+        <view wx:for="{{listItems}}" wx:key="id" class="mine-list-item-wrap">
+          <record-card customClass="mine-list-record-card" itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" badgeText="{{item.cardView.badgeText}}" badgeTone="{{item.cardView.badgeTone}}" primaryActionText="{{(currentKind === 'sediments' || currentKind === 'inspirations' || (currentKind === 'pending' && item.sourceType === 'inspiration')) ? '编辑' : ''}}" bind:tapcard="openDetail" bind:action="onEditCard" />
+        </view>
+      </scroll-view>
     </view>
   </bottom-sheet>
 

@@ -394,7 +394,6 @@
   display: flex;
   flex-direction: column;
   gap: 84rpx;
-  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 }
 
 form-field.profile-tags-field {
@@ -511,6 +510,8 @@ form-field.profile-tags-field {
   display: flex;
   flex-direction: column;
   gap: 18rpx;
+  width: 100%;
+  min-height: 0;
 }
 
 .mine-filter-scroll {
@@ -593,6 +594,22 @@ form-field.profile-tags-field {
   display: flex;
   flex-direction: column;
   position: relative;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 18rpx;
+}
+
+.mine-list-scroll {
+  width: 100%;
+  min-height: 180rpx;
+  max-height: 48vh;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.mine-list-record-card {
+  width: 100%;
+  min-width: 0;
 }
 
 .card-actions {

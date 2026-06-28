@@ -49,7 +49,7 @@ const FIELD_WHITELISTS = {
   [COLLECTIONS.inspirations]: ['id', 'title', 'desc', 'meta', 'linkedMaterialId', 'linkedMaterialTitle', 'linkedRehearsalId', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
   [COLLECTIONS.methodCards]: ['id', 'type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
   [COLLECTIONS.rehearsals]: ['id', 'title', 'desc', 'teamName', 'duration', 'goals', 'source', 'status', 'plan', 'reviewKeep', 'reviewTry', 'reviewReminder', 'meta'],
-  [COLLECTIONS.practiceRecords]: ['id', 'materialId', 'materialTitle', 'rehearsalId', 'rehearsalTitle', 'title', 'desc', 'effect', 'keep', 'try', 'reminder', 'duration', 'meta'],
+  [COLLECTIONS.practiceRecords]: ['id', 'materialId', 'materialTitle', 'rehearsalId', 'rehearsalTitle', 'title', 'desc', 'score', 'note', 'attachments', 'reminder', 'duration', 'meta'],
   [COLLECTIONS.profiles]: ['id', 'displayName', 'avatarUrl', 'troupeName']
 }
 
@@ -58,7 +58,7 @@ const UPDATE_WHITELISTS = {
   [COLLECTIONS.inspirations]: ['title', 'desc', 'meta', 'linkedMaterialId', 'linkedMaterialTitle', 'linkedRehearsalId', 'linkedRehearsalTitle', 'sourceType', 'sourceId', 'sourceTitle'],
   [COLLECTIONS.methodCards]: ['type', 'title', 'desc', 'meta', 'sourceType', 'sourceId', 'sourceTitle'],
   [COLLECTIONS.rehearsals]: ['title', 'desc', 'teamName', 'duration', 'goals', 'source', 'status', 'plan', 'reviewKeep', 'reviewTry', 'reviewReminder', 'meta'],
-  [COLLECTIONS.practiceRecords]: ['materialId', 'materialTitle', 'rehearsalId', 'rehearsalTitle', 'title', 'desc', 'effect', 'keep', 'try', 'reminder', 'duration', 'meta']
+  [COLLECTIONS.practiceRecords]: ['materialId', 'materialTitle', 'rehearsalId', 'rehearsalTitle', 'title', 'desc', 'score', 'note', 'attachments', 'reminder', 'duration', 'meta']
 }
 
 function ok(data = {}, requestId = '') {
@@ -248,6 +248,37 @@ function validateStringArrayField(payload, field, requestId, maxItems = 20, maxI
   return null
 }
 
+function validatePracticeAttachments(payload, requestId) {
+  const attachments = payload.attachments
+  if (attachments === undefined || attachments === null) return null
+  if (!Array.isArray(attachments)) return fail('attachments 必须为数组', requestId, 400)
+  if (attachments.length > 9) return fail('attachments 不能超过 9 项', requestId, 400)
+  const allowedTypes = ['image', 'video']
+  for (const item of attachments) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return fail('attachments 包含非法附件', requestId, 400)
+    const unknown = findUnknownFields(item, ['id', 'type', 'fileID', 'thumbFileID', 'duration', 'size', 'createdAt'])
+    if (unknown.length) return fail(`attachments 包含未定义字段: ${unknown.join(', ')}`, requestId, 400)
+    if (typeof item.id !== 'string' || !item.id.trim() || item.id.length > 100) return fail('附件缺少合法 id', requestId, 400)
+    if (!allowedTypes.includes(item.type)) return fail('附件类型无效', requestId, 400)
+    if (typeof item.fileID !== 'string' || !item.fileID.trim() || item.fileID.length > 500) return fail('附件缺少合法 fileID', requestId, 400)
+    if (item.thumbFileID !== undefined && (typeof item.thumbFileID !== 'string' || item.thumbFileID.length > 500)) return fail('附件 thumbFileID 无效', requestId, 400)
+    if (item.duration !== undefined && (!Number.isFinite(Number(item.duration)) || Number(item.duration) < 0 || Number(item.duration) > 3600)) return fail('附件 duration 无效', requestId, 400)
+    if (item.size !== undefined && (!Number.isFinite(Number(item.size)) || Number(item.size) < 0 || Number(item.size) > 200 * 1024 * 1024)) return fail('附件 size 无效', requestId, 400)
+  }
+  return null
+}
+
+async function checkPracticeAttachmentSecurity(payload, requestId) {
+  const attachments = Array.isArray(payload.attachments) ? payload.attachments : []
+  for (const item of attachments) {
+    if (item.type === 'image') {
+      const unsafeImage = await checkImageSecurity(item.fileID, requestId)
+      if (unsafeImage) return unsafeImage
+    }
+  }
+  return null
+}
+
 function validateRehearsalPlan(plan, requestId) {
   if (plan === undefined || plan === null) return null
   if (!Array.isArray(plan)) return fail('plan 必须为数组', requestId, 400)
@@ -318,12 +349,14 @@ function validateOwnedSchema(collectionName, payload, requestId, isUpdate = fals
       validateStringField(payload, 'rehearsalTitle', requestId, 80),
       validateStringField(payload, 'title', requestId, 80, !isUpdate),
       validateStringField(payload, 'desc', requestId, 1000),
-      validateStringField(payload, 'effect', requestId, 40),
-      validateStringField(payload, 'keep', requestId, 1000),
-      validateStringField(payload, 'try', requestId, 1000),
+      validateStringField(payload, 'note', requestId, 2000),
+      validatePracticeAttachments(payload, requestId),
       validateStringField(payload, 'reminder', requestId, 500),
       validateStringArrayField(payload, 'meta', requestId, 20, 40)
     )
+    if (payload.score !== undefined && (!Number.isInteger(Number(payload.score)) || Number(payload.score) < 1 || Number(payload.score) > 10)) {
+      checks.push(fail('score 必须为 1–10 分', requestId, 400))
+    }
     if (payload.duration !== undefined && (!Number.isFinite(Number(payload.duration)) || Number(payload.duration) < 0 || Number(payload.duration) > 86400)) {
       checks.push(fail('duration 必须为 0–86400 秒', requestId, 400))
     }
@@ -634,12 +667,31 @@ async function updateMaterialState(payload, requestId) {
 
 async function listOwned(collectionName, payload, requestId) {
   const limit = Math.min(Number(payload.limit) || DEFAULT_LIMIT, MAX_LIMIT)
+  const offset = Math.max(Number(payload.offset) || 0, 0)
+  const where = ownerWhere()
+  if (collectionName === COLLECTIONS.practiceRecords) {
+    if (payload.materialId && typeof payload.materialId === 'string' && payload.materialId !== 'all') {
+      where.materialId = payload.materialId
+    }
+  }
   const result = await db.collection(collectionName)
-    .where(ownerWhere())
+    .where(where)
     .orderBy('updatedAt', 'desc')
+    .skip(offset)
     .limit(limit)
     .get()
-  return ok({ items: result.data }, requestId)
+  let items = result.data
+  if (collectionName === COLLECTIONS.practiceRecords) {
+    const minScore = Number(payload.minScore)
+    const maxScore = Number(payload.maxScore)
+    if (Number.isFinite(minScore)) items = items.filter(item => Number(item.score) >= Math.max(1, minScore))
+    if (Number.isFinite(maxScore)) items = items.filter(item => Number(item.score) <= Math.min(10, maxScore))
+    if (payload.attachmentType && payload.attachmentType !== 'all') {
+      const attachmentType = payload.attachmentType
+      items = items.filter(item => Array.isArray(item.attachments) && item.attachments.some(attachment => attachment.type === attachmentType))
+    }
+  }
+  return ok({ items, nextOffset: offset + items.length, hasMore: result.data.length >= limit }, requestId)
 }
 
 async function createOwned(collectionName, payload, requestId) {
@@ -649,6 +701,10 @@ async function createOwned(collectionName, payload, requestId) {
   const safeData = pickFields(payload, whitelist)
   const unsafeContent = await checkTextSecurity(safeData, requestId)
   if (unsafeContent) return unsafeContent
+  if (collectionName === COLLECTIONS.practiceRecords) {
+    const unsafeAttachment = await checkPracticeAttachmentSecurity(safeData, requestId)
+    if (unsafeAttachment) return unsafeAttachment
+  }
   const collection = db.collection(collectionName)
   const existing = await collection.where(ownerWhere({ id: safeData.id })).limit(1).get()
   if (existing.data.length) return ok({ item: existing.data[0] }, requestId)
@@ -684,6 +740,10 @@ async function updateOwned(collectionName, payload, requestId) {
   const safePatch = pickFields(rawPatch, whitelist)
   const unsafeContent = await checkTextSecurity(safePatch, requestId)
   if (unsafeContent) return unsafeContent
+  if (collectionName === COLLECTIONS.practiceRecords && safePatch.attachments !== undefined) {
+    const unsafeAttachment = await checkPracticeAttachmentSecurity(safePatch, requestId)
+    if (unsafeAttachment) return unsafeAttachment
+  }
   const patch = Object.assign({}, safePatch, { updatedAt: now() })
   await collection.doc(result.data[0]._id).update({ data: patch })
   return ok({ item: Object.assign({}, result.data[0], safePatch) }, requestId)
@@ -840,6 +900,8 @@ async function completePractice(payload, requestId) {
     methodCard: methodCardPayload ? pickFields(methodCardPayload, FIELD_WHITELISTS[COLLECTIONS.methodCards]) : null
   }, requestId)
   if (unsafeContent) return unsafeContent
+  const unsafeAttachment = await checkPracticeAttachmentSecurity(recordPayload, requestId)
+  if (unsafeAttachment) return unsafeAttachment
 
   const ownerOpenId = getOpenId()
   const result = await db.runTransaction(async transaction => {

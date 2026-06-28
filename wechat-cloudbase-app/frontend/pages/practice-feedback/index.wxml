@@ -1,5 +1,10 @@
 <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{themeClass}}" style="{{layoutStyle}}" wx:if="{{material}}">
-  <subpage-header kicker="{{duration > 0 ? '本次练习时长：' + durationText : '素材练习复盘'}}" title="{{material.title}}" bind:back="back" />
+  <subpage-header title="素材练习复盘" bind:back="back" />
+
+  <view wx:if="{{duration > 0}}" class="practice-duration-summary">
+    <text class="duration-label">本次练习时长</text>
+    <text class="duration-value">{{durationText}}</text>
+  </view>
 
   <form-card title="关联方式">
     <view class="feedback-object-summary">
@@ -9,8 +14,61 @@
     <view class="meta-row feedback-object-meta"><text wx:for="{{material.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
   </form-card>
 
-  <form-card title="本次反馈">
-    <view class="feedback-section context-inline-section">
+  <form-card title="本次复盘">
+    <view class="feedback-section score-inline-section">
+      <view class="score-heading-row">
+        <view>
+          <text class="feedback-section-title">评分</text>
+          <text class="score-summary">{{scoreValue >= 8 ? '很有效' : scoreValue >= 5 ? '一般' : '需调整'}}</text>
+        </view>
+        <view class="score-value-badge">
+          <text>{{scoreValue}}</text>
+          <text>分</text>
+        </view>
+      </view>
+      <view class="score-slider-box">
+        <button class="score-step-btn" data-delta="-1" bindtap="adjustScore">-</button>
+        <view class="score-slider-main">
+          <slider class="score-slider" min="1" max="10" step="1" value="{{scoreValue}}" activeColor="#FF9F1C" backgroundColor="#EDF2EE" block-color="#FF9F1C" block-size="26" bindchanging="setScore" bindchange="setScore" />
+          <view class="score-scale-row">
+            <text>1</text>
+            <text>5</text>
+            <text>10</text>
+          </view>
+        </view>
+        <button class="score-step-btn" data-delta="1" bindtap="adjustScore">+</button>
+      </view>
+    </view>
+
+    <view class="form-field-stack feedback-field-stack">
+      <form-field label="本次复盘">
+        <textarea class="app-textarea" value="{{noteValue}}" data-field="noteValue" bindblur="updateField" placeholder="记录这次有效的瞬间、卡住的地方，或下一轮想尝试的方向。" />
+      </form-field>
+    </view>
+
+    <view class="feedback-section attachment-section">
+      <text class="feedback-section-title">附件</text>
+      <view class="attachment-actions">
+        <button class="small-btn attachment-add-btn" loading="{{uploadingAttachment}}" disabled="{{uploadingAttachment}}" data-type="image" bindtap="addAttachment">添加照片</button>
+        <button class="small-btn attachment-add-btn" loading="{{uploadingAttachment}}" disabled="{{uploadingAttachment}}" data-type="video" bindtap="addAttachment">添加短视频</button>
+      </view>
+      <view wx:if="{{draftAttachments.length}}" class="attachment-grid">
+        <view wx:for="{{draftAttachments}}" wx:key="id" class="attachment-item {{item.type === 'video' ? 'video' : ''}}">
+          <text>{{item.type === 'video' ? '视频' : '照片'}}</text>
+          <button class="attachment-remove" data-id="{{item.id}}" bindtap="removeDraftAttachment">删除</button>
+        </view>
+      </view>
+      <text wx:else class="feedback-helper">可上传照片或短视频，保存前可直接删除。</text>
+    </view>
+
+    <view class="more-toggle" bindtap="toggleMore">
+      <view>
+        <text class="mini-title">更多信息</text>
+      </view>
+      <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
+    </view>
+    <view wx:if="{{moreVisible}}" class="more-fields">
+      <view class="feedback-section context-inline-section">
       <text class="feedback-section-title">归属场景</text>
       <view class="form-chip-row context-chip-row">
         <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
@@ -27,34 +85,13 @@
       <picker wx:if="{{contextType === 'history'}}" mode="selector" range="{{historicalRehearsals}}" range-key="title" bindchange="selectHistoricalRehearsal">
         <view class="app-input">{{linkedRehearsal || '选择历史排练'}}</view>
       </picker>
-    </view>
-    <view class="feedback-section effect-inline-section">
-      <text class="feedback-section-title">效果反馈</text>
-      <view class="form-chip-row effect-chip-row">
-        <button wx:for="{{effectOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setEffect">{{item.label}}</button>
       </view>
-    </view>
-    <view class="form-field-stack feedback-field-stack">
-      <form-field label="Keep">
-        <textarea class="app-textarea" value="{{keepValue}}" data-field="keepValue" bindblur="updateField" />
-      </form-field>
-      <form-field label="Try">
-        <textarea class="app-textarea" value="{{tryValue}}" data-field="tryValue" bindblur="updateField" />
-      </form-field>
-      <form-field label="下次提醒">
-        <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" />
-      </form-field>
-    </view>
-    <view class="more-toggle" bindtap="toggleMore">
-      <view>
-        <text class="mini-title">更多信息</text>
-      </view>
-      <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
-    </view>
-    <view wx:if="{{moreVisible}}" class="more-fields">
       <view class="form-field-stack">
         <form-field label="人数">
           <input class="app-input" value="{{attendanceText}}" data-field="attendanceText" bindblur="updateField" />
+        </form-field>
+        <form-field label="下次提醒">
+          <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" />
         </form-field>
       </view>
     </view>

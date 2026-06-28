@@ -5,6 +5,7 @@ old/
 project_memory/
 node_modules/
 wechat-cloudbase-app/node_modules/
+release-support/local/
 .env
 .env.*
 *.pem
