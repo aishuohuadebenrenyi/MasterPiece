@@ -1,0 +1,722 @@
+import type { Material, MaterialType } from '../../types/domain'
+import { findLocalMaterial, getMaterial, updateMaterialState, updateMaterial, deleteMaterial } from '../../services/material'
+import { listPracticeRecords } from '../../services/practice-record'
+import { getState, markPlayed, unmarkPlayed, setMaterials, toggleSaved, startMaterialSession, subscribe, updateMaterialSession, clearMaterialSession , getThemeClass } from '../../store/index'
+import { getRouteParam, toast } from '../../utils/page'
+import { getLayoutStyle } from '../../utils/layout'
+import { SHARE_ABILITY_COUNT, CATEGORY_SUGGESTION_LIMIT } from '../../config/constants'
+import { MATERIAL_ABILITIES, MATERIAL_SCENES, MATERIAL_TYPES } from '../../config/material'
+
+const materialTypes = MATERIAL_TYPES
+const abilityOptions = MATERIAL_ABILITIES
+const sceneOptions = MATERIAL_SCENES
+
+function getCustomMaterialTags(categories: string[]) {
+  return categories.filter((item) => (
+    !materialTypes.includes(item as MaterialType)
+    && !abilityOptions.includes(item)
+    && !sceneOptions.includes(item)
+  ))
+}
+
+type EditMaterialDraft = Partial<Material> & {
+  people?: string
+  duration?: string
+  steps?: string
+}
+
+type HistoryCard = {
+  id: string
+  title: string
+  desc: string
+  meta: string[]
+  date: string
+}
+
+function formatShortDate(value: unknown) {
+  if (!value) return '-'
+  const date = new Date(value as number)
+  if (Number.isNaN(date.getTime())) return '-'
+  return `${date.getMonth() + 1}月${date.getDate()}日`
+}
+
+function buildMaterialMeta(people = '', duration = '') {
+  if (!people && !duration) return []
+  return [people || '', duration || '']
+}
+
+function isEditableMaterial(material: Material) {
+  return material.ownerOpenId !== 'system' && (Boolean(material.ownerOpenId) || material.tags.includes('自定义') || material.id.startsWith('custom-'))
+}
+
+function isPermissionError(message = '') {
+  return message.includes('权限') || message.includes('无权限')
+}
+
+Page({
+  data: {
+    themeClass: 'theme-default',
+    material: null as Material | null,
+    related: null as Material | null,
+    saved: false,
+    played: false,
+    saveIcon: '♡',
+    savedText: '♡ 收藏',
+    playedText: '○ 练过',
+    tagText: '',
+    displayMeta: [] as string[],
+    layoutStyle: '',
+    detailLoading: true,
+    detailErrorTitle: '',
+    detailErrorDesc: '',
+    canEditMaterial: false,
+    isEditMode: false,
+    editMaterial: {} as EditMaterialDraft,
+    timer: null as number | null,
+    currentMaterialSession: null as any,
+    historyCards: [] as HistoryCard[],
+    practiceSummary: {
+      avgScore: '-',
+      count: 0,
+      latestText: '-',
+      videoCount: 0,
+      markerCount: 0
+    },
+    recentPracticeRecords: [] as Array<{ id: string; title: string; note: string; meta: string[] }>,
+    typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    tagCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    customCategoryVisible: false,
+    customCategoryInput: '',
+    categorySuggestions: [] as Array<{ value: string; label: string }>,
+    customCategoryFocus: false,
+    showMoreOptions: false,
+    moreOptionsToggleText: '补充玩法与提示',
+    selectedCategoryTags: [] as string[]
+  },
+
+  syncStatusText() {
+    this.setData({
+      saveIcon: this.data.saved ? '♥︎' : '♡',
+      savedText: this.data.saved ? '♥︎ 已收藏' : '♡ 收藏',
+      playedText: this.data.played ? '✓ 已练过' : '○ 练过'
+    })
+  },
+
+  unsubscribeStore: null as null | (() => void),
+
+  onShareAppMessage() {
+    const material = this.data.material
+    if (material) {
+      const stripeMap: Record<string, string> = {
+        orange: '/assets/share/share-material-orange.png',
+        blue: '/assets/share/share-material-blue.png',
+        mint: '/assets/share/share-material-mint.png'
+      }
+      const abilities = (material.abilities || []).slice(0, SHARE_ABILITY_COUNT).join('·')
+      return {
+        title: `【${material.type}】${material.title}${abilities ? ' — ' + abilities : ''}`,
+        path: `/pages/material-detail/index?id=${material.id}`,
+        imageUrl: stripeMap[material.stripeTone] || '/assets/share/share-brand.png'
+      }
+    }
+    return {
+      title: '即兴素材 — 即兴工具箱',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
+  onShareTimeline() {
+    const material = this.data.material
+    if (material) {
+      const stripeMap: Record<string, string> = {
+        orange: '/assets/share/share-material-orange.png',
+        blue: '/assets/share/share-material-blue.png',
+        mint: '/assets/share/share-material-mint.png'
+      }
+      return {
+        title: `【${material.type}】${material.title}`,
+        query: `id=${material.id}`,
+        imageUrl: stripeMap[material.stripeTone] || '/assets/share/share-brand.png'
+      }
+    }
+    return {
+      title: '即兴素材 — 即兴工具箱',
+      query: '',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
+  async onLoad(options: Record<string, string>) {
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
+    const id = getRouteParam(options, 'id', '')
+    if (!id) {
+      this.setData({
+        detailLoading: false,
+        detailErrorTitle: '没有找到这条素材',
+        detailErrorDesc: '返回上一页，重新选择一条素材。'
+      })
+      return
+    }
+    
+    // 1. 先尝试从本地 store 渲染，避免白屏等待
+    let allMaterials = getState().materials
+    let material = allMaterials.find((item) => item.id === id) || findLocalMaterial(id)
+    if (material) {
+      this.renderMaterial(material)
+    }
+
+    this.unsubscribeStore = subscribe((state) => {
+      const currentMaterialSession = state.currentMaterial && state.currentMaterial.materialId === id ? state.currentMaterial : null
+      const historyCards = state.methodCards
+        .filter((card) => material && card.title === material.title)
+        .map((card) => ({
+          id: card.id,
+          title: card.title,
+          desc: card.desc,
+          meta: card.meta,
+          date: new Date(card.createdAt as number).toLocaleDateString()
+        }))
+
+      this.setData({ currentMaterialSession, historyCards })
+    })
+
+    // 2. 按 ID 拉取最新数据，避免默认列表分页导致后续素材深链打不开
+    try {
+      material = await getMaterial(id)
+      const mergedMaterials = getState().materials.filter((item) => item.id !== id).concat(material)
+      setMaterials(mergedMaterials)
+      this.renderMaterial(material)
+    } catch (error: any) {
+      if (!this.data.material) {
+        this.setData({
+          detailLoading: false,
+          detailErrorTitle: error && error.code === 404 ? '没有找到这条素材' : '素材详情加载失败',
+          detailErrorDesc: error && error.code === 404
+            ? '返回记录页重新选择。'
+            : '可返回记录页，或重试。'
+        })
+      }
+      return
+    }
+  },
+
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
+  },
+
+  onUnload() {
+    if (this.data.timer) clearInterval(this.data.timer)
+    if (this.unsubscribeStore) this.unsubscribeStore()
+  },
+
+  renderMaterial(material: Material) {
+    const allMaterials = getState().materials
+    const related = allMaterials.find((item) => item.id === material.relatedMaterialId) || findLocalMaterial(material.relatedMaterialId)
+    const state = getState()
+    const canEditMaterial = isEditableMaterial(material)
+    const displayMeta = (material.meta || []).filter((item) => typeof item === 'string' && item.trim())
+    this.setData({
+      material,
+      related,
+      canEditMaterial,
+      tagText: [material.type, ...(material.abilities || []), ...(material.tags || [])].filter(Boolean).join(' · '),
+      displayMeta,
+      saved: state.savedMaterialIds.includes(material.id),
+      played: state.playedMaterialIds.includes(material.id),
+      detailLoading: false,
+      detailErrorTitle: '',
+      detailErrorDesc: ''
+    }, () => this.syncStatusText())
+    this.loadPracticeSummary(material.id)
+  },
+
+  async loadPracticeSummary(materialId: string) {
+    try {
+      const allRecords = await listPracticeRecords({ materialId, limit: 100 })
+      const records = allRecords.filter((item) => item.materialId === materialId)
+      const scoredRecords = records.filter((item) => Number(item.score) > 0)
+      const avgScore = scoredRecords.length
+        ? (scoredRecords.reduce((sum, item) => sum + Number(item.score || 0), 0) / scoredRecords.length).toFixed(1)
+        : '-'
+      const latest = records[0]
+      const videoCount = records.filter((item) => Array.isArray(item.attachments) && item.attachments.some((attachment) => attachment.type === 'video')).length
+      const markerCount = records.reduce((sum, item) => {
+        if (!Array.isArray(item.attachments)) return sum
+        return sum + item.attachments.reduce((attachmentSum, attachment) => attachmentSum + (Array.isArray(attachment.markers) ? attachment.markers.length : 0), 0)
+      }, 0)
+      this.setData({
+        practiceSummary: {
+          avgScore,
+          count: records.length,
+          latestText: latest ? formatShortDate(latest.createdAt) : '-',
+          videoCount,
+          markerCount
+        },
+        recentPracticeRecords: records.slice(0, 3).map((item) => ({
+          id: item.id,
+          title: formatShortDate(item.createdAt),
+          note: item.note || item.desc || '无复盘内容',
+          meta: [`${item.score || '-'} 分`, ...(Array.isArray(item.attachments) && item.attachments.length ? [`${item.attachments.length} 个附件`] : [])]
+        }))
+      })
+    } catch (error) {
+      this.setData({
+        practiceSummary: {
+          avgScore: '-',
+          count: 0,
+          latestText: '-',
+          videoCount: 0,
+          markerCount: 0
+        },
+        recentPracticeRecords: []
+      })
+    }
+  },
+
+  retryLoad() {
+    if (!this.data.material) {
+      this.setData({
+        detailLoading: true,
+        detailErrorTitle: '',
+        detailErrorDesc: ''
+      })
+      const pages = getCurrentPages()
+      const current = pages[pages.length - 1] as { options?: Record<string, string> }
+      if (this.unsubscribeStore) {
+        this.unsubscribeStore()
+        this.unsubscribeStore = null
+      }
+      this.onLoad(current.options || {})
+    }
+  },
+
+  back() {
+    wx.navigateBack()
+  },
+
+  async toggleSaved() {
+    if (!this.data.material) return
+    const saved = toggleSaved(this.data.material.id)
+    this.setData({ saved }, () => this.syncStatusText())
+    try {
+      await updateMaterialState(this.data.material.id, { saved })
+    } catch (error: any) {
+      toggleSaved(this.data.material.id)
+      this.setData({ saved: !saved }, () => this.syncStatusText())
+      toast(error.message || '收藏状态保存失败')
+    }
+  },
+
+  async togglePlayed() {
+    if (!this.data.material) return
+    const isPlayed = this.data.played
+    if (isPlayed) {
+      unmarkPlayed(this.data.material.id)
+      this.setData({ played: false }, () => this.syncStatusText())
+      try {
+        await updateMaterialState(this.data.material.id, { played: false })
+      } catch (error: any) {
+        markPlayed(this.data.material.id)
+        this.setData({ played: true }, () => this.syncStatusText())
+        toast(error.message || '状态保存失败')
+      }
+    } else {
+      markPlayed(this.data.material.id)
+      this.setData({ played: true }, () => this.syncStatusText())
+      try {
+        await updateMaterialState(this.data.material.id, { played: true })
+        toast('已标记练过')
+      } catch (error: any) {
+        unmarkPlayed(this.data.material.id)
+        this.setData({ played: false }, () => this.syncStatusText())
+        toast(error.message || '状态保存失败')
+      }
+    }
+  },
+
+  startPractice() {
+    try {
+      const { material } = this.data
+      if (!material) return
+      if (material.referenceOnly) {
+        toast('路径素材只支持查看')
+        return
+      }
+      startMaterialSession({
+        id: `session-${Date.now()}`,
+        materialId: material.id,
+        title: material.title,
+        startTime: Date.now(),
+        duration: 0,
+        status: '进行中'
+      })
+      this.startTimer()
+    } catch (e: any) {
+      toast(e.message || '开启失败')
+    }
+  },
+
+  pausePractice() {
+    if (this.data.timer) clearInterval(this.data.timer)
+    this.setData({ timer: null })
+    updateMaterialSession({ status: '暂停中' })
+  },
+
+  resumePractice() {
+    updateMaterialSession({ status: '进行中' })
+    this.startTimer()
+  },
+
+  finishPractice() {
+    if (this.data.timer) clearInterval(this.data.timer)
+    const session = this.data.currentMaterialSession
+    if (!session) return
+    clearMaterialSession()
+    wx.navigateTo({ url: `/pages/practice-feedback/index?id=${session.materialId}&duration=${session.duration}` })
+  },
+
+  startTimer() {
+    if (this.data.timer) return
+    const timer = setInterval(() => {
+      const session = this.data.currentMaterialSession
+      if (session) {
+        updateMaterialSession({ duration: session.duration + 1 })
+      }
+    }, 1000) as unknown as number
+    this.setData({ timer })
+  },
+
+  openRelated() {
+    if (!this.data.related) return
+    wx.redirectTo({ url: `/pages/material-detail/index?id=${this.data.related.id}` })
+  },
+
+  openPracticeRecords() {
+    const materialId = this.data.material?.id
+    wx.navigateTo({ url: `/pages/material-records/index${materialId ? '?materialId=' + materialId : ''}` })
+  },
+
+  enterEditMode() {
+    const material = this.data.material
+    if (!material) return
+    if (!this.data.canEditMaterial) {
+      toast('只能修改自己创建的素材')
+      return
+    }
+    const editMaterial: EditMaterialDraft = { ...material }
+    editMaterial.people = material.meta[0] || ''
+    editMaterial.duration = material.meta[1] || ''
+    editMaterial.steps = (material.steps || []).join('\n')
+    
+    this.setData({
+      editMaterial,
+      selectedCategoryTags: Array.from(new Set([material.type].concat(material.abilities || [], material.scenes || [], material.tags || []).filter(Boolean))),
+      showMoreOptions: false,
+      moreOptionsToggleText: '补充训练方法',
+      isEditMode: true
+    })
+    this.syncCategoryOptions()
+  },
+
+  cancelEdit() {
+    this.setData({
+      isEditMode: false,
+      editMaterial: {},
+      selectedCategoryTags: [],
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: [],
+      showMoreOptions: false,
+      moreOptionsToggleText: '补充训练方法'
+    })
+  },
+
+  getCategoryPool() {
+    const categories: string[] = []
+    getState().materials.forEach((material: Material) => {
+      if (Array.isArray(material.tags)) {
+        material.tags.forEach((tag) => categories.push(tag))
+      }
+    })
+    return Array.from(new Set(categories.map((item) => String(item).trim()).filter(Boolean)))
+  },
+
+  getCategorySuggestions(input: string) {
+    const keyword = String(input || '').trim().toLowerCase()
+    if (!keyword) return []
+    return this.getCategoryPool()
+      .filter((item: string) => item.toLowerCase().includes(keyword))
+      .slice(0, CATEGORY_SUGGESTION_LIMIT)
+      .map((value: string) => ({ value, label: value }))
+  },
+
+  syncCategoryOptions() {
+    this.setData({
+      typeCategoryOptions: materialTypes.map((value: string) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      abilityCategoryOptions: abilityOptions.map((value: string) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      sceneCategoryOptions: sceneOptions.map((value: string) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      tagCategoryOptions: getCustomMaterialTags(this.data.selectedCategoryTags).map((value: string) => ({
+        value,
+        label: value,
+        activeClass: 'active'
+      })),
+      categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
+    })
+  },
+
+  updateEditMaterial(event: WechatMiniprogram.Input) {
+    const field = event.currentTarget.dataset.field
+    this.setData({ [`editMaterial.${field}`]: event.detail.value })
+  },
+
+  handleMaterialFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
+    const { field, value } = event.detail || { field: '', value: '' }
+    if (!field) return
+    this.setData({ [`editMaterial.${field}`]: value })
+  },
+
+  setEditMaterialType(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    const value = String(event.detail?.value || '').trim()
+    if (!value) return
+    const selectedCategoryTags = this.data.selectedCategoryTags
+      .filter((item: string) => !materialTypes.includes(item as MaterialType))
+      .concat(value)
+    this.setData({ selectedCategoryTags }, () => this.syncCategoryOptions())
+  },
+
+  toggleEditMaterialAbility(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleEditMaterialScene(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleEditMaterialTag(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleEditMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleEditMaterialCategory(category: string) {
+    if (!category) return
+    const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
+      ? this.data.selectedCategoryTags.filter((item: string) => item !== category)
+      : this.data.selectedCategoryTags.concat(category)
+    this.setData({ selectedCategoryTags }, () => this.syncCategoryOptions())
+  },
+
+  toggleCustomCategory() {
+    const customCategoryVisible = !this.data.customCategoryVisible
+    if (customCategoryVisible) {
+      this.setData({
+        customCategoryVisible: true,
+        customCategoryFocus: false,
+        customCategoryInput: this.data.customCategoryInput,
+        categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
+      }, () => {
+        this.setData({ customCategoryFocus: true })
+      })
+      return
+    }
+    this.setData({
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: []
+    })
+  },
+
+  handleCustomCategoryFocus() {
+    if (!this.data.customCategoryFocus) {
+      this.setData({ customCategoryFocus: true })
+    }
+  },
+
+  handleCustomCategoryBlur() {
+    if (this.data.customCategoryFocus) {
+      this.setData({ customCategoryFocus: false })
+    }
+  },
+
+  updateCustomCategory(event: WechatMiniprogram.Input) {
+    const customCategoryInput = event.detail.value
+    this.setData({
+      customCategoryInput,
+      categorySuggestions: this.getCategorySuggestions(customCategoryInput)
+    })
+  },
+
+  selectCategorySuggestion(event: WechatMiniprogram.TouchEvent) {
+    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
+    if (!category) return
+    this.addCategoryTag(category)
+  },
+
+  confirmCustomCategory() {
+    const maybeEvent = arguments[0] as WechatMiniprogram.CustomEvent<{ value?: string }> | undefined
+    const nextValue = maybeEvent && maybeEvent.detail && typeof maybeEvent.detail.value === 'string'
+      ? maybeEvent.detail.value
+      : this.data.customCategoryInput
+    const category = String(nextValue || '').trim()
+    if (!category) {
+      toast('先输入标签')
+      return
+    }
+    if (materialTypes.includes(category as MaterialType) || abilityOptions.includes(category) || sceneOptions.includes(category)) {
+      toast('请在对应的类型、能力或场景中选择')
+      return
+    }
+    const existed = this.getCategoryPool().find((item: string) => item.toLowerCase() === category.toLowerCase())
+    this.addCategoryTag(existed || category)
+  },
+
+  addCategoryTag(category: string) {
+    const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
+      ? this.data.selectedCategoryTags
+      : this.data.selectedCategoryTags.concat(category)
+    this.setData({
+      selectedCategoryTags,
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: []
+    }, () => this.syncCategoryOptions())
+  },
+
+  toggleMoreOptions() {
+    const nextVisible = !this.data.showMoreOptions
+    this.setData({
+      showMoreOptions: nextVisible,
+      moreOptionsToggleText: nextVisible ? '收起训练方法' : '补充训练方法'
+    })
+  },
+
+  async saveMaterial() {
+    const title = this.data.editMaterial.title
+    if (!title) {
+      toast('先写素材名称')
+      return
+    }
+    if (!this.data.material || !this.data.canEditMaterial) {
+      toast('只能修改自己创建的素材')
+      return
+    }
+    const categories: string[] = Array.from(new Set(this.data.selectedCategoryTags.map((item: string) => item.trim()).filter(Boolean)))
+
+    const currentMaterial = { ...(this.data.material as Material & { fit?: string[]; lead?: string; avoid?: string; verdict?: string; ownerOpenId?: string }) }
+    delete currentMaterial.fit
+    delete currentMaterial.lead
+    delete currentMaterial.avoid
+    delete currentMaterial.verdict
+
+    const materialType = materialTypes.find((item) => categories.includes(item)) as MaterialType | undefined
+    if (!materialType) {
+      toast('请选择素材类型')
+      return
+    }
+    const abilities = abilityOptions.filter((item) => categories.includes(item))
+    const scenes = sceneOptions.filter((item) => categories.includes(item))
+    const tags = getCustomMaterialTags(categories)
+    const steps = typeof this.data.editMaterial.steps === 'string' && this.data.editMaterial.steps.trim()
+      ? this.data.editMaterial.steps.split('\n').map((item: string) => item.trim()).filter(Boolean)
+      : []
+
+    const updatedMaterial: Material = {
+      ...currentMaterial,
+      title,
+      desc: this.data.editMaterial.desc || '',
+      tags,
+      type: materialType,
+      abilities,
+      scenes,
+      meta: buildMaterialMeta(this.data.editMaterial.people, this.data.editMaterial.duration),
+      steps,
+      tips: this.data.editMaterial.tips || '',
+      variant: this.data.editMaterial.variant || '',
+      issue: this.data.editMaterial.issue || '',
+      relatedMaterialId: currentMaterial.relatedMaterialId || '',
+      referenceOnly: materialType === '路径' ? true : currentMaterial.referenceOnly || false
+    }
+
+    const updatePayload = { ...updatedMaterial }
+    delete updatePayload.ownerOpenId
+    let response
+    try {
+      response = await updateMaterial(updatePayload)
+    } catch (error: any) {
+      toast(isPermissionError(error.message) ? '只能修改自己创建的素材' : (error.message || '保存失败，请重试'))
+      return
+    }
+
+    const allMaterials = getState().materials
+    const savedMaterial = Object.assign({}, updatedMaterial, response.item)
+    const nextMaterials = allMaterials.map((materialItem: Material) => materialItem.id === updatedMaterial.id ? savedMaterial : materialItem)
+    setMaterials(nextMaterials)
+    this.renderMaterial(savedMaterial)
+    this.cancelEdit()
+    toast('已保存修改')
+  },
+
+  async refreshMaterials(materialId?: string) {
+    try {
+      const currentId = materialId || this.data.material?.id
+      const material = currentId ? await getMaterial(currentId) : null
+      if (material) {
+        const mergedMaterials = getState().materials.filter((item) => item.id !== material.id).concat(material)
+        setMaterials(mergedMaterials)
+        this.renderMaterial(material)
+      }
+    } catch (error) {
+      // 原操作已告知用户失败原因，刷新只做尽力而为
+    }
+  },
+
+  confirmDelete() {
+    if (!this.data.material || !this.data.canEditMaterial) {
+      toast('只能删除自己创建的素材')
+      return
+    }
+    wx.showModal({
+      title: '确认删除',
+      content: '将从素材库删除，是否继续？',
+      success: async (res) => {
+        if (res.confirm) {
+          const materialId = this.data.material?.id
+          if (!materialId) return
+
+          try {
+            await deleteMaterial(materialId)
+          } catch (error: any) {
+            toast(isPermissionError(error.message) ? '只能删除自己创建的素材' : (error.message || '删除失败，请重试'))
+            return
+          }
+
+          const allMaterials = getState().materials
+          setMaterials(allMaterials.filter((materialItem: Material) => materialItem.id !== materialId))
+          wx.navigateBack()
+          setTimeout(() => {
+            toast('已删除')
+          }, 300)
+        }
+      }
+    })
+  }
+})

@@ -1,0 +1,126 @@
+<scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="page subpage-page feedback {{themeClass}}" style="{{layoutStyle}}" wx:if="{{material}}">
+  <subpage-header title="素材练习复盘" bind:back="back" />
+
+  <view wx:if="{{duration > 0}}" class="practice-duration-summary">
+    <text class="duration-label">本次练习时长</text>
+    <text class="duration-value">{{durationText}}</text>
+  </view>
+
+  <form-card title="关联方式">
+    <view class="feedback-object-summary">
+      <view class="feedback-object-title">{{material.title}}</view>
+      <text class="muted feedback-object-desc">{{material.desc}}</text>
+    </view>
+    <view class="meta-row feedback-object-meta"><text wx:for="{{material.meta}}" wx:key="*this" class="meta-pill">{{item}}</text></view>
+  </form-card>
+
+  <form-card title="本次复盘">
+    <view class="feedback-section score-inline-section">
+      <view class="score-heading-row">
+        <view>
+          <text class="feedback-section-title">评分</text>
+          <text class="score-summary">{{scoreValue >= 8 ? '很有效' : scoreValue >= 5 ? '一般' : '需调整'}}</text>
+        </view>
+        <view class="score-value-badge">
+          <text>{{scoreValue}}</text>
+          <text>分</text>
+        </view>
+      </view>
+      <view class="score-slider-box">
+        <button class="score-step-btn" data-delta="-1" bindtap="adjustScore">-</button>
+        <view class="score-slider-main">
+          <slider class="score-slider" min="1" max="10" step="1" value="{{scoreValue}}" activeColor="#FF9F1C" backgroundColor="#EDF2EE" block-color="#FF9F1C" block-size="26" bindchanging="setScore" bindchange="setScore" />
+          <view class="score-scale-row">
+            <text>1</text>
+            <text>5</text>
+            <text>10</text>
+          </view>
+        </view>
+        <button class="score-step-btn" data-delta="1" bindtap="adjustScore">+</button>
+      </view>
+    </view>
+
+    <view class="form-field-stack feedback-field-stack">
+      <form-field label="本次复盘">
+        <textarea class="app-textarea" value="{{noteValue}}" data-field="noteValue" bindblur="updateField" placeholder="有效、卡住、下次尝试" />
+      </form-field>
+    </view>
+
+    <view class="feedback-section attachment-section">
+      <text class="feedback-section-title">附件</text>
+      <view wx:if="{{attachmentModeTitle}}" class="attachment-mode-card">
+        <text class="feedback-status-title">{{attachmentModeTitle}}</text>
+        <text class="feedback-helper">{{attachmentModeDesc}}</text>
+      </view>
+      <view class="attachment-actions">
+        <button class="small-btn attachment-add-btn" loading="{{activeAttachmentAction === 'upload-media'}}" disabled="{{uploadingAttachment || audioRecording || audioUploading}}" data-action="upload-media" data-type="mixed" data-source="album" bindtap="addAttachment">上传照片或视频</button>
+        <button class="small-btn attachment-add-btn" loading="{{activeAttachmentAction === 'take-photo'}}" disabled="{{uploadingAttachment || audioRecording || audioUploading}}" data-action="take-photo" data-type="image" data-source="camera" bindtap="addAttachment">拍照片</button>
+        <button class="small-btn attachment-add-btn" loading="{{activeAttachmentAction === 'take-video'}}" disabled="{{uploadingAttachment || audioRecording || audioUploading}}" data-action="take-video" data-type="video" data-source="camera" bindtap="addAttachment">拍视频</button>
+        <button wx:if="{{!audioRecording}}" class="small-btn attachment-add-btn" loading="{{audioUploading}}" disabled="{{uploadingAttachment || audioUploading}}" bindtap="startAudioRecording">录音</button>
+        <button wx:else class="small-btn attachment-add-btn recording" bindtap="stopAudioRecording">停止录音</button>
+      </view>
+      <view wx:if="{{audioRecording || audioUploading}}" class="audio-recording-card">
+        <text>{{audioRecording ? '正在录音' : '正在上传录音'}}</text>
+        <text class="muted">{{audioDurationText}}</text>
+      </view>
+      <view wx:if="{{draftAttachments.length}}" class="attachment-grid">
+        <view wx:for="{{draftAttachments}}" wx:key="id" class="attachment-item {{item.type === 'video' ? 'video' : item.type === 'audio' ? 'audio' : ''}}">
+          <text>{{item.type === 'audio' ? '音频' : item.type === 'video' ? '视频' : '照片'}}</text>
+          <text wx:if="{{item.duration}}" class="attachment-duration">{{item.duration}} 秒</text>
+          <button class="attachment-remove" data-id="{{item.id}}" bindtap="removeDraftAttachment">删除</button>
+        </view>
+      </view>
+      <text wx:else class="feedback-helper">照片、视频或录音</text>
+    </view>
+
+    <view class="more-toggle" bindtap="toggleMore">
+      <view>
+        <text class="mini-title">更多信息</text>
+      </view>
+      <text class="more-arrow">{{moreVisible ? '收起' : '展开'}}</text>
+    </view>
+    <view wx:if="{{moreVisible}}" class="more-fields">
+      <view class="feedback-section context-inline-section">
+      <text class="feedback-section-title">归属场景</text>
+      <view class="form-chip-row context-chip-row">
+        <button wx:for="{{contextOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setContextType">{{item.label}}</button>
+      </view>
+      <text wx:if="{{contextLoading}}" class="context-load-note">正在加载排练…</text>
+      <view wx:if="{{contextLoadFailed}}" class="context-load-error">
+        <text>排练加载失败，可单独保存。</text>
+        <button class="small-btn context-retry-btn" bindtap="retryHistoricalRehearsals">重试</button>
+      </view>
+      <view class="feedback-status-card context-status-card">
+        <text class="feedback-status-title">{{contextSummaryTitle}}</text>
+        <text class="feedback-helper">{{contextSummaryDesc}}</text>
+      </view>
+      <picker wx:if="{{contextType === 'history'}}" mode="selector" range="{{historicalRehearsals}}" range-key="title" bindchange="selectHistoricalRehearsal">
+        <view class="app-input">{{linkedRehearsal || '选择历史排练'}}</view>
+      </picker>
+      </view>
+      <view class="form-field-stack">
+        <form-field label="人数">
+          <input class="app-input" value="{{attendanceText}}" data-field="attendanceText" bindblur="updateField" />
+        </form-field>
+        <form-field label="下次提醒">
+          <input class="app-input" value="{{reminderValue}}" data-field="reminderValue" bindblur="updateField" bindconfirm="updateField" />
+        </form-field>
+      </view>
+    </view>
+  </form-card>
+
+  <view class="bottom-spacer"></view>
+
+  <root-portal>
+    <view class="action-stack">
+    <view class="form-actions">
+        <button class="ghost-btn" loading="{{savingMode === 'method'}}" disabled="{{!!savingMode}}" bindtap="saveMethodCard">保存并沉淀</button>
+        <button class="primary-btn" loading="{{savingMode === 'record'}}" disabled="{{!!savingMode}}" bindtap="saveRecord">保存记录</button>
+      </view>
+    </view>
+  </root-portal>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>

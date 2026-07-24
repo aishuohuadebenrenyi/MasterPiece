@@ -1,0 +1,56 @@
+<view class="material-form">
+  <view class="material-form-group primary-group">
+    <view class="material-title-field">
+      <text class="material-title-label">素材名称</text>
+      <input class="app-input material-title-input {{titleFocused ? 'is-focused' : ''}}" value="{{value.title}}" data-field="title" placeholder="例如：情绪接力" bindfocus="focusTitle" bindblur="emitTitleFieldChange" bindconfirm="emitTitleFieldChange" />
+    </view>
+
+    <view class="category-stack">
+      <filter-section label="类型" options="{{typeOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectType" />
+      <filter-section label="能力" options="{{abilityOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectAbility" />
+      <filter-section label="场景" options="{{sceneOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectScene" />
+      <filter-section label="标签（可选）" options="{{tagOptions}}" customClass="material-form-category-section" rowClass="material-form-category-row" chipClass="category-chip" bind:select="selectTag">
+        <button slot="suffix" class="chip compact-filter-chip custom-category-chip" catchtap="toggleCustomCategory">+ 添加标签</button>
+        <view wx:if="{{customCategoryVisible}}" class="custom-category-panel">
+          <input class="app-input custom-category-input" value="{{customCategoryInput}}" focus="{{customCategoryFocus}}" placeholder="例如：热身、双人、新手" bindfocus="customCategoryFocus" bindblur="customCategoryBlur" bindconfirm="customCategoryConfirm" />
+          <view wx:if="{{categorySuggestions.length}}" class="category-suggestions">
+            <button wx:for="{{categorySuggestions}}" wx:key="value" class="category-suggestion" data-category="{{item.value}}" catchtap="selectSuggestion">{{item.label}}</button>
+          </view>
+          <button class="ghost-btn custom-category-confirm" catchtap="customCategoryConfirm">添加标签</button>
+        </view>
+      </filter-section>
+    </view>
+
+    <view class="form-grid">
+      <form-field class="compact-field add-sheet-grid-item" label="适合人数">
+        <input class="app-input" value="{{value.people}}" data-field="people" placeholder="4-8 人" bindblur="emitFieldChange" bindconfirm="emitFieldChange" />
+      </form-field>
+      <form-field class="compact-field add-sheet-grid-item" label="时长">
+        <input class="app-input" value="{{value.duration}}" data-field="duration" placeholder="10 分钟" bindblur="emitFieldChange" bindconfirm="emitFieldChange" />
+      </form-field>
+    </view>
+
+    <form-field label="简短描述">
+      <textarea class="app-textarea" value="{{value.desc}}" data-field="desc" placeholder="一句话描述" bindblur="emitFieldChange"></textarea>
+    </form-field>
+  </view>
+
+  <view class="advanced-toggle-row">
+    <button class="steps-toggle" catchtap="toggleMore">{{moreOptionsToggleText}}</button>
+  </view>
+
+  <view wx:if="{{showMoreOptions}}" class="material-form-group advanced-group">
+    <form-field label="补充玩法步骤">
+      <textarea class="app-textarea steps-textarea" value="{{value.steps}}" data-field="steps" placeholder="每行一个步骤" bindblur="emitFieldChange"></textarea>
+    </form-field>
+    <form-field label="带领提示">
+      <textarea class="app-textarea steps-textarea" value="{{value.tips}}" data-field="tips" placeholder="带练提醒" bindblur="emitFieldChange"></textarea>
+    </form-field>
+    <form-field label="变体玩法">
+      <textarea class="app-textarea steps-textarea" value="{{value.variant}}" data-field="variant" placeholder="变体用法" bindblur="emitFieldChange"></textarea>
+    </form-field>
+    <form-field label="可能翻车点">
+      <textarea class="app-textarea steps-textarea" value="{{value.issue}}" data-field="issue" placeholder="易卡住的环节" bindblur="emitFieldChange"></textarea>
+    </form-field>
+  </view>
+</view>

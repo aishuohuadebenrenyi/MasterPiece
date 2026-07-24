@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "全部记录",
+  "disableScroll": true,
+  "usingComponents": {
+    "bottom-sheet": "../../components/bottom-sheet/index",
+    "empty-state-panel": "../../components/empty-state-panel/index",
+    "subpage-header": "../../components/subpage-header/index"
+  }
+}

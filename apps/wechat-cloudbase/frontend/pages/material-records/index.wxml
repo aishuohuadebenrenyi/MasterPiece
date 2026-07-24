@@ -1,0 +1,184 @@
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onPullDownRefresh" class="material-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <view class="material-records-page {{themeClass}}">
+    <subpage-header title="素材记录" bind:back="back" />
+
+    <view wx:if="{{!materialId}}" class="state-note-card">
+      <view class="section-title">缺少素材信息</view>
+      <text class="muted">返回素材详情后重新进入记录页。</text>
+    </view>
+
+    <block wx:else>
+      <view class="card material-record-summary">
+        <view class="summary-head">
+          <view class="summary-copy">
+            <text class="kicker">素材成长档案</text>
+            <view class="summary-title">{{materialTitle}}</view>
+          </view>
+          <view class="summary-score">{{summary.avgScore}}</view>
+        </view>
+        <view class="summary-grid">
+          <view class="summary-metric">
+            <text class="metric-value">{{summary.count}}</text>
+            <text class="metric-label">练习次数</text>
+          </view>
+          <view class="summary-metric">
+            <text class="metric-value">{{summary.latestText}}</text>
+            <text class="metric-label">最近一次</text>
+          </view>
+          <view class="summary-metric">
+            <text class="metric-value">{{summary.videoCount}}</text>
+            <text class="metric-label">视频记录</text>
+          </view>
+          <view class="summary-metric">
+            <text class="metric-value">{{summary.markerCount}}</text>
+            <text class="metric-label">关键时刻</text>
+          </view>
+        </view>
+        <view class="comparison-note" wx:if="{{summary.latestComparison}}">
+          <text class="comparison-label">最近对比</text>
+          <text class="comparison-text">{{summary.latestComparison}}</text>
+        </view>
+      </view>
+
+      <view class="record-filter-panel">
+        <view class="filter-row">
+          <button wx:for="{{filterOptions}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-value="{{item.value}}" bindtap="setFilter">{{item.label}}</button>
+        </view>
+      </view>
+
+      <view wx:if="{{errorText}}" class="notice-note-card">{{errorText}}</view>
+      <empty-state-panel wx:if="{{loading}}" tone="loading" title="正在加载素材记录" />
+      <empty-state-panel wx:elif="{{!records.length}}" title="还没有素材记录" desc="{{hasActiveFilter ? '没有符合条件的记录。' : '完成一次训练后，可在这里回看。'}}" primaryText="{{hasActiveFilter ? '查看全部' : '去训练'}}" secondaryText="返回详情" bind:primary="handleEmptyPrimary" bind:secondary="back" />
+
+      <view wx:else class="record-list">
+        <view wx:for="{{records}}" wx:key="id" class="card material-record-card {{item.selected ? 'selected' : ''}}">
+          <view class="record-main" data-id="{{item.id}}" bindtap="openRecord">
+            <view class="score-badge">{{item.scoreText}}</view>
+            <view class="record-copy">
+              <view class="record-title">{{item.dateLabel}}</view>
+              <text class="muted record-note">{{item.noteText}}</text>
+            </view>
+          </view>
+          <view class="meta-row record-meta">
+            <text wx:for="{{item.meta}}" wx:key="*this" class="meta-pill">{{item}}</text>
+          </view>
+          <view wx:if="{{item.attachments.length}}" class="media-strip">
+            <view wx:for="{{item.attachmentPreview}}" wx:key="id" class="media-thumb {{item.type === 'video' ? 'video' : item.type === 'audio' ? 'audio' : 'image'}}">
+              <text>{{item.typeLabel}}</text>
+              <text class="media-thumb-meta">{{item.meta}}</text>
+            </view>
+          </view>
+          <view class="record-actions">
+            <button class="mini-action-btn" data-id="{{item.id}}" catchtap="openRecord">查看</button>
+            <button class="mini-action-btn {{item.canCompare ? '' : 'disabled'}}" data-id="{{item.id}}" disabled="{{!item.canCompare}}" catchtap="toggleCompareSelection">{{item.selected ? '取消对比' : '选择对比'}}</button>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view class="compare-bar {{compareSelection.length ? 'active' : ''}}">
+    <view class="compare-bar-copy">
+      <text class="compare-bar-title">已选择 {{compareSelection.length}} 条</text>
+      <text class="compare-bar-desc">{{compareSelection.length === 2 ? '可以开始双视频对比' : '再选择一条含视频记录'}}</text>
+    </view>
+    <button class="primary-btn compare-start-btn" disabled="{{compareSelection.length !== 2}}" bindtap="openCompare">开始对比</button>
+  </view>
+
+  <bottom-sheet visible="{{detailVisible}}" title="记录详情" sheetClass="record-detail-sheet" bind:close="closeDetail">
+    <view wx:if="{{selectedRecord}}" class="detail-panel">
+      <view class="detail-score-row">
+        <view class="score-badge large">{{selectedRecord.scoreText}}</view>
+        <view class="detail-score-copy">
+          <view class="section-title">{{selectedRecord.dateLabel}}</view>
+          <text class="muted">{{selectedRecord.metaText}}</text>
+        </view>
+      </view>
+      <view class="detail-note">
+        <view class="section-title">本次复盘</view>
+        <text class="muted">{{selectedRecord.noteText}}</text>
+      </view>
+      <view class="detail-note" wx:if="{{selectedRecord.reminder}}">
+        <view class="section-title">下次提醒</view>
+        <text class="muted">{{selectedRecord.reminder}}</text>
+      </view>
+
+      <view wx:if="{{selectedRecord.attachments.length}}" class="record-attachment-section">
+        <view class="section-title">媒体证据</view>
+        <view class="record-attachment-grid">
+          <button wx:for="{{selectedRecord.attachments}}" wx:key="id" class="record-attachment-item {{item.type === 'video' ? 'video' : item.type === 'audio' ? 'audio' : ''}}" data-attachment-id="{{item.id}}" bindtap="openAttachment">
+            <text>{{item.type === 'audio' ? '音频' : item.type === 'video' ? '视频' : '照片'}}</text>
+            <text class="attachment-count">{{item.markerCount ? item.markerCount + ' 个关键时刻' : item.type === 'audio' ? '播放' : '查看'}}</text>
+          </button>
+        </view>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{audioVisible}}" title="音频预览" sheetClass="record-detail-sheet" bind:close="closeAudio">
+    <view wx:if="{{selectedAttachment}}" class="audio-review-panel">
+      <audio wx:if="{{selectedAttachment.fileID}}" class="review-audio" src="{{selectedAttachment.fileID}}" controls></audio>
+      <view wx:else class="video-placeholder">没有可播放的音频地址</view>
+      <text class="muted attachment-file-id">{{selectedAttachment.fileID}}</text>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{videoVisible}}" title="视频关键时刻" sheetClass="record-detail-sheet video-review-sheet" bind:close="closeVideo">
+    <view wx:if="{{selectedAttachment}}" class="video-review-panel">
+      <video wx:if="{{selectedAttachment.fileID}}" id="reviewVideo" class="review-video" src="{{selectedAttachment.fileID}}" controls show-center-play-btn enable-progress-gesture bindtimeupdate="handleVideoTimeUpdate"></video>
+      <view wx:else class="video-placeholder">没有可播放的视频地址</view>
+      <view class="video-tool-row">
+        <view class="speed-toggle">
+          <button class="{{playbackRate === 0.5 ? 'active' : ''}}" data-rate="0.5" bindtap="setPlaybackRate">0.5x</button>
+          <button class="{{playbackRate === 1 ? 'active' : ''}}" data-rate="1" bindtap="setPlaybackRate">1x</button>
+        </view>
+        <text class="muted">当前 {{currentVideoTimeText}}</text>
+      </view>
+
+      <view class="marker-form">
+        <view class="form-row">
+          <button wx:for="{{markerKinds}}" wx:key="value" class="chip compact-filter-chip {{item.activeClass}}" data-kind="{{item.value}}" bindtap="setMarkerKind">{{item.label}}</button>
+        </view>
+        <textarea class="app-textarea marker-input" value="{{markerDraftNote}}" maxlength="300" placeholder="补一句这个时间点发生了什么" bindblur="updateMarkerNote"></textarea>
+        <button class="primary-btn marker-save-btn" loading="{{savingMarker}}" disabled="{{savingMarker}}" bindtap="saveMarker">添加关键时刻</button>
+      </view>
+
+      <view class="marker-list">
+        <view wx:for="{{selectedAttachment.markers}}" wx:key="id" class="marker-item" data-time="{{item.time}}" bindtap="seekMarker">
+          <text class="marker-time">{{item.timeText}}</text>
+          <view class="marker-copy">
+            <text class="marker-kind">{{item.kindLabel}}</text>
+            <text class="muted">{{item.note}}</text>
+          </view>
+        </view>
+      </view>
+      <text wx:if="{{!selectedAttachment.markers.length}}" class="muted empty-inline">播放到关键位置，写一句备注。</text>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet visible="{{compareVisible}}" title="双视频对比" sheetClass="record-detail-sheet compare-sheet" bind:close="closeCompare">
+    <view wx:if="{{compareRecords.length === 2}}" class="compare-panel">
+      <view wx:for="{{compareRecords}}" wx:key="id" class="compare-card">
+        <view class="compare-card-head">
+          <view>
+            <view class="section-title">{{item.dateLabel}}</view>
+            <text class="muted">{{item.scoreText}} 分 · {{item.markerCount}} 个关键时刻</text>
+          </view>
+          <text class="pill blue">{{index === 0 ? '对比 A' : '对比 B'}}</text>
+        </view>
+        <video wx:if="{{item.videoAttachment && item.videoAttachment.fileID}}" class="compare-video" src="{{item.videoAttachment.fileID}}" controls show-center-play-btn></video>
+        <text class="muted compare-note">{{item.noteText}}</text>
+      </view>
+      <view class="comparison-form">
+        <textarea class="app-textarea" value="{{comparisonDraft.improvement}}" maxlength="500" placeholder="变化" data-field="improvement" bindblur="updateComparisonDraft"></textarea>
+        <textarea class="app-textarea" value="{{comparisonDraft.issue}}" maxlength="500" placeholder="仍需改进" data-field="issue" bindblur="updateComparisonDraft"></textarea>
+        <textarea class="app-textarea" value="{{comparisonDraft.nextFocus}}" maxlength="500" placeholder="下次重点" data-field="nextFocus" bindblur="updateComparisonDraft"></textarea>
+      </view>
+      <button class="primary-btn comparison-save-btn" loading="{{savingComparison}}" disabled="{{savingComparison}}" bindtap="saveComparison">保存对比复盘</button>
+    </view>
+  </bottom-sheet>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>

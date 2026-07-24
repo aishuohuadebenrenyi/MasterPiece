@@ -1,0 +1,30 @@
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="team-records-scroll {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <view class="team-records-page">
+    <subpage-header title="排练记录" bind:back="back" />
+
+    <form-card wx:if="{{showSummaryCard}}" title="最近排练" kicker="排练概览">
+      <view class="card-head">
+        <text class="pill blue">{{records.length}} 条</text>
+      </view>
+    </form-card>
+
+    <view wx:if="{{errorText}}" class="notice-note-card">{{errorText}}</view>
+
+    <empty-state-panel wx:if="{{loading}}" tone="loading" title="正在加载排练记录" />
+    <empty-state-panel wx:elif="{{!records.length}}" title="还没有排练记录" desc="完成一次排练后，可在这里回看。" primaryText="去记录" secondaryText="去发现" bind:primary="goRecord" bind:secondary="goDiscover" />
+
+    <view wx:else class="record-list">
+      <view class="record-item-wrap" wx:for="{{records}}" wx:key="id">
+        <record-card itemId="{{item.id}}" layoutKind="{{item.cardView.layoutKind}}" eyebrow="{{item.cardView.eyebrow}}" title="{{item.cardView.title}}" bodyText="{{item.cardView.bodyText}}" metaPills="{{item.cardView.metaPills}}" pending="{{item.cardView.pending}}" primaryActionText="{{item.cardView.primaryActionText}}" secondaryActionText="{{item.cardView.secondaryActionText}}" bind:action="openRecord" bind:danger="onDeleteRehearsal" />
+      </view>
+    </view>
+  </view>
+
+  <bottom-sheet visible="{{detailVisible}}" title="排练详情" sheetClass="record-detail-sheet" bind:close="closeSheet">
+    <record-detail-panel wx:if="{{selectedRecord}}" title="{{selectedRecord.displayTitle}}" desc="{{selectedRecord.displayDesc}}" meta="{{selectedDetailMeta}}" pending="{{selectedRecord.syncStatus === 'pending'}}" sectionTitle="排练计划" plan="{{selectedPlan}}" planEmptyText="没有保存素材计划。" readonlyNote="历史记录只读" />
+  </bottom-sheet>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>

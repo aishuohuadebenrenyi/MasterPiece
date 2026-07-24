@@ -1,0 +1,921 @@
+import type { Material, MaterialType, ViewMode } from '../../types/domain'
+import { createMaterial, listMaterialsPage, updateMaterial, updateSaved } from '../../services/material'
+import type { MaterialFacets } from '../../services/material'
+import { getState, setMaterials, setState, subscribe, toggleSaved, getThemeClass } from '../../store/index'
+import { toast } from '../../utils/page'
+import { closeModal, openModal } from '../../utils/modal'
+import { syncTabBar } from '../../utils/tabbar'
+import { getLayoutStyle } from '../../utils/layout'
+import { DEFAULT_PAGE_LIMIT, DEFAULT_SORT_ORDER, CATEGORY_SUGGESTION_LIMIT } from '../../config/constants'
+import { MATERIAL_STATUSES } from '../../config/material'
+
+import {
+  abilityOptions,
+  buildCategoryRows,
+  buildFacetOptions,
+  buildMaterialMeta,
+  buildPathEntries,
+  buildRandomTagLabels,
+  categoryHints,
+  fabBottomRpx,
+  fabDragThreshold,
+  fabEdgeRpx,
+  fabPositionStorageKey,
+  fabSizeRpx,
+  fabTopGapRpx,
+  getCustomMaterialTags,
+  getCustomPathMaterial,
+  getFabPositionPreference,
+  getPathPreset,
+  materialToPathSteps,
+  materialTypes,
+  pathPresets,
+  sceneOptions,
+  splitPathText
+} from './model'
+import type {
+  CategoryCard,
+  CategoryCardRow,
+  ExpandCardItem,
+  FabWindow,
+  NewMaterialDraft,
+  PathDraft,
+  PathEntry,
+  PathSheetState
+} from './model'
+
+Page({
+  data: {
+    themeClass: 'theme-default',
+    materials: [] as Material[],
+    allMaterials: [] as Material[],
+    filteredMaterials: [] as Material[],
+    resultTotal: 0,
+    availableTotal: 0,
+    categoryCounts: {} as Record<string, number>,
+    facets: { types: {}, abilities: {}, scenes: {}, statuses: {} } as MaterialFacets,
+    categoryCards: [] as CategoryCard[],
+    categoryRows: [] as CategoryCardRow[],
+    pathEntries: buildPathEntries([]) as PathEntry[],
+    pathVisible: false,
+    pathEditMode: false,
+    pathSheetTitle: '',
+    activePath: null as PathSheetState | null,
+    pathDraft: {} as PathDraft,
+    view: 'all' as ViewMode,
+    activeCategory: '' as MaterialType | '',
+    isCategoryDetail: false,
+    allActiveClass: 'active',
+    categoryActiveClass: '',
+    discoverTitle: '全部素材',
+    searchPlaceholder: '搜索素材、能力或场景',
+    query: '',
+    type: 'all',
+    ability: 'all',
+    scene: 'all',
+    status: 'all',
+    randomVisible: false,
+    filterVisible: false,
+    addVisible: false,
+    modalOpen: false,
+    randomIndex: 0,
+    drawnCount: 1,
+    randomUseAllMaterials: false,
+    currentRandomMaterial: null as Material | null,
+    randomTagLabels: [] as string[],
+    newMaterial: {} as NewMaterialDraft,
+    selectedCategoryTags: [] as string[],
+    customCategoryVisible: false,
+    customCategoryFocus: false,
+    customCategoryInput: '',
+    categorySuggestions: [] as Array<{ value: string; label: string }>,
+    showMoreOptions: false,
+    moreOptionsToggleText: '补充训练方法',
+    typeCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    abilityCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    sceneCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    tagCategoryOptions: [] as Array<{ value: string; label: string; activeClass: string }>,
+    typeFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    abilityFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    sceneFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    statusFilters: [] as Array<{ value: string; label: string; activeClass: string }>,
+    fabReady: false,
+    fabHidden: false,
+    fabX: 0,
+    fabY: 0,
+    layoutStyle: '',
+    loadingMaterials: true,
+    loadErrorText: '',
+    showEmptyState: false,
+    showEmptyCategoryState: false,
+    showLoadErrorState: false,
+    showFilterNoMatchState: false,
+    hasMore: true,
+    pageLoading: false,
+    privacyVisible: false,
+    isRefreshing: false
+  },
+
+  unsubscribeStore: null as null | (() => void),
+  unsubscribePrivacy: null as null | (() => void),
+  fabStartTouch: null as null | { x: number; y: number },
+  fabTouchOffset: null as null | { x: number; y: number },
+  fabWindow: null as FabWindow | null,
+  fabMoved: false,
+  fabIgnoreTapUntil: 0,
+  currentLimit: DEFAULT_PAGE_LIMIT,
+  currentOffset: 0,
+
+  getRandomCandidates() {
+    const source = this.data.randomUseAllMaterials ? this.data.allMaterials : this.data.filteredMaterials
+    return source.filter((material: Material) => !material.referenceOnly)
+  },
+
+  syncFromStore() {
+    const state = getState()
+    this.setData({
+      allMaterials: state.materials,
+      view: state.viewMode
+    }, () => this.syncFiltered())
+  },
+
+  getFilteredMaterials() {
+    return this.data.materials
+  },
+
+  buildCategoryCards() {
+    const tones = ['orange', 'blue', 'mint', 'orange', 'blue', 'mint', 'orange', 'blue']
+    return materialTypes.map((type, index) => ({
+      type,
+      count: Number(this.data.categoryCounts[type]) || 0,
+      tone: tones[index],
+      hint: categoryHints[type]
+    })).filter((item) => item.count > 0)
+  },
+
+  syncFiltered() {
+    const filteredMaterials = this.getFilteredMaterials()
+    const randomCandidates = this.getRandomCandidates()
+    const currentRandomMaterial = randomCandidates[this.data.randomIndex % Math.max(randomCandidates.length, 1)] || null
+    const categoryCards = this.buildCategoryCards()
+    const isCategoryDetail = !!this.data.activeCategory
+    const activeCategoryMaterialCount = isCategoryDetail ? Number(this.data.categoryCounts[this.data.activeCategory]) || 0 : 0
+    const showLoadErrorState = !this.data.loadingMaterials && !!this.data.loadErrorText && this.data.availableTotal === 0
+    const showEmptyState = !this.data.loadingMaterials && !this.data.loadErrorText && this.data.availableTotal === 0
+    const showEmptyCategoryState = !this.data.loadingMaterials && !this.data.loadErrorText && isCategoryDetail && activeCategoryMaterialCount === 0 && this.data.resultTotal === 0
+    const showFilterNoMatchState = !showEmptyCategoryState && !this.data.loadingMaterials && this.data.availableTotal > 0 && (this.data.view === 'all' || isCategoryDetail) && this.data.resultTotal === 0
+    this.setData({
+      filteredMaterials,
+      categoryCards,
+      categoryRows: buildCategoryRows(categoryCards),
+      pathEntries: buildPathEntries(this.data.materials),
+      currentRandomMaterial,
+      randomTagLabels: buildRandomTagLabels(currentRandomMaterial),
+      allActiveClass: this.data.view === 'all' ? 'active' : '',
+      categoryActiveClass: this.data.view === 'category' ? 'active' : '',
+      isCategoryDetail,
+      discoverTitle: isCategoryDetail ? this.data.activeCategory : '全部素材',
+      searchPlaceholder: isCategoryDetail ? `在${this.data.activeCategory}里搜索` : '搜索素材、能力或场景',
+      showEmptyState,
+      showEmptyCategoryState,
+      showLoadErrorState,
+      showFilterNoMatchState,
+      typeFilters: buildFacetOptions(materialTypes, this.data.facets.types, this.data.activeCategory || this.data.type),
+      abilityFilters: buildFacetOptions(abilityOptions, this.data.facets.abilities, this.data.ability),
+      sceneFilters: buildFacetOptions(sceneOptions, this.data.facets.scenes, this.data.scene),
+      statusFilters: buildFacetOptions(MATERIAL_STATUSES, this.data.facets.statuses, this.data.status, { saved: '收藏', played: '练过', unplayed: '未练过' }),
+      typeCategoryOptions: materialTypes.map((value) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      abilityCategoryOptions: abilityOptions.map((value) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      sceneCategoryOptions: sceneOptions.map((value) => ({
+        value,
+        label: value,
+        activeClass: this.data.selectedCategoryTags.includes(value) ? 'active' : ''
+      })),
+      tagCategoryOptions: getCustomMaterialTags(this.data.selectedCategoryTags).map((value) => ({
+        value,
+        label: value,
+        activeClass: 'active'
+      })),
+      categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
+    })
+  },
+
+  getCategoryPool() {
+    const categories: string[] = []
+    this.data.allMaterials.forEach((material: Material) => {
+      ;(material.tags || []).forEach((tag) => categories.push(tag))
+    })
+    return Array.from(new Set(categories.map((item) => String(item).trim()).filter(Boolean)))
+  },
+
+  getCategorySuggestions(input: string) {
+    const keyword = String(input || '').trim().toLowerCase()
+    if (!keyword) return []
+    return this.getCategoryPool()
+      .filter((item) => item.toLowerCase().includes(keyword))
+      .slice(0, CATEGORY_SUGGESTION_LIMIT)
+      .map((value) => ({ value, label: value }))
+  },
+
+  async loadMaterials(showRetryToast = false, loadMore = false) {
+    if (loadMore) {
+      if (!this.data.hasMore || this.data.pageLoading) return
+      this.setData({ pageLoading: true })
+    } else {
+      this.currentLimit = DEFAULT_PAGE_LIMIT
+      this.currentOffset = 0
+      this.setData({ loadingMaterials: true, loadErrorText: '', hasMore: true }, () => this.syncFiltered())
+    }
+    try {
+      const effectiveType = this.data.activeCategory || this.data.type
+      const filters = {
+        query: this.data.query,
+        type: effectiveType,
+        ability: this.data.ability,
+        scene: this.data.scene,
+        status: this.data.status,
+        limit: DEFAULT_PAGE_LIMIT,
+        offset: loadMore ? this.currentOffset : 0
+      }
+      const page = await listMaterialsPage(filters)
+      const items = loadMore ? this.data.materials.concat(page.items) : page.items
+      this.currentOffset = page.nextOffset === null ? items.length : page.nextOffset
+      const isUnfiltered = !this.data.query && !this.data.activeCategory
+        && this.data.type === 'all' && this.data.ability === 'all'
+        && this.data.scene === 'all' && this.data.status === 'all'
+      if (isUnfiltered) setMaterials(items)
+      this.setData({
+        materials: items,
+        resultTotal: page.total,
+        availableTotal: page.availableTotal,
+        categoryCounts: page.categoryCounts,
+        facets: page.facets,
+        hasMore: page.hasMore
+      })
+    } catch (error) {
+      this.syncFromStore()
+      const loadErrorText = getState().materials.length
+        ? '云端同步失败，先继续查看本次会话里的素材。'
+        : '云端暂时不可用，请重试，或先手动添加素材。'
+      this.setData({ loadErrorText })
+      if (showRetryToast) toast(loadErrorText)
+    } finally {
+      this.setData({ loadingMaterials: false, pageLoading: false }, () => this.syncFiltered())
+    }
+  },
+
+  onScroll(e: any) {
+    const scrollTop = Number(e.detail.scrollTop || 0)
+    const previousScrollTop = typeof this._lastScrollTop === 'number' ? this._lastScrollTop : scrollTop
+    const delta = scrollTop - previousScrollTop
+    this._lastScrollTop = scrollTop
+    if (Math.abs(delta) > 10) {
+      const hidden = delta > 0
+      const tabbar = this.getTabBar()
+      if (tabbar && typeof tabbar.setHidden === 'function') {
+        tabbar.setHidden(hidden)
+      }
+      if (this.data.fabHidden !== hidden) this.setData({ fabHidden: hidden })
+    }
+  },
+
+  async onPullDownRefresh() {
+    await this.loadMaterials()
+    this.setData({ isRefreshing: false })
+    wx.stopPullDownRefresh()
+  },
+
+  onReachBottom() {
+    this.loadMaterials(false, true)
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      path: '/pages/discover/index',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
+  onShareTimeline() {
+    return {
+      title: '即兴工具箱 — 找素材·快记录·可沉淀',
+      query: '',
+      imageUrl: '/assets/share/share-brand.png'
+    }
+  },
+
+  async onLoad() {
+    this.setData({
+      layoutStyle: getLayoutStyle(),
+      themeClass: getThemeClass()
+    })
+    this.resetFabPosition()
+    this.unsubscribeStore = subscribe(() => this.syncFromStore())
+    const app = getApp()
+    if (app.subscribePrivacy) {
+      this.unsubscribePrivacy = app.subscribePrivacy(() => {
+        this.setData({ privacyVisible: true })
+      })
+    }
+    await this.loadMaterials()
+  },
+
+  onShow() {
+    this.setData({ themeClass: getThemeClass() })
+    syncTabBar(this, 0)
+    this.syncFromStore()
+  },
+
+  onUnload() {
+    if (this.unsubscribeStore) this.unsubscribeStore()
+    if (this.unsubscribePrivacy) this.unsubscribePrivacy()
+  },
+
+  onPrivacyAgree() {
+    const app = getApp()
+    if (app.onPrivacyAgree) app.onPrivacyAgree()
+    this.setData({ privacyVisible: false })
+  },
+
+  onPrivacyRefuse() {
+    const app = getApp()
+    if (app.onPrivacyRefuse) app.onPrivacyRefuse()
+    this.setData({ privacyVisible: false })
+  },
+
+  onResize() {
+    this.setData({ layoutStyle: getLayoutStyle() })
+    this.resetFabPosition()
+  },
+
+  resetFabPosition() {
+    const wxApi = wx as any
+    const info = wxApi.getWindowInfo ? wxApi.getWindowInfo() : wxApi.getSystemInfoSync()
+    const rpxRatio = info.windowWidth / 750
+    const menu = wxApi.getMenuButtonBoundingClientRect ? wxApi.getMenuButtonBoundingClientRect() : null
+    const safeBottom = info.safeArea && typeof info.safeArea.bottom === 'number'
+      ? Math.max(0, (info.screenHeight || info.windowHeight) - info.safeArea.bottom)
+      : 0
+    const fabSize = fabSizeRpx * rpxRatio
+    const edge = fabEdgeRpx * rpxRatio
+    const minX = edge
+    const maxX = Math.max(minX, info.windowWidth - fabSize - edge)
+    const safeTop = menu && typeof menu.bottom === 'number'
+      ? menu.bottom
+      : (info.safeArea && typeof info.safeArea.top === 'number' ? info.safeArea.top : 0)
+    const minY = Math.max(edge, safeTop + fabTopGapRpx * rpxRatio)
+    const maxY = Math.max(minY, info.windowHeight - fabSize - fabBottomRpx * rpxRatio - safeBottom)
+    const savedPosition = getFabPositionPreference()
+    const x = savedPosition?.side === 'left' ? minX : maxX
+    const y = savedPosition
+      ? minY + (maxY - minY) * savedPosition.yRatio
+      : maxY
+    this.fabWindow = { minX, maxX, minY, maxY }
+    this.setData({ fabReady: true, fabX: x, fabY: y })
+  },
+
+  saveFabPosition() {
+    if (!this.fabWindow) return
+    const { minX, maxX, minY, maxY } = this.fabWindow
+    const side = Math.abs(this.data.fabX - minX) <= Math.abs(this.data.fabX - maxX) ? 'left' : 'right'
+    const yRange = maxY - minY
+    const yRatio = yRange > 0 ? (this.data.fabY - minY) / yRange : 0
+    try {
+      wx.setStorageSync(fabPositionStorageKey, { side, yRatio })
+    } catch (error) {
+      // UI 偏好写入失败时保留当前会话位置。
+    }
+  },
+
+  switchView(event: WechatMiniprogram.TouchEvent) {
+    const view = event.currentTarget.dataset.view as ViewMode
+    const patch: Record<string, unknown> = {
+      activeCategory: '',
+      query: '',
+      type: 'all',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }
+    this.setData(patch, async () => {
+      setState({ viewMode: view })
+      await this.loadMaterials()
+    })
+  },
+
+  search(event: WechatMiniprogram.Input) {
+    this.setData({ query: event.detail.value }, () => this.loadMaterials())
+  },
+
+  clearSearchQuery() {
+    this.setData({ query: '' }, () => this.loadMaterials())
+  },
+
+  openCategoryDetail(event: WechatMiniprogram.TouchEvent) {
+    const activeCategory = String(event.currentTarget.dataset.type || '') as MaterialType
+    if (!materialTypes.includes(activeCategory)) return
+    this.setData({
+      view: 'category',
+      activeCategory,
+      type: 'all',
+      query: '',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }, async () => {
+      setState({ viewMode: 'category' })
+      await this.loadMaterials()
+    })
+  },
+
+  backToCategoryGrid() {
+    this.setData({
+      activeCategory: '',
+      query: '',
+      type: 'all',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }, () => this.loadMaterials())
+  },
+
+  buildActivePath(key: string): PathSheetState {
+    const preset = getPathPreset(key)
+    const custom = getCustomPathMaterial(this.data.materials, key)
+    const source = custom || preset
+    return {
+      key,
+      title: source.title,
+      desc: source.desc,
+      abilities: source.abilities || preset.abilities,
+      scenes: source.scenes || preset.scenes,
+      steps: custom ? materialToPathSteps(custom, preset) : preset.steps,
+      tips: source.tips || preset.tips,
+      customId: custom?.id || '',
+      editText: custom ? '编辑我的版本' : '编辑我的版本',
+      saveText: custom ? '保存修改' : '保存为我的路径'
+    }
+  },
+
+  openPathSheet(event: WechatMiniprogram.TouchEvent) {
+    const key = String(event.currentTarget.dataset.key || '')
+    if (!key) return
+    openModal(this, {
+      pathVisible: true,
+      pathEditMode: false,
+      activePath: this.buildActivePath(key),
+      pathSheetTitle: this.buildActivePath(key).title,
+      pathDraft: {}
+    })
+  },
+
+  editPath() {
+    const activePath = this.data.activePath
+    if (!activePath) return
+    this.setData({
+      pathEditMode: true,
+      pathSheetTitle: '编辑 · ' + activePath.title,
+      pathDraft: {
+        title: activePath.title,
+        desc: activePath.desc,
+        steps: activePath.steps.map((item: ExpandCardItem) => item.title).join('\n'),
+        abilityText: activePath.abilities.join('，'),
+        tips: activePath.tips
+      }
+    })
+  },
+
+  cancelPathEdit() {
+    const activePath = this.data.activePath
+    this.setData({
+      pathEditMode: false,
+      pathDraft: {},
+      activePath: activePath ? this.buildActivePath(activePath.key) : null
+    })
+  },
+
+  handlePathDraftFieldChange(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const field = String(event.currentTarget.dataset.field || '')
+    if (!field) return
+    this.setData({ [`pathDraft.${field}`]: String(event.detail?.value || '') })
+  },
+
+  async savePathDraft() {
+    const activePath = this.data.activePath
+    if (!activePath) return
+    const preset = getPathPreset(activePath.key)
+    const title = String(this.data.pathDraft.title || '').trim()
+    if (!title) {
+      toast('先写路径名称')
+      return
+    }
+    const abilities = splitPathText(this.data.pathDraft.abilityText)
+    const steps = splitPathText(this.data.pathDraft.steps)
+    const material: Material = {
+      id: activePath.customId || `custom-${activePath.key}-${Date.now()}`,
+      title,
+      desc: String(this.data.pathDraft.desc || '').trim(),
+      type: '路径',
+      tags: Array.from(new Set(['路径', '学习路径', '自定义'].concat(abilities))),
+      abilities,
+      scenes: preset.scenes,
+      meta: ['我的路径', '参考'],
+      steps,
+      tips: String(this.data.pathDraft.tips || '').trim(),
+      variant: '',
+      issue: '',
+      relatedMaterialId: activePath.key,
+      referenceOnly: true,
+      stripeTone: 'mint',
+      sortOrder: preset.sortOrder
+    }
+    try {
+      if (activePath.customId) await updateMaterial(material)
+      else await createMaterial(material)
+      const nextMaterials = [material].concat(getState().materials.filter((item) => item.id !== material.id))
+      setMaterials(nextMaterials)
+      this.setData({
+        materials: nextMaterials,
+        pathEditMode: false,
+        activePath: {
+          key: activePath.key,
+          title: material.title,
+          desc: material.desc,
+          abilities: material.abilities,
+          scenes: material.scenes,
+          steps: materialToPathSteps(material, preset),
+          tips: material.tips,
+          customId: material.id,
+          editText: '编辑我的版本',
+          saveText: '保存修改'
+        },
+        pathDraft: {}
+      }, () => this.syncFiltered())
+      toast(activePath.customId ? '已保存修改' : '已保存为我的路径')
+    } catch (error) {
+      toast('路径保存失败，请重试')
+    }
+  },
+
+  filterType(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ type: value, activeCategory: '' }, () => this.loadMaterials())
+  },
+
+  filterAbility(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ ability: value }, () => this.loadMaterials())
+  },
+
+  filterScene(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ scene: value }, () => this.loadMaterials())
+  },
+
+  filterStatus(event: WechatMiniprogram.TouchEvent) {
+    const value = (event as WechatMiniprogram.CustomEvent<{ value: string }>).detail?.value || event.currentTarget.dataset.value
+    this.setData({ status: value }, () => this.loadMaterials())
+  },
+
+  openMaterial(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
+    wx.navigateTo({ url: `/pages/material-detail/index?id=${event.detail.id}` })
+  },
+
+  openMaterialFromTap(event: WechatMiniprogram.TouchEvent) {
+    const id = String(event.currentTarget.dataset.id || '')
+    if (id) wx.navigateTo({ url: `/pages/material-detail/index?id=${id}` })
+  },
+
+  async toggleSave(event: WechatMiniprogram.CustomEvent<{ id: string }>) {
+    const id = event.detail.id
+    const nextValue = toggleSaved(id)
+    try {
+      await updateSaved(id, nextValue)
+      await this.loadMaterials()
+    } catch (error) {
+      toggleSaved(id, !nextValue)
+      toast('收藏状态同步失败，请重试')
+    }
+  },
+
+  openRandom() {
+    if (Date.now() < this.fabIgnoreTapUntil) return
+    if (!this.data.filteredMaterials.filter((material: Material) => !material.referenceOnly).length) return
+    this.setData({
+      drawnCount: 1,
+      randomIndex: 0,
+      randomUseAllMaterials: false
+    }, () => {
+      this.syncFiltered()
+      openModal(this, { randomVisible: true })
+    })
+  },
+
+  onFabTouchStart(event: any) {
+    const touch = event.changedTouches && event.changedTouches[0]
+    this.fabStartTouch = touch ? { x: touch.clientX, y: touch.clientY } : null
+    this.fabTouchOffset = touch ? { x: touch.clientX - this.data.fabX, y: touch.clientY - this.data.fabY } : null
+    this.fabMoved = false
+  },
+
+  onFabTouchMove(event: any) {
+    const touch = event.changedTouches && event.changedTouches[0]
+    if (!touch || !this.fabStartTouch || !this.fabTouchOffset || !this.fabWindow) return
+    const distanceX = Math.abs(touch.clientX - this.fabStartTouch.x)
+    const distanceY = Math.abs(touch.clientY - this.fabStartTouch.y)
+    if (distanceX > fabDragThreshold || distanceY > fabDragThreshold) this.fabMoved = true
+    const { minX, maxX, minY, maxY } = this.fabWindow
+    const x = Math.min(maxX, Math.max(minX, touch.clientX - this.fabTouchOffset.x))
+    const y = Math.min(maxY, Math.max(minY, touch.clientY - this.fabTouchOffset.y))
+    this.setData({ fabX: x, fabY: y })
+  },
+
+  onFabTouchEnd() {
+    if (this.fabMoved && this.fabWindow) {
+      this.fabIgnoreTapUntil = Date.now() + 250
+      const { minX, maxX } = this.fabWindow
+      const x = Math.abs(this.data.fabX - minX) <= Math.abs(this.data.fabX - maxX) ? minX : maxX
+      this.setData({ fabX: x }, () => this.saveFabPosition())
+    }
+    this.fabStartTouch = null
+    this.fabTouchOffset = null
+  },
+
+  reroll() {
+    const candidates = this.getRandomCandidates()
+    if (candidates.length <= 1 || this.data.drawnCount >= candidates.length) {
+      toast('已无更多卡片')
+      return
+    }
+    const randomIndex = this.data.randomIndex + 1
+    const currentRandomMaterial = candidates[randomIndex % candidates.length]
+    this.setData({
+      randomIndex,
+      currentRandomMaterial,
+      randomTagLabels: buildRandomTagLabels(currentRandomMaterial),
+      drawnCount: this.data.drawnCount + 1
+    })
+  },
+
+  openRandomDetail() {
+    const material = this.data.currentRandomMaterial
+    if (!material) return
+    this.closeSheet()
+    wx.navigateTo({ url: `/pages/material-detail/index?id=${material.id}` })
+  },
+
+  openFilter() {
+    openModal(this, { filterVisible: true })
+  },
+
+  applyFilter() {
+    closeModal(this, { filterVisible: false })
+    const count = this.data.resultTotal
+    toast(count ? `已筛选出 ${count} 条素材` : '没有匹配素材')
+  },
+
+  clearFilters() {
+    this.setData({
+      query: '',
+      type: 'all',
+      ability: 'all',
+      scene: 'all',
+      status: 'all',
+      randomIndex: 0,
+      drawnCount: 1,
+      randomUseAllMaterials: false
+    }, () => this.loadMaterials())
+  },
+
+  clearFiltersForRandom() {
+    this.clearFilters()
+    toast('已清空条件')
+  },
+
+  useAllMaterialsForRandom() {
+    this.setData({
+      randomUseAllMaterials: true,
+      randomIndex: 0,
+      drawnCount: 1
+    }, () => this.syncFiltered())
+  },
+
+  retryLoadMaterials() {
+    this.loadMaterials(true)
+  },
+
+  openAdd() {
+    openModal(this, {
+      randomVisible: false,
+      filterVisible: false,
+      addVisible: true
+    })
+  },
+
+  openAddForActiveCategory() {
+    const activeCategory = this.data.activeCategory
+    if (!activeCategory) return
+    this.setData({ selectedCategoryTags: [activeCategory] }, () => this.openAdd())
+  },
+
+  closeSheet() {
+    closeModal(this, {
+      randomVisible: false,
+      filterVisible: false,
+      addVisible: false,
+      pathVisible: false,
+      pathEditMode: false,
+      activePath: null,
+      pathDraft: {},
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: [],
+      newMaterial: {},
+      randomUseAllMaterials: false,
+      selectedCategoryTags: [],
+      showMoreOptions: false,
+      moreOptionsToggleText: '补充训练方法'
+    })
+  },
+
+  handleMaterialFormFieldChange(event: WechatMiniprogram.CustomEvent<{ field: string; value: string }>) {
+    const { field, value } = event.detail || { field: '', value: '' }
+    if (!field) return
+    this.setData({ [`newMaterial.${field}`]: value })
+  },
+
+  setNewMaterialType(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    const value = String(event.detail?.value || '').trim()
+    if (!value) return
+    const selectedCategoryTags = this.data.selectedCategoryTags
+      .filter((item) => !materialTypes.includes(item as MaterialType))
+      .concat(value)
+    this.setData({ selectedCategoryTags }, () => this.syncFiltered())
+  },
+
+  toggleNewMaterialAbility(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleNewMaterialScene(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleNewMaterialTag(event: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    this.toggleNewMaterialCategory(String(event.detail?.value || '').trim())
+  },
+
+  toggleNewMaterialCategory(category: string) {
+    if (!category) return
+    const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
+      ? this.data.selectedCategoryTags.filter((item) => item !== category)
+      : this.data.selectedCategoryTags.concat(category)
+    this.setData({ selectedCategoryTags }, () => this.syncFiltered())
+  },
+
+  toggleCustomCategory() {
+    const customCategoryVisible = !this.data.customCategoryVisible
+    if (customCategoryVisible) {
+      this.setData({
+        customCategoryVisible: true,
+        customCategoryFocus: false,
+        customCategoryInput: this.data.customCategoryInput,
+        categorySuggestions: this.getCategorySuggestions(this.data.customCategoryInput)
+      }, () => {
+        this.setData({ customCategoryFocus: true })
+      })
+      return
+    }
+    this.setData({
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: []
+    })
+  },
+
+  handleCustomCategoryFocus() {
+    if (!this.data.customCategoryFocus) this.setData({ customCategoryFocus: true })
+  },
+
+  handleCustomCategoryBlur(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const customCategoryInput = String(event.detail?.value || '')
+    this.setData({
+      customCategoryFocus: false,
+      customCategoryInput,
+      categorySuggestions: this.getCategorySuggestions(customCategoryInput)
+    })
+  },
+
+  selectCategorySuggestion(event: WechatMiniprogram.TouchEvent) {
+    const category = String((event as WechatMiniprogram.CustomEvent<{ category: string }>).detail?.category || event.currentTarget.dataset.category || '').trim()
+    if (category) this.addCategoryTag(category)
+  },
+
+  confirmCustomCategory(event?: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const inputValue = event && event.detail ? event.detail.value : this.data.customCategoryInput
+    const category = String(inputValue || '').trim()
+    if (!category) {
+      toast('先输入标签')
+      return
+    }
+    if (materialTypes.includes(category as MaterialType) || abilityOptions.includes(category) || sceneOptions.includes(category)) {
+      toast('请在对应的类型、能力或场景中选择')
+      return
+    }
+    this.setData({
+      customCategoryInput: category,
+      categorySuggestions: this.getCategorySuggestions(category)
+    })
+    const existed = this.getCategoryPool().find((item) => item.toLowerCase() === category.toLowerCase())
+    this.addCategoryTag(existed || category)
+  },
+
+  addCategoryTag(category: string) {
+    const selectedCategoryTags = this.data.selectedCategoryTags.includes(category)
+      ? this.data.selectedCategoryTags
+      : this.data.selectedCategoryTags.concat(category)
+    this.setData({
+      selectedCategoryTags,
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: []
+    }, () => this.syncFiltered())
+  },
+
+  toggleMoreOptions() {
+    const nextVisible = !this.data.showMoreOptions
+    this.setData({
+      showMoreOptions: nextVisible,
+      moreOptionsToggleText: nextVisible ? '收起训练方法' : '补充训练方法'
+    })
+  },
+
+  async addMaterial() {
+    const title = this.data.newMaterial.title
+    if (!title) {
+      toast('先写素材名称')
+      return
+    }
+    const categories = Array.from(new Set<string>(this.data.selectedCategoryTags.map((item) => item.trim()).filter(Boolean)))
+    const materialType = materialTypes.find((item) => categories.includes(item)) as MaterialType | undefined
+    if (!materialType) {
+      toast('请选择素材类型')
+      return
+    }
+    const abilities = abilityOptions.filter((item) => categories.includes(item))
+    const scenes = sceneOptions.filter((item) => categories.includes(item))
+    const tags = getCustomMaterialTags(categories)
+    const steps = typeof this.data.newMaterial.steps === 'string' && this.data.newMaterial.steps.trim()
+      ? this.data.newMaterial.steps.split('\n').map((item) => item.trim()).filter(Boolean)
+      : []
+    const material: Material = {
+      id: `custom-${Date.now()}`,
+      title,
+      desc: this.data.newMaterial.desc || '',
+      type: materialType,
+      tags,
+      abilities,
+      scenes,
+      meta: buildMaterialMeta(this.data.newMaterial.people, this.data.newMaterial.duration),
+      steps,
+      tips: this.data.newMaterial.tips || '',
+      variant: this.data.newMaterial.variant || '',
+      issue: this.data.newMaterial.issue || '',
+      relatedMaterialId: '',
+      referenceOnly: materialType === '路径',
+      stripeTone: 'orange',
+      sortOrder: DEFAULT_SORT_ORDER
+    }
+    try {
+      const response = await createMaterial(material)
+      setMaterials([Object.assign({}, material, response.item)].concat(getState().materials))
+    } catch (error: any) {
+      toast(error.message || '添加失败，请重试')
+      return
+    }
+    closeModal(this, {
+      addVisible: false,
+      newMaterial: {},
+      selectedCategoryTags: [],
+      customCategoryVisible: false,
+      customCategoryFocus: false,
+      customCategoryInput: '',
+      categorySuggestions: [],
+      showMoreOptions: false,
+      moreOptionsToggleText: '补充训练方法'
+    }, () => this.loadMaterials())
+    toast('已加入素材库')
+  }
+})

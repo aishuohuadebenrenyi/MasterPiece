@@ -1,0 +1,96 @@
+<scroll-view scroll-y="{{!modalOpen}}" enhanced show-scrollbar="{{false}}" class="settings-scroll {{themeClass}} {{modalOpen ? 'modal-open' : ''}}" style="{{layoutStyle}}">
+  <view class="settings-page">
+    <subpage-header title="设置" bind:back="goBack" />
+
+    <view class="settings-group">
+      <view class="card settings-card">
+        <view class="settings-row" role="button" aria-label="打开使用帮助" bindtap="openHelp">
+          <view class="settings-row-main">
+            <text class="settings-row-title">使用帮助</text>
+          </view>
+          <view class="settings-row-side"><text class="settings-row-action">查看</text><text class="settings-row-arrow">›</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="settings-group">
+      <view class="card settings-card">
+        <view class="settings-row" role="button" aria-label="打开意见反馈" bindtap="openFeedback">
+          <view class="settings-row-main">
+            <text class="settings-row-title">意见反馈</text>
+          </view>
+          <view class="settings-row-side"><text class="settings-row-action">反馈</text><text class="settings-row-arrow">›</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="settings-group">
+      <text class="settings-group-title">偏好</text>
+      <view class="card settings-card settings-theme-card">
+        <view class="settings-panel">
+          <view class="settings-panel-main">
+            <text class="settings-row-title">外观主题</text>
+            <text class="settings-row-desc">灵感用于日常，现场用于低光</text>
+          </view>
+          <view class="settings-theme-switch {{themeClass === 'theme-vivid' ? 'is-vivid' : ''}}">
+            <view class="settings-theme-thumb"></view>
+            <button aria-label="切换到灵感主题" class="settings-theme-option {{themeClass === 'theme-default' ? 'active' : ''}}" data-mode="default" bindtap="setThemeModeByTap">灵感</button>
+            <button aria-label="切换到现场主题" class="settings-theme-option {{themeClass === 'theme-vivid' ? 'active' : ''}}" data-mode="vivid" bindtap="setThemeModeByTap">现场</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="settings-group">
+      <text class="settings-group-title">关于</text>
+      <view class="card settings-card">
+        <view class="settings-row" role="button" aria-label="打开隐私政策" bindtap="openPrivacy">
+          <view class="settings-row-main">
+            <text class="settings-row-title">隐私政策</text>
+          </view>
+          <view class="settings-row-side"><text class="settings-row-action">查看</text><text class="settings-row-arrow">›</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="settings-account-group">
+      <text class="settings-group-title">账号</text>
+      <view class="card settings-card settings-account-card">
+        <view class="settings-account-main">
+          <text class="settings-row-title settings-account-title">注销并删除数据</text>
+          <text class="settings-row-desc">不可恢复</text>
+        </view>
+        <button class="button-danger-quiet settings-danger-btn" bindtap="deleteMyAccount">注销</button>
+      </view>
+    </view>
+  </view>
+
+  <bottom-sheet visible="{{feedbackVisible}}" title="意见反馈" sheetClass="task-sheet feedback-sheet" showActions="{{true}}" closeOnMask="{{false}}" bind:close="closeFeedback">
+    <view class="feedback-form">
+      <form-field label="反馈类型">
+        <scroll-view scroll-x="true" enable-flex="true" enhanced show-scrollbar="{{false}}" class="feedback-types-scroll">
+          <view class="feedback-types-row">
+            <button wx:for="{{feedbackOptions}}" wx:key="value" class="chip feedback-chip {{item.activeClass}}" data-category="{{item.value}}" bindtap="selectFeedbackCategory">{{item.label}}</button>
+          </view>
+        </scroll-view>
+      </form-field>
+
+      <form-field label="反馈内容（10–500 字）">
+        <textarea class="app-textarea feedback-textarea" value="{{feedbackContent}}" maxlength="500" placeholder="发生了什么？你希望怎样？" bindblur="updateFeedbackContent"></textarea>
+        <text class="feedback-count">{{feedbackContent.length}} / 500</text>
+      </form-field>
+
+      <form-field label="联系方式（选填）">
+        <input class="app-input" type="text" value="{{feedbackContact}}" maxlength="100" placeholder="微信号或邮箱" bindblur="updateFeedbackContact" bindconfirm="updateFeedbackContact" />
+      </form-field>
+
+    </view>
+    <view slot="actions" class="feedback-actions">
+      <button class="primary-btn feedback-submit" loading="{{feedbackSubmitting}}" disabled="{{feedbackSubmitting}}" bindtap="submitFeedback">提交反馈</button>
+    </view>
+  </bottom-sheet>
+
+  <root-portal wx:if="{{appToastVisible}}">
+    <view class="app-toast app-toast-{{appToastTone}} {{themeClass}}"><text>{{appToastTitle}}</text></view>
+  </root-portal>
+</scroll-view>

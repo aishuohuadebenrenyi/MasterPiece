@@ -1,0 +1,169 @@
+.record-overview-scroll {
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+}
+
+.record-overview-page {
+  width: 100%;
+  min-height: 0;
+  padding: var(--nav-row-top) var(--page-side) calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.subpage-header {
+  margin-bottom: 28rpx;
+}
+
+.overview-summary-card {
+  padding: 32rpx;
+}
+
+.overview-summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.overview-title {
+  margin-top: 8rpx;
+  color: var(--improv-text);
+  font-size: 40rpx;
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.overview-metric {
+  min-width: 0;
+  padding: 20rpx 18rpx;
+  border-radius: 24rpx;
+  background: var(--improv-bg-subtle);
+}
+
+.metric-value {
+  display: block;
+  color: var(--improv-text);
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.metric-label {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--improv-muted);
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.record-filter-panel {
+  margin: 22rpx 0 28rpx;
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-row .chip {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 208rpx;
+  margin: 0;
+}
+
+.overview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+}
+
+.overview-record-card {
+  padding: 28rpx;
+}
+
+.overview-record-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.record-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  color: var(--improv-primary-strong);
+  background: var(--improv-primary-tint);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.record-type.practice {
+  color: var(--improv-secondary);
+  background: var(--improv-secondary-wash);
+}
+
+.record-type.rehearsal {
+  color: var(--improv-primary-strong);
+  background: var(--improv-primary-glass);
+}
+
+.record-type.method {
+  color: var(--improv-light);
+  background: var(--improv-secondary);
+}
+
+.overview-record-title {
+  margin-top: 16rpx;
+  color: var(--improv-text);
+  font-size: 31rpx;
+  font-weight: 900;
+  line-height: 1.28;
+  word-break: break-word;
+}
+
+.overview-record-desc {
+  display: -webkit-box;
+  margin-top: 8rpx;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.overview-meta {
+  margin-top: 18rpx;
+}
+
+.overview-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.detail-desc {
+  display: block;
+  padding: 22rpx;
+  border-radius: 24rpx;
+  background: var(--improv-bg-subtle);
+  line-height: 1.55;
+}
+
+.material-record-link {
+  width: 100%;
+  margin-top: 8rpx;
+}
