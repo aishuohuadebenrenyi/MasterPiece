@@ -1,0 +1,316 @@
+[
+  {
+    "id": "name-chain",
+    "title": "名字接龙变奏",
+    "desc": "低门槛开场，快速统一声音和注意力。",
+    "type": "游戏",
+    "tags": [
+      "热身",
+      "破冰",
+      "新手"
+    ],
+    "abilities": [
+      "自发性",
+      "积极聆听"
+    ],
+    "scenes": [
+      "备课",
+      "排练"
+    ],
+    "meta": [
+      "6-12 人",
+      "8 分钟"
+    ],
+    "steps": [
+      "围成一圈，每个人说出自己的名字并配一个动作。",
+      "下一位重复前面内容，再加入自己的名字和动作。",
+      "逐渐加快节奏，让大家进入共同注意力。"
+    ],
+    "tips": "示范动作要轻松、可模仿，先让大家敢做，再追求节奏。",
+    "variant": "变体：加入情绪、拍手节奏或不同声音状态。",
+    "issue": "动作过复杂会拖慢节奏，第一轮保持简单。",
+    "relatedMaterialId": "status-swap",
+    "referenceOnly": false,
+    "stripeTone": "orange",
+    "sortOrder": 10,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "status-swap",
+    "title": "一句话交换身份",
+    "desc": "用一句台词确认彼此身份，快速建立关系。",
+    "type": "角色",
+    "tags": [
+      "关系",
+      "叙事",
+      "中等"
+    ],
+    "abilities": [
+      "角色塑造",
+      "积极聆听"
+    ],
+    "scenes": [
+      "临场速查",
+      "排练"
+    ],
+    "meta": [
+      "2-6 人",
+      "12 分钟"
+    ],
+    "steps": [
+      "一人抛出带身份关系的台词。",
+      "另一人接住关系，并在下一句继续确认。",
+      "几轮后复盘：哪一句让关系变清楚了？"
+    ],
+    "tips": "提醒参与者不要解释背景，先把“我和你是什么关系”演清楚。",
+    "variant": "限定每句话只能新增一个关系信息。",
+    "issue": "信息一次给太多，关系反而会糊。",
+    "relatedMaterialId": "space-walk",
+    "referenceOnly": false,
+    "stripeTone": "blue",
+    "sortOrder": 20,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "space-walk",
+    "title": "空间行走切换",
+    "desc": "现场有点散时，适合重新聚焦身体和节奏。",
+    "type": "技巧",
+    "tags": [
+      "专注",
+      "热身",
+      "身体"
+    ],
+    "abilities": [
+      "身体空间",
+      "团队协作"
+    ],
+    "scenes": [
+      "排练",
+      "演出"
+    ],
+    "meta": [
+      "6-12 人",
+      "10 分钟"
+    ],
+    "steps": [
+      "所有人在空间里自由行走，感受彼此距离。",
+      "带领者给出速度、方向、状态切换口令。",
+      "加入停顿、对视或成组，提高现场专注度。"
+    ],
+    "tips": "口令保持清晰，变化不要过多，让身体先跟上。",
+    "variant": "加入情绪温度、重力、身体部位带路。",
+    "issue": "口令过快会让大家只想做对，而不是感受现场。",
+    "relatedMaterialId": "name-chain",
+    "referenceOnly": false,
+    "stripeTone": "mint",
+    "sortOrder": 30,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "chairman-open",
+    "title": "排练开场主持词",
+    "desc": "用 30 秒说明今天目标、节奏和安全边界。",
+    "type": "主理",
+    "tags": [
+      "主持",
+      "开场",
+      "控场"
+    ],
+    "abilities": [
+      "主持",
+      "团队协作"
+    ],
+    "scenes": [
+      "备课",
+      "排练"
+    ],
+    "meta": [
+      "主理人",
+      "30 秒"
+    ],
+    "steps": [
+      "说明本次目标。",
+      "确认今天先练什么、不练什么。",
+      "给出第一个热身入口。"
+    ],
+    "tips": "话术短，目标清楚，不在开场解释太多理论。",
+    "variant": "可以改成演出前开场或工作坊破冰开场。",
+    "issue": "主理人说太久会让现场降温。",
+    "relatedMaterialId": "name-chain",
+    "referenceOnly": false,
+    "stripeTone": "blue",
+    "sortOrder": 40,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "dance-three-beats",
+    "title": "三拍识别舞步",
+    "desc": "用三个动作让观众快速认出舞蹈风格。",
+    "type": "才艺",
+    "tags": [
+      "舞蹈",
+      "识别点",
+      "身体"
+    ],
+    "abilities": [
+      "身体空间",
+      "情绪表达"
+    ],
+    "scenes": [
+      "临场速查",
+      "演出"
+    ],
+    "meta": [
+      "单人/多人",
+      "5 分钟"
+    ],
+    "steps": [
+      "选一个清晰风格。",
+      "提炼三个标志性动作。",
+      "加一句台词或声音增强识别。"
+    ],
+    "tips": "动作不求完整，先让观众认出来。",
+    "variant": "换成歌曲、口音、运动或职业技能。",
+    "issue": "动作太复杂会变成展示才艺，而不是服务场景。",
+    "relatedMaterialId": "space-walk",
+    "referenceOnly": false,
+    "stripeTone": "orange",
+    "sortOrder": 50,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "montage-return",
+    "title": "蒙太奇回收",
+    "desc": "把多个短场景里的物件、关系或台词在后段回收。",
+    "type": "格式",
+    "tags": [
+      "长篇",
+      "回收",
+      "结构"
+    ],
+    "abilities": [
+      "叙事构建",
+      "积极聆听"
+    ],
+    "scenes": [
+      "排练",
+      "演出"
+    ],
+    "meta": [
+      "3-8 人",
+      "20 分钟"
+    ],
+    "steps": [
+      "先建立 3 个短场景。",
+      "记录每段的明显识别点。",
+      "后段用台词、动作或关系回收。"
+    ],
+    "tips": "回收要简单明确，不要为了聪明牺牲当下关系。",
+    "variant": "可替换为主题回收、人物回收或物件回收。",
+    "issue": "只追求回收会让场景失去真实关系。",
+    "relatedMaterialId": "status-swap",
+    "referenceOnly": false,
+    "stripeTone": "mint",
+    "sortOrder": 60,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "keep-try-card",
+    "title": "Keep / Try 复盘卡",
+    "desc": "把一次练习拆成保留点和下次尝试。",
+    "type": "复盘",
+    "tags": [
+      "复盘",
+      "方法卡",
+      "沉淀",
+      "观察"
+    ],
+    "abilities": [
+      "失败复原"
+    ],
+    "scenes": [
+      "排练",
+      "备课"
+    ],
+    "meta": [
+      "个人/团队",
+      "5 分钟"
+    ],
+    "steps": [
+      "先写一个 Keep。",
+      "再写一个 Try。",
+      "最后写下次提醒。"
+    ],
+    "tips": "每项只写一条，避免复盘变成批评大会。",
+    "variant": "可增加观众反馈、团队观察和成功模式。",
+    "issue": "Try 写太多会降低执行概率。",
+    "relatedMaterialId": "chairman-open",
+    "referenceOnly": false,
+    "stripeTone": "blue",
+    "sortOrder": 70,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  },
+  {
+    "id": "actor-training-map",
+    "title": "演员学习路径地图",
+    "desc": "从敢上场到能驾驭：底盘、关系、角色、情绪、叙事和演出整合。",
+    "type": "路径",
+    "tags": [
+      "学习路径",
+      "参考"
+    ],
+    "abilities": [
+      "自发性",
+      "角色塑造",
+      "叙事构建"
+    ],
+    "scenes": [
+      "备课"
+    ],
+    "meta": [
+      "参考",
+      "路径"
+    ],
+    "steps": [
+      "敢上场",
+      "建立关系",
+      "角色识别",
+      "情绪表达",
+      "叙事推进",
+      "演出整合"
+    ],
+    "tips": "路径素材用于查阅，不进入训练计时。",
+    "variant": "",
+    "issue": "",
+    "relatedMaterialId": "",
+    "referenceOnly": true,
+    "stripeTone": "mint",
+    "sortOrder": 80,
+    "ownerOpenId": "system",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z",
+    "deletedAt": null
+  }
+]

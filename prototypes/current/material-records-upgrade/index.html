@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+  <title>素材记录页升级原型</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --paper: #fffaf2;
+      --paper-2: #fbf4e8;
+      --ink: #2d2922;
+      --muted: #817667;
+      --line: rgba(54, 42, 28, 0.13);
+      --brand: #1e7563;
+      --brand-2: #2f6f93;
+      --brand-soft: #dcefe8;
+      --amber: #df7a2f;
+      --amber-soft: #f6e0c5;
+      --rose: #c85b62;
+      --blue-soft: #dbe8ef;
+      --shadow: 0 18px 42px rgba(59, 44, 26, 0.13);
+      --bottom-safe: 82px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(30, 117, 99, 0.13), transparent 32%),
+        linear-gradient(145deg, #eadfce 0%, #f7f0e7 50%, #ece1d5 100%);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .phone {
+      width: min(100vw, 430px);
+      height: min(100vh, 920px);
+      min-height: 760px;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid rgba(65, 48, 30, 0.18);
+      border-radius: 34px;
+      box-shadow: 0 30px 80px rgba(51, 37, 22, 0.22);
+    }
+
+    .statusbar {
+      height: 46px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 0 22px 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .capsule {
+      width: 78px;
+      height: 27px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .capsule span {
+      width: 4px;
+      height: 4px;
+      border-radius: 99px;
+      background: currentColor;
+    }
+
+    .screen-shell {
+      height: calc(100% - 46px);
+      position: relative;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      overflow-y: auto;
+      padding: 14px 18px calc(var(--bottom-safe) + 26px);
+      background: var(--bg);
+      scrollbar-width: none;
+    }
+
+    .screen::-webkit-scrollbar,
+    .h-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .sub-head,
+    .section-head,
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .sub-head {
+      margin-bottom: 14px;
+    }
+
+    .sub-head h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .sub-head p,
+    .muted,
+    .card-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .sub-head p,
+    p,
+    h2,
+    h3 {
+      margin: 0;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section-head {
+      min-height: 34px;
+      margin-bottom: 10px;
+    }
+
+    .section-head h2 {
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 250, 242, 0.93);
+      box-shadow: 0 12px 28px rgba(64, 48, 30, 0.08);
+    }
+
+    .soft-card {
+      padding: 15px;
+    }
+
+    .card-kicker {
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 7px 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .card h2 {
+      font-size: 22px;
+    }
+
+    .card h3 {
+      font-size: 17px;
+    }
+
+    .pill,
+    .tag,
+    .meta {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pill {
+      color: var(--brand);
+      background: rgba(30, 117, 99, 0.1);
+    }
+
+    .pill.amber {
+      color: #90511d;
+      background: var(--amber-soft);
+    }
+
+    .pill.blue {
+      color: var(--brand-2);
+      background: var(--blue-soft);
+    }
+
+    .tag,
+    .meta {
+      color: #665642;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .primary-btn,
+    .ghost-btn,
+    .danger-btn,
+    .icon-btn,
+    .chip {
+      min-height: 38px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .primary-btn {
+      padding: 0 15px;
+      color: #fff;
+      background: var(--brand);
+      box-shadow: 0 12px 20px rgba(30, 117, 99, 0.18);
+    }
+
+    .ghost-btn {
+      padding: 0 15px;
+      color: var(--brand);
+      background: rgba(30, 117, 99, 0.1);
+    }
+
+    .danger-btn {
+      padding: 0 15px;
+      color: #fff;
+      background: var(--rose);
+    }
+
+    .icon-btn {
+      width: 38px;
+      display: inline-grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: inset 0 0 0 1px var(--line);
+      flex: 0 0 auto;
+    }
+
+    .icon-back::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-left: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      margin-left: 4px;
+    }
+
+    .icon-close::before,
+    .icon-close::after {
+      content: "";
+      width: 15px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+      grid-area: 1 / 1;
+    }
+
+    .icon-close::before {
+      transform: rotate(45deg);
+    }
+
+    .icon-close::after {
+      transform: rotate(-45deg);
+    }
+
+    .chip {
+      padding: 0 12px;
+      color: #665642;
+      background: rgba(255, 255, 255, 0.64);
+      box-shadow: inset 0 0 0 1px var(--line);
+      flex: 0 0 auto;
+    }
+
+    .chip.active {
+      color: #fff;
+      background: var(--brand);
+      box-shadow: none;
+    }
+
+    .primary-btn:active,
+    .ghost-btn:active,
+    .chip:active,
+    .record-card:active,
+    .media-tile:active {
+      transform: translateY(1px);
+    }
+
+    .hero-card {
+      padding: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -24px;
+      top: -20px;
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.86), rgba(223, 122, 47, 0.18) 42%, rgba(30, 117, 99, 0.14));
+      pointer-events: none;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .summary-cell {
+      min-width: 0;
+      border-radius: 15px;
+      padding: 10px 8px;
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: inset 0 0 0 1px rgba(54, 42, 28, 0.08);
+    }
+
+    .summary-cell strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .summary-cell span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .metric-card {
+      padding: 13px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.56);
+      box-shadow: inset 0 0 0 1px rgba(54, 42, 28, 0.08);
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 21px;
+      line-height: 1.1;
+    }
+
+    .metric-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .filter-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 4px;
+      scrollbar-width: none;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .record-card {
+      width: 100%;
+      padding: 14px;
+      text-align: left;
+      color: inherit;
+      position: relative;
+    }
+
+    .record-card.selected {
+      box-shadow: inset 0 0 0 2px var(--brand), 0 12px 28px rgba(64, 48, 30, 0.08);
+    }
+
+    .record-main {
+      min-width: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .score-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(145deg, var(--amber), #bc5e29);
+      font-size: 18px;
+      font-weight: 900;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 18px rgba(223, 122, 47, 0.2);
+    }
+
+    .record-title-row {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+    }
+
+    .record-title-copy {
+      min-width: 0;
+    }
+
+    .record-title-copy h3 {
+      margin: 0 0 4px;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .record-title-copy p {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .media-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .media-thumb,
+    .media-tile {
+      min-width: 0;
+      min-height: 60px;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      background: rgba(245, 241, 234, 0.9);
+      box-shadow: inset 0 0 0 1px rgba(54, 42, 28, 0.08);
+      display: grid;
+      place-items: center;
+      color: #665642;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .media-thumb.video,
+    .media-tile.video {
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(31, 38, 35, 0.8), rgba(47, 111, 147, 0.75)),
+        radial-gradient(circle at 26% 24%, rgba(255, 255, 255, 0.28), transparent 34%);
+    }
+
+    .media-thumb.image,
+    .media-tile.image {
+      background:
+        linear-gradient(145deg, rgba(220, 239, 232, 0.96), rgba(246, 224, 197, 0.88));
+    }
+
+    .media-thumb.audio,
+    .media-tile.audio {
+      background:
+        linear-gradient(145deg, rgba(219, 232, 239, 0.98), rgba(255, 255, 255, 0.76));
+      color: var(--brand-2);
+    }
+
+    .media-thumb.file,
+    .media-tile.file {
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(246, 224, 197, 0.72));
+      color: #90511d;
+    }
+
+    .play-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.24);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    }
+
+    .play-mark::before {
+      content: "";
+      width: 0;
+      height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 11px solid currentColor;
+      margin-left: 3px;
+    }
+
+    .small-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .compare-bar {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 18px;
+      z-index: 18;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(45, 41, 34, 0.92);
+      color: #fffaf2;
+      box-shadow: 0 18px 40px rgba(45, 41, 34, 0.28);
+    }
+
+    .compare-bar.active {
+      display: flex;
+    }
+
+    .compare-bar p {
+      font-size: 12px;
+      color: rgba(255, 250, 242, 0.78);
+      line-height: 1.35;
+    }
+
+    .compare-bar strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 100px;
+      z-index: 50;
+      transform: translateX(-50%);
+      max-width: calc(100% - 44px);
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 12px 30px rgba(45, 41, 34, 0.16);
+      font-size: 13px;
+      font-weight: 900;
+      display: none;
+      white-space: nowrap;
+    }
+
+    .toast.active {
+      display: block;
+    }
+
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      background: rgba(45, 41, 34, 0.22);
+      display: none;
+      align-items: end;
+    }
+
+    .sheet-backdrop.active {
+      display: flex;
+    }
+
+    .sheet {
+      width: 100%;
+      max-height: 86%;
+      overflow-y: auto;
+      padding: 16px 18px 24px;
+      border-radius: 26px 26px 0 0;
+      background: rgba(255, 250, 242, 0.98);
+      box-shadow: 0 -20px 44px rgba(45, 41, 34, 0.18);
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .sheet-head h2 {
+      font-size: 21px;
+    }
+
+    .detail-summary {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .note-block {
+      padding: 13px;
+      border-radius: 16px;
+      background: rgba(245, 241, 234, 0.82);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .media-tile {
+      min-height: 118px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .media-tile small {
+      display: block;
+      margin-top: 7px;
+      color: inherit;
+      opacity: 0.72;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .video-stage {
+      border-radius: 22px;
+      min-height: 230px;
+      padding: 14px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        radial-gradient(circle at 22% 20%, rgba(255, 255, 255, 0.2), transparent 26%),
+        linear-gradient(145deg, #21343b, #1c2826 62%, #2f221d);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    .video-stage .muted {
+      color: rgba(255, 250, 242, 0.68);
+    }
+
+    .video-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.12);
+      gap: 4px;
+    }
+
+    .segmented button {
+      min-height: 32px;
+      min-width: 54px;
+      padding: 0 11px;
+      border-radius: 12px;
+      color: #fff;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .segmented button.active {
+      color: var(--ink);
+      background: #fffaf2;
+    }
+
+    .marker-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .marker {
+      width: 100%;
+      text-align: left;
+      border-radius: 16px;
+      padding: 11px 12px;
+      background: rgba(245, 241, 234, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(54, 42, 28, 0.08);
+    }
+
+    .marker.active {
+      background: var(--brand-soft);
+      box-shadow: inset 0 0 0 2px rgba(30, 117, 99, 0.32);
+    }
+
+    .marker strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+
+    .marker span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .compare-layout {
+      display: grid;
+      gap: 12px;
+    }
+
+    .compare-video {
+      border-radius: 20px;
+      padding: 13px;
+      color: #fff;
+      min-height: 210px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.22), transparent 28%),
+        linear-gradient(145deg, #233438, #1e2528 64%, #2e201c);
+    }
+
+    .compare-video.secondary {
+      background:
+        radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.2), transparent 27%),
+        linear-gradient(145deg, #283241, #1f2f2b 62%, #3b2c1f);
+    }
+
+    .compare-note-form {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .field {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(245, 241, 234, 0.72);
+      padding: 12px;
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .field textarea,
+    .field input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      resize: none;
+      line-height: 1.5;
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .field textarea {
+      min-height: 74px;
+    }
+
+    .bottom-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .bottom-actions .primary-btn,
+    .bottom-actions .ghost-btn {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .empty-hint {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.56);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 380px) {
+      .phone {
+        border-radius: 0;
+        height: 100vh;
+        min-height: 100vh;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .media-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .metric-row {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-bar {
+        left: 10px;
+        right: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="素材记录页升级原型">
+    <div class="statusbar">
+      <span>9:41</span>
+      <div class="capsule" aria-hidden="true"><span></span><span></span></div>
+    </div>
+
+    <div class="screen-shell">
+      <section class="screen active" data-screen="summary" aria-label="素材详情摘要">
+        <header class="sub-head">
+          <div>
+            <p class="muted">素材详情</p>
+            <h1>一词一句故事</h1>
+            <p>训练叙事接力、聆听和即时反应。当前页面模拟素材详情底部的个人练习记录摘要。</p>
+          </div>
+          <button class="icon-btn" type="button" aria-label="更多"></button>
+        </header>
+
+        <article class="card hero-card">
+          <div class="card-kicker">个人练习记录</div>
+          <h2>这个素材已经练了 8 次</h2>
+          <p class="card-copy">最近一次评分 8.6，节奏更稳，但角色进入仍偏慢。建议下次先看 2 个关键时刻再开始。</p>
+          <div class="summary-grid" aria-label="素材练习摘要">
+            <div class="summary-cell"><strong>8</strong><span>练习次数</span></div>
+            <div class="summary-cell"><strong>8.1</strong><span>平均分</span></div>
+            <div class="summary-cell"><strong>5</strong><span>视频记录</span></div>
+            <div class="summary-cell"><strong>+1.4</strong><span>近三次</span></div>
+          </div>
+          <div class="meta-row">
+            <span class="pill">最近 6 月 28 日</span>
+            <span class="pill amber">3 个关键时刻</span>
+            <span class="pill blue">可对比变化</span>
+          </div>
+          <div class="bottom-actions">
+            <button class="primary-btn" type="button" data-nav="records">查看全部记录</button>
+            <button class="ghost-btn" type="button" data-nav="video">看最佳片段</button>
+          </div>
+        </article>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>最近 3 条</h2>
+            <span class="meta">摘要预览</span>
+          </div>
+          <div class="timeline" id="summaryList"></div>
+        </section>
+      </section>
+
+      <section class="screen" data-screen="records" aria-label="素材记录页">
+        <header class="sub-head">
+          <button class="icon-btn icon-back" type="button" data-nav="summary" aria-label="返回"></button>
+          <div style="min-width:0; flex:1;">
+            <p class="muted">素材记录</p>
+            <h1>一词一句故事</h1>
+            <p>回看每次练习证据，选择两条记录对比变化。</p>
+          </div>
+        </header>
+
+        <article class="card soft-card">
+          <div class="row-between">
+            <div>
+              <div class="card-kicker">成长档案</div>
+              <h2>叙事节奏正在变稳</h2>
+            </div>
+            <span class="pill blue">近三次 +1.4</span>
+          </div>
+          <div class="metric-row">
+            <div class="metric-card"><strong>8.1</strong><span>平均分，从 6.8 提升到 8.6</span></div>
+            <div class="metric-card"><strong>12</strong><span>关键时刻，6 个标为待改进</span></div>
+          </div>
+        </article>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>筛选记录</h2>
+            <button class="ghost-btn" type="button" id="quickCompare">最高分 / 最低分</button>
+          </div>
+          <div class="filter-strip" id="filters" aria-label="记录筛选"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>练习时间线</h2>
+            <span class="meta" id="recordCountLabel">0 条</span>
+          </div>
+          <div class="timeline" id="recordList"></div>
+        </section>
+      </section>
+
+      <section class="screen" data-screen="compare" aria-label="视频对比页">
+        <header class="sub-head">
+          <button class="icon-btn icon-back" type="button" data-nav="records" aria-label="返回"></button>
+          <div style="min-width:0; flex:1;">
+            <p class="muted">双视频对比</p>
+            <h1>看见变化</h1>
+            <p>对比两次练习的评分、视频证据和关键时刻。</p>
+          </div>
+        </header>
+
+        <div class="compare-layout" id="compareVideos"></div>
+
+        <article class="card soft-card section">
+          <div class="card-kicker">对比结论</div>
+          <h2>保存一条对比复盘</h2>
+          <div class="compare-note-form">
+            <div class="field">
+              <label for="improvement">变化</label>
+              <textarea id="improvement">最近一次更敢停顿，接词前有了明显的聆听动作。</textarea>
+            </div>
+            <div class="field">
+              <label for="issue">仍需改进</label>
+              <textarea id="issue">故事推进到第三句时仍容易抢节奏，需要保留半拍给对方。</textarea>
+            </div>
+            <div class="field">
+              <label for="nextFocus">下次重点</label>
+              <textarea id="nextFocus">先做 2 分钟慢速接词，再进入完整练习。</textarea>
+            </div>
+          </div>
+          <div class="bottom-actions">
+            <button class="ghost-btn" type="button" data-nav="records">先不保存</button>
+            <button class="primary-btn" type="button" id="saveComparison">保存对比复盘</button>
+          </div>
+        </article>
+      </section>
+
+      <div class="compare-bar" id="compareBar" aria-live="polite">
+        <div>
+          <strong id="compareTitle">已选择 0 条</strong>
+          <p id="compareHint">选择两条含视频的记录进行对比。</p>
+        </div>
+        <button class="primary-btn" type="button" id="startCompare">开始对比</button>
+      </div>
+
+      <div class="toast" id="toast">已保存对比复盘</div>
+
+      <div class="sheet-backdrop" id="detailSheet" role="dialog" aria-modal="true" aria-label="记录详情">
+        <div class="sheet">
+          <div class="sheet-head">
+            <div>
+              <p class="muted" id="detailDate">记录详情</p>
+              <h2 id="detailTitle">本次复盘</h2>
+            </div>
+            <button class="icon-btn icon-close" type="button" data-close="detailSheet" aria-label="关闭"></button>
+          </div>
+          <div class="detail-summary" id="detailSummary"></div>
+          <div class="section-head">
+            <h2>媒体证据</h2>
+            <span class="meta" id="detailMediaCount">0 个</span>
+          </div>
+          <div class="media-grid" id="detailMedia"></div>
+        </div>
+      </div>
+
+      <div class="sheet-backdrop" id="videoSheet" role="dialog" aria-modal="true" aria-label="视频查看层">
+        <div class="sheet">
+          <div class="sheet-head">
+            <div>
+              <p class="muted" id="videoDate">视频证据</p>
+              <h2 id="videoTitle">关键片段</h2>
+            </div>
+            <button class="icon-btn icon-close" type="button" data-close="videoSheet" aria-label="关闭"></button>
+          </div>
+          <div class="video-stage">
+            <div>
+              <p class="muted">模拟播放器</p>
+              <h2 id="videoHeadline">本次练习视频</h2>
+            </div>
+            <div class="play-mark" aria-hidden="true"></div>
+            <div class="video-controls">
+              <button class="ghost-btn" type="button" id="playToggle">播放</button>
+              <div class="segmented" id="speedControls">
+                <button type="button" data-speed="0.5">0.5x</button>
+                <button class="active" type="button" data-speed="1">1x</button>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-head">
+              <h2>关键时刻</h2>
+              <button class="ghost-btn" type="button" id="addMarker">添加反馈点</button>
+            </div>
+            <div class="marker-list" id="videoMarkers"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const records = [
+      {
+        id: "r-20260628",
+        date: "2026.06.28",
+        title: "第 8 次练习",
+        score: 8.6,
+        note: "开始前先回看上次问题，这次节奏更稳，第三句之后能保持故事方向。",
+        reminder: "下次继续练慢速接词，先留半拍再开口。",
+        tags: ["高分", "视频", "关键时刻"],
+        media: [
+          { id: "m-1", type: "video", name: "完整练习视频", meta: "02:18", markers: [
+            { time: "00:18", label: "做得好", note: "接词前有明显聆听，节奏没有抢。" },
+            { time: "01:05", label: "待改进", note: "第三句又急着推进，需要留半拍。" },
+            { time: "01:44", label: "下次重点", note: "结尾可以多保留角色关系。" }
+          ] },
+          { id: "m-2", type: "image", name: "现场站位", meta: "1 张" },
+          { id: "m-3", type: "audio", name: "口述复盘", meta: "00:42" },
+          { id: "m-4", type: "file", name: "课后作业", meta: "PDF" }
+        ]
+      },
+      {
+        id: "r-20260622",
+        date: "2026.06.22",
+        title: "第 7 次练习",
+        score: 7.8,
+        note: "反应速度提升，但故事走向不够清晰，容易跟着词跑。",
+        reminder: "开场先确认谁、在哪、想要什么。",
+        tags: ["视频", "关键时刻"],
+        media: [
+          { id: "m-5", type: "video", name: "训练片段", meta: "01:46", markers: [
+            { time: "00:31", label: "待改进", note: "角色目标没有建立，后面难推进。" },
+            { time: "01:12", label: "做得好", note: "对对方的补充接住了。" }
+          ] },
+          { id: "m-6", type: "image", name: "白板记录", meta: "1 张" }
+        ]
+      },
+      {
+        id: "r-20260615",
+        date: "2026.06.15",
+        title: "第 6 次练习",
+        score: 6.9,
+        note: "能完成规则，但节奏紧张，第三轮开始重复同一种句式。",
+        reminder: "先练三组不同句式，不急着完整跑完。",
+        tags: ["图片"],
+        media: [
+          { id: "m-7", type: "image", name: "句式草稿", meta: "2 张" },
+          { id: "m-8", type: "file", name: "训练记录表", meta: "XLSX" }
+        ]
+      },
+      {
+        id: "r-20260605",
+        date: "2026.06.05",
+        title: "第 5 次练习",
+        score: 8.2,
+        note: "慢速接词效果很好，身体状态更松，故事线更清楚。",
+        reminder: "保留慢速热身作为固定准备动作。",
+        tags: ["高分", "视频"],
+        media: [
+          { id: "m-9", type: "video", name: "最佳片段", meta: "01:24", markers: [
+            { time: "00:26", label: "做得好", note: "接住对方设定后没有急转。" }
+          ] }
+        ]
+      },
+      {
+        id: "r-20260520",
+        date: "2026.05.20",
+        title: "第一次练习",
+        score: 5.8,
+        note: "规则理解没问题，但一直抢词，故事方向散。",
+        reminder: "先练聆听，不追求好笑。",
+        tags: ["低分", "视频", "关键时刻"],
+        media: [
+          { id: "m-10", type: "video", name: "初次练习视频", meta: "02:05", markers: [
+            { time: "00:15", label: "待改进", note: "对方还没说完就进入下一句。" },
+            { time: "01:28", label: "待改进", note: "忘记保留故事地点。" }
+          ] },
+          { id: "m-11", type: "audio", name: "老师反馈", meta: "01:10" }
+        ]
+      }
+    ];
+
+    const filters = [
+      { key: "all", label: "全部" },
+      { key: "video", label: "视频" },
+      { key: "image", label: "图片" },
+      { key: "markers", label: "关键时刻" },
+      { key: "high", label: "高分" },
+      { key: "low", label: "低分" }
+    ];
+
+    const state = {
+      screen: "summary",
+      filter: "all",
+      selectedIds: [],
+      activeRecord: records[0],
+      activeMedia: records[0].media[0],
+      activeMarkerIndex: 0
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function mediaHas(record, type) {
+      return record.media.some((item) => item.type === type);
+    }
+
+    function markerCount(record) {
+      return record.media.reduce((total, item) => total + ((item.markers || []).length), 0);
+    }
+
+    function filteredRecords() {
+      if (state.filter === "video") return records.filter((record) => mediaHas(record, "video"));
+      if (state.filter === "image") return records.filter((record) => mediaHas(record, "image"));
+      if (state.filter === "markers") return records.filter((record) => markerCount(record) > 0);
+      if (state.filter === "high") return records.filter((record) => record.score >= 8);
+      if (state.filter === "low") return records.filter((record) => record.score < 7);
+      return records;
+    }
+
+    function showScreen(name) {
+      state.screen = name;
+      $$(".screen").forEach((screen) => {
+        screen.classList.toggle("active", screen.dataset.screen === name);
+      });
+      if (name === "records") renderRecords();
+      if (name === "compare") renderCompare();
+      updateCompareBar();
+    }
+
+    function showToast(text) {
+      const toast = $("#toast");
+      toast.textContent = text;
+      toast.classList.add("active");
+      setTimeout(() => toast.classList.remove("active"), 1800);
+    }
+
+    function mediaThumb(media) {
+      const labelMap = { video: "视频", image: "图片", audio: "音频", file: "文件" };
+      const play = media.type === "video" ? '<span class="play-mark"></span>' : labelMap[media.type];
+      return `<div class="media-thumb ${media.type}" title="${media.name}">${play}</div>`;
+    }
+
+    function recordCard(record, compact = false) {
+      const isSelected = state.selectedIds.includes(record.id);
+      const media = record.media.slice(0, compact ? 3 : 4).map(mediaThumb).join("");
+      return `
+        <article class="card record-card ${isSelected ? "selected" : ""}" data-record-id="${record.id}">
+          <div class="record-main">
+            <div class="record-title-row">
+              <div class="score-badge">${record.score}</div>
+              <div class="record-title-copy">
+                <h3>${record.title}</h3>
+                <p>${record.date} · ${markerCount(record)} 个关键时刻 · ${record.media.length} 个媒体</p>
+              </div>
+            </div>
+            <p class="card-copy">${record.note}</p>
+            <div class="media-strip">${media}</div>
+            <div class="small-actions">
+              <button class="ghost-btn" type="button" data-open-record="${record.id}">查看详情</button>
+              <button class="ghost-btn" type="button" data-select-record="${record.id}">${isSelected ? "取消对比" : "选择对比"}</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSummary() {
+      $("#summaryList").innerHTML = records.slice(0, 3).map((record) => recordCard(record, true)).join("");
+    }
+
+    function renderFilters() {
+      $("#filters").innerHTML = filters.map((filter) => `
+        <button class="chip ${filter.key === state.filter ? "active" : ""}" type="button" data-filter="${filter.key}">${filter.label}</button>
+      `).join("");
+    }
+
+    function renderRecords() {
+      const items = filteredRecords();
+      renderFilters();
+      $("#recordCountLabel").textContent = `${items.length} 条`;
+      $("#recordList").innerHTML = items.length
+        ? items.map((record) => recordCard(record)).join("")
+        : '<div class="empty-hint">当前筛选下没有练习记录，切回全部记录看看。</div>';
+      updateCompareBar();
+    }
+
+    function updateCompareBar() {
+      const bar = $("#compareBar");
+      if (state.screen !== "records" || state.selectedIds.length === 0) {
+        bar.classList.remove("active");
+        return;
+      }
+      bar.classList.add("active");
+      $("#compareTitle").textContent = `已选择 ${state.selectedIds.length} 条`;
+      $("#compareHint").textContent = state.selectedIds.length === 2
+        ? "可以开始双视频对比。"
+        : "再选择一条含视频记录。";
+      $("#startCompare").disabled = state.selectedIds.length !== 2;
+      $("#startCompare").style.opacity = state.selectedIds.length === 2 ? "1" : "0.45";
+    }
+
+    function toggleSelectRecord(id) {
+      const record = records.find((item) => item.id === id);
+      if (!record || !mediaHas(record, "video")) {
+        showToast("只能选择含视频的记录");
+        return;
+      }
+      if (state.selectedIds.includes(id)) {
+        state.selectedIds = state.selectedIds.filter((item) => item !== id);
+      } else {
+        if (state.selectedIds.length >= 2) {
+          showToast("最多选择 2 条记录");
+          return;
+        }
+        state.selectedIds.push(id);
+      }
+      renderRecords();
+    }
+
+    function openRecord(id) {
+      const record = records.find((item) => item.id === id);
+      if (!record) return;
+      state.activeRecord = record;
+      $("#detailDate").textContent = record.date;
+      $("#detailTitle").textContent = record.title;
+      $("#detailSummary").innerHTML = `
+        <div class="meta-row">
+          <span class="pill amber">${record.score} 分</span>
+          <span class="pill">${markerCount(record)} 个关键时刻</span>
+          <span class="pill blue">${record.media.length} 个媒体证据</span>
+        </div>
+        <div class="note-block"><strong>本次复盘</strong><br>${record.note}</div>
+        <div class="note-block"><strong>下次提醒</strong><br>${record.reminder}</div>
+      `;
+      $("#detailMediaCount").textContent = `${record.media.length} 个`;
+      $("#detailMedia").innerHTML = record.media.map((media) => `
+        <button class="media-tile ${media.type}" type="button" data-open-media="${media.id}">
+          ${media.type === "video" ? '<span class="play-mark"></span>' : media.name}
+          <small>${media.name} · ${media.meta}</small>
+        </button>
+      `).join("");
+      $("#detailSheet").classList.add("active");
+    }
+
+    function openMedia(mediaId) {
+      const media = state.activeRecord.media.find((item) => item.id === mediaId);
+      if (!media) return;
+      if (media.type !== "video") {
+        showToast(`${media.name} 已作为静态预览展示`);
+        return;
+      }
+      state.activeMedia = media;
+      state.activeMarkerIndex = 0;
+      $("#videoDate").textContent = `${state.activeRecord.date} · ${media.meta}`;
+      $("#videoTitle").textContent = media.name;
+      $("#videoHeadline").textContent = `${state.activeRecord.title} · ${state.activeRecord.score} 分`;
+      renderMarkers();
+      $("#videoSheet").classList.add("active");
+    }
+
+    function renderMarkers() {
+      const markers = state.activeMedia.markers || [];
+      $("#videoMarkers").innerHTML = markers.map((marker, index) => `
+        <button class="marker ${index === state.activeMarkerIndex ? "active" : ""}" type="button" data-marker-index="${index}">
+          <strong>${marker.time} · ${marker.label}</strong>
+          <span>${marker.note}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderCompare() {
+      const selected = state.selectedIds
+        .map((id) => records.find((record) => record.id === id))
+        .filter(Boolean);
+      if (selected.length < 2) {
+        state.selectedIds = [records[4].id, records[0].id];
+      }
+      const pair = state.selectedIds
+        .map((id) => records.find((record) => record.id === id))
+        .filter(Boolean)
+        .slice(0, 2);
+      $("#compareVideos").innerHTML = pair.map((record, index) => {
+        const video = record.media.find((item) => item.type === "video");
+        const markers = video && video.markers ? video.markers : [];
+        return `
+          <article class="compare-video ${index === 1 ? "secondary" : ""}">
+            <div>
+              <p class="muted">${record.date} · ${record.score} 分</p>
+              <h2>${record.title}</h2>
+              <p class="muted">${record.note}</p>
+            </div>
+            <div class="play-mark" aria-hidden="true"></div>
+            <div class="meta-row">
+              ${markers.slice(0, 2).map((marker) => `<span class="pill">${marker.time} ${marker.label}</span>`).join("")}
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function bindEvents() {
+      document.addEventListener("click", (event) => {
+        const nav = event.target.closest("[data-nav]");
+        if (nav) {
+          showScreen(nav.dataset.nav);
+          return;
+        }
+
+        const close = event.target.closest("[data-close]");
+        if (close) {
+          $(`#${close.dataset.close}`).classList.remove("active");
+          return;
+        }
+
+        const filter = event.target.closest("[data-filter]");
+        if (filter) {
+          state.filter = filter.dataset.filter;
+          renderRecords();
+          return;
+        }
+
+        const open = event.target.closest("[data-open-record]");
+        if (open) {
+          openRecord(open.dataset.openRecord);
+          return;
+        }
+
+        const select = event.target.closest("[data-select-record]");
+        if (select) {
+          toggleSelectRecord(select.dataset.selectRecord);
+          return;
+        }
+
+        const openMediaButton = event.target.closest("[data-open-media]");
+        if (openMediaButton) {
+          openMedia(openMediaButton.dataset.openMedia);
+          return;
+        }
+
+        const marker = event.target.closest("[data-marker-index]");
+        if (marker) {
+          state.activeMarkerIndex = Number(marker.dataset.markerIndex);
+          renderMarkers();
+        }
+      });
+
+      $("#quickCompare").addEventListener("click", () => {
+        const high = records.reduce((best, item) => item.score > best.score ? item : best, records[0]);
+        const low = records.reduce((worst, item) => item.score < worst.score ? item : worst, records[0]);
+        state.selectedIds = [low.id, high.id];
+        renderRecords();
+        showToast("已选择最高分和最低分");
+      });
+
+      $("#startCompare").addEventListener("click", () => {
+        if (state.selectedIds.length !== 2) return;
+        showScreen("compare");
+      });
+
+      $("#saveComparison").addEventListener("click", () => {
+        state.selectedIds = [];
+        showScreen("records");
+        showToast("已保存对比复盘");
+      });
+
+      $("#playToggle").addEventListener("click", (event) => {
+        event.currentTarget.textContent = event.currentTarget.textContent === "播放" ? "暂停" : "播放";
+      });
+
+      $("#speedControls").addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        $$("#speedControls button").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        showToast(`已切换 ${button.dataset.speed}x 慢放`);
+      });
+
+      $("#addMarker").addEventListener("click", () => {
+        state.activeMedia.markers = state.activeMedia.markers || [];
+        state.activeMedia.markers.push({
+          time: "01:52",
+          label: "新反馈",
+          note: "这里可以补一句对动作、节奏或角色状态的观察。"
+        });
+        state.activeMarkerIndex = state.activeMedia.markers.length - 1;
+        renderMarkers();
+        showToast("已添加关键时刻");
+      });
+    }
+
+    renderSummary();
+    renderFilters();
+    renderRecords();
+    bindEvents();
+  </script>
+</body>
+</html>
